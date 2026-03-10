@@ -1,0 +1,11 @@
+# UploadResult1
+
+
+## Fields
+
+| Field                                                                           | Type                                                                            | Required                                                                        | Description                                                                     |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `RecordID`                                                                      | **string*                                                                       | :heavy_minus_sign:                                                              | N/A                                                                             |
+| `RecordName`                                                                    | **string*                                                                       | :heavy_minus_sign:                                                              | N/A                                                                             |
+| `Status`                                                                        | [*components.UploadResultStatus](../../models/components/uploadresultstatus.md) | :heavy_minus_sign:                                                              | N/A                                                                             |
+| `Error`                                                                         | **string*                                                                       | :heavy_minus_sign:                                                              | N/A                                                                             |

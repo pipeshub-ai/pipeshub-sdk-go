@@ -1,0 +1,9 @@
+# ForgotPasswordResponse
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                              | :heavy_check_mark:                                                                              | N/A                                                                                             |
+| `Object`                                                                                        | [*operations.ForgotPasswordResponseBody](../../models/operations/forgotpasswordresponsebody.md) | :heavy_minus_sign:                                                                              | Password reset email sent successfully (or email not found - same response for security)        |

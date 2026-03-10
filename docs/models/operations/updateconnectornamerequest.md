@@ -1,0 +1,9 @@
+# UpdateConnectorNameRequest
+
+
+## Fields
+
+| Field                                                                                          | Type                                                                                           | Required                                                                                       | Description                                                                                    |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `ConnectorID`                                                                                  | *string*                                                                                       | :heavy_check_mark:                                                                             | Unique connector instance ID                                                                   |
+| `Body`                                                                                         | [components.UpdateConnectorNameRequest](../../models/components/updateconnectornamerequest.md) | :heavy_check_mark:                                                                             | Request body for Update connector instance name                                                |

@@ -1,0 +1,21 @@
+workflowVersion: 1.0.0
+speakeasyVersion: latest
+sources:
+    PipesHub API:
+        inputs:
+            - location: ../pipeshub-ai/backend/nodejs/apps/src/modules/api-docs/pipeshub-openapi.yaml
+        overlays:
+            - location: .speakeasy/speakeasy-modifications-overlay.yaml
+        output: .speakeasy/out.openapi.yaml
+        registry:
+            location: registry.speakeasyapi.dev/pipeshub/test/pipes-hub-api
+targets:
+    pipeshub:
+        target: go
+        source: PipesHub API
+        codeSamples:
+            registry:
+                location: registry.speakeasyapi.dev/pipeshub/test/pipes-hub-api-go-code-samples
+            labelOverride:
+                fixedValue: Go (SDK)
+            blocking: false

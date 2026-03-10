@@ -1,0 +1,9 @@
+# DeleteSearchByIDResponse
+
+
+## Fields
+
+| Field                                                                                               | Type                                                                                                | Required                                                                                            | Description                                                                                         |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                          | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                  | :heavy_check_mark:                                                                                  | N/A                                                                                                 |
+| `Object`                                                                                            | [*operations.DeleteSearchByIDResponseBody](../../models/operations/deletesearchbyidresponsebody.md) | :heavy_minus_sign:                                                                                  | Search deleted successfully                                                                         |

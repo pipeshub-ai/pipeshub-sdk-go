@@ -1,0 +1,12 @@
+# UpdateUserResponseBody
+
+User updated successfully
+
+
+## Fields
+
+| Field                                               | Type                                                | Required                                            | Description                                         | Example                                             |
+| --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| `Success`                                           | **bool*                                             | :heavy_minus_sign:                                  | N/A                                                 | true                                                |
+| `Message`                                           | **string*                                           | :heavy_minus_sign:                                  | N/A                                                 | User updated successfully                           |
+| `Data`                                              | [*components.User](../../models/components/user.md) | :heavy_minus_sign:                                  | User account in an organization                     |                                                     |

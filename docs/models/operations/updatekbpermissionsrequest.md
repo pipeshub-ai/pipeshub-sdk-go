@@ -1,0 +1,9 @@
+# UpdateKBPermissionsRequest
+
+
+## Fields
+
+| Field                                                                                                  | Type                                                                                                   | Required                                                                                               | Description                                                                                            |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `KbID`                                                                                                 | *string*                                                                                               | :heavy_check_mark:                                                                                     | N/A                                                                                                    |
+| `Body`                                                                                                 | [operations.UpdateKBPermissionsRequestBody](../../models/operations/updatekbpermissionsrequestbody.md) | :heavy_check_mark:                                                                                     | Request body for Update permissions                                                                    |

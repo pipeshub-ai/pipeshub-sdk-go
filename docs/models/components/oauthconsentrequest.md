@@ -1,0 +1,16 @@
+# OAuthConsentRequest
+
+Request to submit user consent for OAuth authorization
+
+
+## Fields
+
+| Field                                                                             | Type                                                                              | Required                                                                          | Description                                                                       |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `ClientID`                                                                        | *string*                                                                          | :heavy_check_mark:                                                                | The OAuth app's client ID                                                         |
+| `RedirectURI`                                                                     | *string*                                                                          | :heavy_check_mark:                                                                | Redirect URI (must match authorization request)                                   |
+| `Scope`                                                                           | *string*                                                                          | :heavy_check_mark:                                                                | Requested scopes                                                                  |
+| `State`                                                                           | *string*                                                                          | :heavy_check_mark:                                                                | State parameter from authorization request                                        |
+| `Consent`                                                                         | [components.Consent](../../models/components/consent.md)                          | :heavy_check_mark:                                                                | User's consent decision                                                           |
+| `CodeChallenge`                                                                   | **string*                                                                         | :heavy_minus_sign:                                                                | PKCE code challenge (if used in authorization request)                            |
+| `CodeChallengeMethod`                                                             | [*components.CodeChallengeMethod](../../models/components/codechallengemethod.md) | :heavy_minus_sign:                                                                | PKCE challenge method                                                             |

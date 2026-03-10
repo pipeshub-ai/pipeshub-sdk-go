@@ -1,0 +1,10 @@
+# CreateSubfolderRequest
+
+
+## Fields
+
+| Field                                                                                          | Type                                                                                           | Required                                                                                       | Description                                                                                    |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `KbID`                                                                                         | *string*                                                                                       | :heavy_check_mark:                                                                             | N/A                                                                                            |
+| `FolderID`                                                                                     | *string*                                                                                       | :heavy_check_mark:                                                                             | Parent folder ID                                                                               |
+| `Body`                                                                                         | [operations.CreateSubfolderRequestBody](../../models/operations/createsubfolderrequestbody.md) | :heavy_check_mark:                                                                             | Request payload                                                                                |

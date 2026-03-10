@@ -1,0 +1,14 @@
+# SearchResultItem
+
+A single matching chunk from semantic search
+
+
+## Fields
+
+| Field                                                                                       | Type                                                                                        | Required                                                                                    | Description                                                                                 |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `Content`                                                                                   | **string*                                                                                   | :heavy_minus_sign:                                                                          | The matching text content                                                                   |
+| `ChunkIndex`                                                                                | **int64*                                                                                    | :heavy_minus_sign:                                                                          | Index of this chunk within the source document                                              |
+| `CitationType`                                                                              | **string*                                                                                   | :heavy_minus_sign:                                                                          | Type of citation/source                                                                     |
+| `Metadata`                                                                                  | [*components.SearchResultItemMetadata](../../models/components/searchresultitemmetadata.md) | :heavy_minus_sign:                                                                          | Additional metadata about the source                                                        |
+| `Score`                                                                                     | **float64*                                                                                  | :heavy_minus_sign:                                                                          | Relevance score (higher is more relevant)                                                   |

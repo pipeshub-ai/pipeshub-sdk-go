@@ -1,0 +1,11 @@
+# ListConnectorInstancesRequest
+
+
+## Fields
+
+| Field                                                                   | Type                                                                    | Required                                                                | Description                                                             | Example                                                                 |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `Scope`                                                                 | [*components.ConnectorScope](../../models/components/connectorscope.md) | :heavy_minus_sign:                                                      | Filter by scope (team or personal)                                      | team                                                                    |
+| `Page`                                                                  | **int64*                                                                | :heavy_minus_sign:                                                      | N/A                                                                     |                                                                         |
+| `Limit`                                                                 | **int64*                                                                | :heavy_minus_sign:                                                      | N/A                                                                     |                                                                         |
+| `Search`                                                                | **string*                                                               | :heavy_minus_sign:                                                      | Search by instance name                                                 |                                                                         |

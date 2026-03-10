@@ -1,0 +1,11 @@
+# GetConnectorRegistryRequest
+
+
+## Fields
+
+| Field                                                                   | Type                                                                    | Required                                                                | Description                                                             | Example                                                                 |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `Scope`                                                                 | [*components.ConnectorScope](../../models/components/connectorscope.md) | :heavy_minus_sign:                                                      | Filter by scope type                                                    | team                                                                    |
+| `Page`                                                                  | **int64*                                                                | :heavy_minus_sign:                                                      | Page number                                                             |                                                                         |
+| `Limit`                                                                 | **int64*                                                                | :heavy_minus_sign:                                                      | Items per page                                                          |                                                                         |
+| `Search`                                                                | **string*                                                               | :heavy_minus_sign:                                                      | Search term for connector names                                         |                                                                         |

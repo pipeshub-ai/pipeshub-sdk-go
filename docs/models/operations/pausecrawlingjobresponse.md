@@ -1,0 +1,9 @@
+# PauseCrawlingJobResponse
+
+
+## Fields
+
+| Field                                                                                               | Type                                                                                                | Required                                                                                            | Description                                                                                         |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                          | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                  | :heavy_check_mark:                                                                                  | N/A                                                                                                 |
+| `Object`                                                                                            | [*operations.PauseCrawlingJobResponseBody](../../models/operations/pausecrawlingjobresponsebody.md) | :heavy_minus_sign:                                                                                  | Crawling job paused                                                                                 |

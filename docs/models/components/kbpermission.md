@@ -1,0 +1,15 @@
+# KBPermission
+
+
+## Fields
+
+| Field                                                                       | Type                                                                        | Required                                                                    | Description                                                                 |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `ID`                                                                        | **string*                                                                   | :heavy_minus_sign:                                                          | Permission entry ID                                                         |
+| `UserID`                                                                    | **string*                                                                   | :heavy_minus_sign:                                                          | User ID                                                                     |
+| `Email`                                                                     | **string*                                                                   | :heavy_minus_sign:                                                          | User email                                                                  |
+| `Name`                                                                      | **string*                                                                   | :heavy_minus_sign:                                                          | User display name                                                           |
+| `Role`                                                                      | [*components.KBPermissionRole](../../models/components/kbpermissionrole.md) | :heavy_minus_sign:                                                          | N/A                                                                         |
+| `Type`                                                                      | [*components.KBPermissionType](../../models/components/kbpermissiontype.md) | :heavy_minus_sign:                                                          | Whether permission is for a user or team                                    |
+| `CreatedAtTimestamp`                                                        | **int64*                                                                    | :heavy_minus_sign:                                                          | N/A                                                                         |
+| `UpdatedAtTimestamp`                                                        | **int64*                                                                    | :heavy_minus_sign:                                                          | N/A                                                                         |

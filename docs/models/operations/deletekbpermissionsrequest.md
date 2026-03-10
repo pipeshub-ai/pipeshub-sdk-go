@@ -1,0 +1,9 @@
+# DeleteKBPermissionsRequest
+
+
+## Fields
+
+| Field                                                                                                  | Type                                                                                                   | Required                                                                                               | Description                                                                                            |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `KbID`                                                                                                 | *string*                                                                                               | :heavy_check_mark:                                                                                     | N/A                                                                                                    |
+| `Body`                                                                                                 | [operations.DeleteKBPermissionsRequestBody](../../models/operations/deletekbpermissionsrequestbody.md) | :heavy_check_mark:                                                                                     | Request body for Remove permissions                                                                    |

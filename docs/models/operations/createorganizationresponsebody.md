@@ -1,0 +1,12 @@
+# CreateOrganizationResponseBody
+
+Organization created successfully
+
+
+## Fields
+
+| Field                                                                                   | Type                                                                                    | Required                                                                                | Description                                                                             | Example                                                                                 |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `Success`                                                                               | **bool*                                                                                 | :heavy_minus_sign:                                                                      | N/A                                                                                     | true                                                                                    |
+| `Message`                                                                               | **string*                                                                               | :heavy_minus_sign:                                                                      | N/A                                                                                     | Organization created successfully                                                       |
+| `Data`                                                                                  | [*operations.CreateOrganizationData](../../models/operations/createorganizationdata.md) | :heavy_minus_sign:                                                                      | N/A                                                                                     |                                                                                         |

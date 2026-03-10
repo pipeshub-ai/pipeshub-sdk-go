@@ -1,0 +1,13 @@
+# UploadRecordsToKBRequestBody
+
+Request payload
+
+
+## Fields
+
+| Field                                                                                  | Type                                                                                   | Required                                                                               | Description                                                                            | Example                                                                                |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `Files`                                                                                | [][operations.UploadRecordsToKBFile](../../models/operations/uploadrecordstokbfile.md) | :heavy_check_mark:                                                                     | Files to upload (max 1000)                                                             |                                                                                        |
+| `FilesMetadata`                                                                        | **string*                                                                              | :heavy_minus_sign:                                                                     | JSON array with file_path and last_modified for each file                              | [{"file_path":"/docs/report.pdf","last_modified":"2024-01-15T10:30:00Z"}]              |
+| `IsVersioned`                                                                          | **bool*                                                                                | :heavy_minus_sign:                                                                     | Enable version tracking                                                                |                                                                                        |
+| `RecordType`                                                                           | **string*                                                                              | :heavy_minus_sign:                                                                     | Type of records to create                                                              |                                                                                        |

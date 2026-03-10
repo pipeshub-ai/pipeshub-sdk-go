@@ -1,0 +1,9 @@
+# CreateRootFolderRequest
+
+
+## Fields
+
+| Field                                                                                            | Type                                                                                             | Required                                                                                         | Description                                                                                      |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `KbID`                                                                                           | *string*                                                                                         | :heavy_check_mark:                                                                               | Knowledge base ID                                                                                |
+| `Body`                                                                                           | [operations.CreateRootFolderRequestBody](../../models/operations/createrootfolderrequestbody.md) | :heavy_check_mark:                                                                               | Request payload                                                                                  |

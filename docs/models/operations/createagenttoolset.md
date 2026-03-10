@@ -1,0 +1,13 @@
+# CreateAgentToolset
+
+
+## Fields
+
+| Field                                                                      | Type                                                                       | Required                                                                   | Description                                                                |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `Name`                                                                     | **string*                                                                  | :heavy_minus_sign:                                                         | N/A                                                                        |
+| `DisplayName`                                                              | **string*                                                                  | :heavy_minus_sign:                                                         | N/A                                                                        |
+| `Type`                                                                     | **string*                                                                  | :heavy_minus_sign:                                                         | N/A                                                                        |
+| `InstanceID`                                                               | **string*                                                                  | :heavy_minus_sign:                                                         | Admin-created toolset instance ID                                          |
+| `InstanceName`                                                             | **string*                                                                  | :heavy_minus_sign:                                                         | Human-friendly instance name                                               |
+| `Tools`                                                                    | [][operations.CreateAgentTool](../../models/operations/createagenttool.md) | :heavy_minus_sign:                                                         | N/A                                                                        |

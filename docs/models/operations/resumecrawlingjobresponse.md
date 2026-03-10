@@ -1,0 +1,9 @@
+# ResumeCrawlingJobResponse
+
+
+## Fields
+
+| Field                                                                                                 | Type                                                                                                  | Required                                                                                              | Description                                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                            | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                    | :heavy_check_mark:                                                                                    | N/A                                                                                                   |
+| `Object`                                                                                              | [*operations.ResumeCrawlingJobResponseBody](../../models/operations/resumecrawlingjobresponsebody.md) | :heavy_minus_sign:                                                                                    | Crawling job resumed                                                                                  |

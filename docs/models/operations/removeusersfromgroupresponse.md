@@ -1,0 +1,9 @@
+# RemoveUsersFromGroupResponse
+
+
+## Fields
+
+| Field                                                                                                       | Type                                                                                                        | Required                                                                                                    | Description                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                          | :heavy_check_mark:                                                                                          | N/A                                                                                                         |
+| `Object`                                                                                                    | [*operations.RemoveUsersFromGroupResponseBody](../../models/operations/removeusersfromgroupresponsebody.md) | :heavy_minus_sign:                                                                                          | Users removed from group successfully                                                                       |

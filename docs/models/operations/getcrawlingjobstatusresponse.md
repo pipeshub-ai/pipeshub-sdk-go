@@ -1,0 +1,9 @@
+# GetCrawlingJobStatusResponse
+
+
+## Fields
+
+| Field                                                                                                       | Type                                                                                                        | Required                                                                                                    | Description                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                          | :heavy_check_mark:                                                                                          | N/A                                                                                                         |
+| `Object`                                                                                                    | [*operations.GetCrawlingJobStatusResponseBody](../../models/operations/getcrawlingjobstatusresponsebody.md) | :heavy_minus_sign:                                                                                          | Job status retrieved successfully                                                                           |

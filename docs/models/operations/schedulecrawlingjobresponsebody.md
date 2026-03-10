@@ -1,0 +1,12 @@
+# ScheduleCrawlingJobResponseBody
+
+Crawling job scheduled successfully
+
+
+## Fields
+
+| Field                                                                                     | Type                                                                                      | Required                                                                                  | Description                                                                               | Example                                                                                   |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `Success`                                                                                 | **bool*                                                                                   | :heavy_minus_sign:                                                                        | N/A                                                                                       | true                                                                                      |
+| `Message`                                                                                 | **string*                                                                                 | :heavy_minus_sign:                                                                        | N/A                                                                                       | Crawling job scheduled successfully                                                       |
+| `Data`                                                                                    | [*operations.ScheduleCrawlingJobData](../../models/operations/schedulecrawlingjobdata.md) | :heavy_minus_sign:                                                                        | N/A                                                                                       |                                                                                           |

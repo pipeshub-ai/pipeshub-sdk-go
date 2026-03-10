@@ -1,0 +1,9 @@
+# ScheduleCrawlingJobResponse
+
+
+## Fields
+
+| Field                                                                                                     | Type                                                                                                      | Required                                                                                                  | Description                                                                                               |
+| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                        | :heavy_check_mark:                                                                                        | N/A                                                                                                       |
+| `Object`                                                                                                  | [*operations.ScheduleCrawlingJobResponseBody](../../models/operations/schedulecrawlingjobresponsebody.md) | :heavy_minus_sign:                                                                                        | Crawling job scheduled successfully                                                                       |

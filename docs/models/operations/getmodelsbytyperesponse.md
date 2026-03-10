@@ -1,0 +1,9 @@
+# GetModelsByTypeResponse
+
+
+## Fields
+
+| Field                                                                                             | Type                                                                                              | Required                                                                                          | Description                                                                                       |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                        | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                | :heavy_check_mark:                                                                                | N/A                                                                                               |
+| `Object`                                                                                          | [*operations.GetModelsByTypeResponseBody](../../models/operations/getmodelsbytyperesponsebody.md) | :heavy_minus_sign:                                                                                | Models retrieved                                                                                  |

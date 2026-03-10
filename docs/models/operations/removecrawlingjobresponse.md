@@ -1,0 +1,9 @@
+# RemoveCrawlingJobResponse
+
+
+## Fields
+
+| Field                                                                                                 | Type                                                                                                  | Required                                                                                              | Description                                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                            | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                    | :heavy_check_mark:                                                                                    | N/A                                                                                                   |
+| `Object`                                                                                              | [*operations.RemoveCrawlingJobResponseBody](../../models/operations/removecrawlingjobresponsebody.md) | :heavy_minus_sign:                                                                                    | Crawling job removed successfully                                                                     |

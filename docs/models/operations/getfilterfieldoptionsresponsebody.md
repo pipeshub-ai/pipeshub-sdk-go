@@ -1,0 +1,12 @@
+# GetFilterFieldOptionsResponseBody
+
+Options retrieved
+
+
+## Fields
+
+| Field                                                                                                     | Type                                                                                                      | Required                                                                                                  | Description                                                                                               |
+| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `Success`                                                                                                 | **bool*                                                                                                   | :heavy_minus_sign:                                                                                        | N/A                                                                                                       |
+| `Options`                                                                                                 | [][operations.Option](../../models/operations/option.md)                                                  | :heavy_minus_sign:                                                                                        | N/A                                                                                                       |
+| `Pagination`                                                                                              | [*operations.GetFilterFieldOptionsPagination](../../models/operations/getfilterfieldoptionspagination.md) | :heavy_minus_sign:                                                                                        | N/A                                                                                                       |

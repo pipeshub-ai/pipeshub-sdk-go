@@ -1,0 +1,9 @@
+# UpdateKnowledgeBaseRequest
+
+
+## Fields
+
+| Field                                                                                                  | Type                                                                                                   | Required                                                                                               | Description                                                                                            |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `KbID`                                                                                                 | *string*                                                                                               | :heavy_check_mark:                                                                                     | Knowledge base ID                                                                                      |
+| `Body`                                                                                                 | [operations.UpdateKnowledgeBaseRequestBody](../../models/operations/updateknowledgebaserequestbody.md) | :heavy_check_mark:                                                                                     | Request payload                                                                                        |

@@ -1,0 +1,10 @@
+# RegenerateAnswerRequest
+
+
+## Fields
+
+| Field                                                                                             | Type                                                                                              | Required                                                                                          | Description                                                                                       |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `ConversationID`                                                                                  | *string*                                                                                          | :heavy_check_mark:                                                                                | N/A                                                                                               |
+| `MessageID`                                                                                       | *string*                                                                                          | :heavy_check_mark:                                                                                | ID of the message to regenerate response for                                                      |
+| `Body`                                                                                            | [*operations.RegenerateAnswerRequestBody](../../models/operations/regenerateanswerrequestbody.md) | :heavy_minus_sign:                                                                                | Request payload                                                                                   |

@@ -1,0 +1,9 @@
+# GetAllUserGroupsResponse
+
+
+## Fields
+
+| Field                                                                                               | Type                                                                                                | Required                                                                                            | Description                                                                                         |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                          | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                  | :heavy_check_mark:                                                                                  | N/A                                                                                                 |
+| `Object`                                                                                            | [*operations.GetAllUserGroupsResponseBody](../../models/operations/getallusergroupsresponsebody.md) | :heavy_minus_sign:                                                                                  | List of user groups retrieved successfully                                                          |

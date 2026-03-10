@@ -1,0 +1,9 @@
+# UpdateAgentTemplateRequest
+
+
+## Fields
+
+| Field                                                                                                  | Type                                                                                                   | Required                                                                                               | Description                                                                                            |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `TemplateID`                                                                                           | *string*                                                                                               | :heavy_check_mark:                                                                                     | N/A                                                                                                    |
+| `Body`                                                                                                 | [operations.UpdateAgentTemplateRequestBody](../../models/operations/updateagenttemplaterequestbody.md) | :heavy_check_mark:                                                                                     | Request body for Update agent template                                                                 |

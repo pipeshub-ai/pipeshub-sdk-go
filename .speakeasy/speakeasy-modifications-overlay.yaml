@@ -1,0 +1,2516 @@
+overlay: 1.0.0
+x-speakeasy-jsonpath: rfc9535
+info:
+  title: Speakeasy Modifications
+  version: 0.0.2
+  x-speakeasy-metadata:
+    after: ""
+    before: ""
+    type: speakeasy-modifications
+actions:
+  - target: $["paths"]["/connectors/oauth/callback"]["get"]
+    update:
+      x-speakeasy-group: connectorOAuth
+      x-speakeasy-name-override: handleCallback
+    x-speakeasy-metadata:
+      after: sdk.connectorOAuth.handleCallback()
+      before: sdk.Connector OAuth.handleOAuthCallback()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/crawlingManager/schedule/all"]["get"]
+    update:
+      x-speakeasy-group: crawlingJobs
+      x-speakeasy-name-override: listAllStatuses
+    x-speakeasy-metadata:
+      after: sdk.crawlingJobs.listAllStatuses()
+      before: sdk.Crawling Jobs.getAllCrawlingJobStatus()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/teams/{teamId}/users"]["delete"]
+    update:
+      x-speakeasy-name-override: remove
+    x-speakeasy-metadata:
+      after: sdk.teams.remove()
+      before: sdk.Teams.removeUserFromTeam()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/active"]["get"]
+    update:
+      x-speakeasy-group: connectorInstances
+      x-speakeasy-name-override: listActive
+    x-speakeasy-metadata:
+      after: sdk.connectorInstances.listActive()
+      before: sdk.Connector Instances.listActiveConnectors()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth/{connectorType}/{configId}"]["get"]
+    update:
+      x-speakeasy-group: oauthConfiguration
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.oauthConfiguration.get()
+      before: sdk.OAuth Configuration.getOAuthConfig()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/oauth-configs/{toolsetType}/{oauthConfigId}"]["delete"]
+    update:
+      x-speakeasy-group: oauthConfiguration
+      x-speakeasy-name-override: deleteConfig
+    x-speakeasy-metadata:
+      after: sdk.oauthConfiguration.deleteConfig()
+      before: sdk.OAuth Configuration.deleteToolsetOAuthConfig()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth-clients/{appId}/tokens"]["get"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: listTokens
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.listTokens()
+      before: sdk.OAuth Apps.listOAuthAppTokens()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/permissions"]["get"]
+    update:
+      x-speakeasy-name-override: getPermissions
+    x-speakeasy-metadata:
+      after: sdk.agents.getPermissions()
+      before: sdk.Agents.getAgentPermissions()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/org"]["put"]
+    update:
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.organizations.update()
+      before: sdk.Organizations.updateOrganization()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/conversations/{conversationId}/unshare"]["post"]
+    update:
+      x-speakeasy-name-override: unshare
+    x-speakeasy-metadata:
+      after: sdk.conversations.unshare()
+      before: sdk.Conversations.unshareConversationById()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}"]["get"]
+    update:
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.agents.get()
+      before: sdk.Agents.getAgent()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/frontendPublicUrl"]["get"]
+    update:
+      x-speakeasy-group: publicURLs
+      x-speakeasy-name-override: getFrontend
+    x-speakeasy-metadata:
+      after: sdk.publicURLs.getFrontend()
+      before: sdk.Public URLs.getFrontendPublicUrl()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/record/{recordId}"]["delete"]
+    update:
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.records.delete()
+      before: sdk.Records.deleteRecord()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/instances/{instanceId}/oauth/authorize"]["get"]
+    update:
+      x-speakeasy-group: toolsetOAuth
+      x-speakeasy-name-override: getAuthUrl
+    x-speakeasy-metadata:
+      after: sdk.toolsetOAuth.getAuthUrl()
+      before: sdk.Toolset OAuth.getInstanceOAuthAuthorizationUrl()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/.well-known/openid-configuration"]["get"]
+    update:
+      x-speakeasy-group: openIdConnect
+      x-speakeasy-name-override: getConfiguration
+    x-speakeasy-metadata:
+      after: sdk.openIdConnect.getConfiguration()
+      before: sdk.OpenID Connect.openidConfiguration()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/authConfig/oauth"]["post"]
+    update:
+      x-speakeasy-group: authConfigurations
+      x-speakeasy-name-override: setOAuth
+    x-speakeasy-metadata:
+      after: sdk.authConfigurations.setOAuth()
+      before: sdk.Authentication Configuration.setOAuthConfig()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/search/{searchId}/unshare"]["patch"]
+    update:
+      x-speakeasy-group: semanticSearch
+      x-speakeasy-name-override: unshare
+    x-speakeasy-metadata:
+      after: sdk.semanticSearch.unshare()
+      before: sdk.Semantic Search.unshareSearch()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/orgAuthConfig/updateAuthMethod"]["post"]
+    update:
+      x-speakeasy-group: organizationAuthConfig
+    x-speakeasy-metadata:
+      after: sdk.organizationAuthConfig.updateAuthMethod()
+      before: sdk.Organization Auth Config.updateAuthMethod()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors"]["get"]
+    update:
+      x-speakeasy-group: connectorInstances
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.connectorInstances.list()
+      before: sdk.Connector Instances.listConnectorInstances()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/conversations/{conversationId}/message/{messageId}/regenerate"]["post"]
+    update:
+      x-speakeasy-name-override: regenerate
+    x-speakeasy-metadata:
+      after: sdk.conversations.regenerate()
+      before: sdk.Conversations.regenerateAnswer()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/limits"]["get"]
+    update:
+      x-speakeasy-name-override: getLimits
+    x-speakeasy-metadata:
+      after: sdk.upload.getLimits()
+      before: sdk.Upload.getUploadLimits()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/knowledge-hub/nodes"]["get"]
+    update:
+      x-speakeasy-group: knowledgeBases
+      x-speakeasy-name-override: getRootNodes
+    x-speakeasy-metadata:
+      after: sdk.knowledgeBases.getRootNodes()
+      before: sdk.Knowledge Bases.getKnowledgeHubRootNodes()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth-clients/scopes"]["get"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: listScopes
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.listScopes()
+      before: sdk.OAuth Apps.listOAuthScopes()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth2/introspect"]["post"]
+    update:
+      x-speakeasy-group: oauthProvider
+      x-speakeasy-name-override: introspectToken
+    x-speakeasy-metadata:
+      after: sdk.oauthProvider.introspectToken()
+      before: sdk.OAuth Provider.oauthIntrospect()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/smtpConfig"]["get"]
+    update:
+      x-speakeasy-group: smtpConfiguration
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.smtpConfiguration.get()
+      before: sdk.SMTP Configuration.getSMTPConfig()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/users/{id}"]["get"]
+    update:
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.users.get()
+      before: sdk.Users.getUserById()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/conversations/stream"]["post"]
+    update:
+      x-speakeasy-group: agentConversations
+      x-speakeasy-name-override: stream
+    x-speakeasy-metadata:
+      after: sdk.agentConversations.stream()
+      before: sdk.Agent Conversations.streamAgentConversation()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/conversations/{conversationId}"]["get"]
+    update:
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.conversations.get()
+      before: sdk.Conversations.getConversationById()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/authConfig/google"]["get"]
+    update:
+      x-speakeasy-group: authenticationConfiguration
+    x-speakeasy-metadata:
+      after: sdk.authenticationConfiguration.getGoogleAuthConfig()
+      before: sdk.Authentication Configuration.getGoogleAuthConfig()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/oauth/authorize"]["get"]
+    update:
+      x-speakeasy-group: connectorOAuth
+      x-speakeasy-name-override: authorize
+    x-speakeasy-metadata:
+      after: sdk.connectorOAuth.authorize()
+      before: sdk.Connector OAuth.getOAuthAuthorizationUrl()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/teams/{teamId}/users"]["get"]
+    update:
+      x-speakeasy-name-override: getUsers
+    x-speakeasy-metadata:
+      after: sdk.teams.getUsers()
+      before: sdk.Teams.getTeamUsers()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/permissions"]["post"]
+    update:
+      x-speakeasy-name-override: grantKBAccess
+    x-speakeasy-metadata:
+      after: sdk.permissions.grantKBAccess()
+      before: sdk.Permissions.createKBPermission()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/prompts/system"]["get"]
+    update:
+      x-speakeasy-group: platformSettings
+    x-speakeasy-metadata:
+      after: sdk.platformSettings.getCustomSystemPrompt()
+      before: sdk.Platform Settings.getCustomSystemPrompt()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/knowledge-hub/nodes/{parentType}/{parentId}"]["get"]
+    update:
+      x-speakeasy-group: knowledgeBases
+      x-speakeasy-name-override: getChildNodes
+    x-speakeasy-metadata:
+      after: sdk.knowledgeBases.getChildNodes()
+      before: sdk.Knowledge Bases.getKnowledgeHubChildNodes()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/configured"]["get"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: listConfigured
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.listConfigured()
+      before: sdk.Toolset Instances.listConfiguredToolsets()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/conversations/{conversationId}"]["get"]
+    update:
+      x-speakeasy-group: agentConversations
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.agentConversations.get()
+      before: sdk.Agent Conversations.getAgentConversation()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth-clients/{appId}"]["put"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.update()
+      before: sdk.OAuth Apps.updateOAuthApp()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/upload"]["post"]
+    update:
+      x-speakeasy-name-override: files
+    x-speakeasy-metadata:
+      after: sdk.upload.files()
+      before: sdk.Upload.uploadRecordsToKB()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth2/authorize"]["post"]
+    update:
+      x-speakeasy-group: oauthProvider
+      x-speakeasy-name-override: authorizeConsent
+    x-speakeasy-metadata:
+      after: sdk.oauthProvider.authorizeConsent()
+      before: sdk.OAuth Provider.oauthAuthorizeConsent()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/ai-models/providers/{modelType}/{modelKey}"]["put"]
+    update:
+      x-speakeasy-group: aiModelsProviders
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.aiModelsProviders.update()
+      before: sdk.AI Models Providers.updateAIModelProvider()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/users"]["get"]
+    update:
+      x-speakeasy-name-override: getAll
+    x-speakeasy-metadata:
+      after: sdk.users.getAll()
+      before: sdk.Users.getAllUsers()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/users/{id}"]["put"]
+    update:
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.users.update()
+      before: sdk.Users.updateUser()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/ai-models/providers/{modelType}/{modelKey}"]["delete"]
+    update:
+      x-speakeasy-group: aiModelsProviders
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.aiModelsProviders.delete()
+      before: sdk.AI Models Providers.deleteAIModelProvider()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/authConfig/azureAd"]["get"]
+    update:
+      x-speakeasy-group: authenticationConfiguration
+      x-speakeasy-name-override: getAzureAd
+    x-speakeasy-metadata:
+      after: sdk.authenticationConfiguration.getAzureAd()
+      before: sdk.Authentication Configuration.getAzureAdAuthConfig()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/filters"]["get"]
+    update:
+      x-speakeasy-group: connectorFilters
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.connectorFilters.get()
+      before: sdk.Connector Filters.getConnectorFilters()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/.well-known/oauth-protected-resource/mcp"]["get"]
+    update:
+      x-speakeasy-group: openIDConnect
+      x-speakeasy-name-override: getProtectedResourceMetadata
+    x-speakeasy-metadata:
+      after: sdk.openIDConnect.getProtectedResourceMetadata()
+      before: sdk.OpenID Connect.oauthProtectedResource()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/ai-models/available/{modelType}"]["get"]
+    update:
+      x-speakeasy-group: aiModelsProviders
+      x-speakeasy-name-override: getAvailableModels
+    x-speakeasy-metadata:
+      after: sdk.aiModelsProviders.getAvailableModels()
+      before: sdk.AI Models Providers.getAvailableModelsByType()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/template"]["get"]
+    update:
+      x-speakeasy-group: agentTemplates
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.agentTemplates.list()
+      before: sdk.Agent Templates.listAgentTemplates()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/orgAuthConfig/authMethods"]["get"]
+    update:
+      x-speakeasy-group: organizationAuthConfig
+    x-speakeasy-metadata:
+      after: sdk.organizationAuthConfig.getAuthMethods()
+      before: sdk.Organization Auth Config.getAuthMethods()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/instances/{instanceId}"]["put"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.update()
+      before: sdk.Toolset Instances.updateToolsetInstance()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/{toolsetId}/reauthenticate"]["post"]
+    update:
+      x-speakeasy-group: toolsets
+      x-speakeasy-name-override: reauthenticateById
+    x-speakeasy-metadata:
+      after: sdk.toolsets.reauthenticateById()
+      before: sdk.Toolset Instances.reauthenticateToolset()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/teams"]["post"]
+    update:
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.teams.create()
+      before: sdk.Teams.createTeam()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/teams/{teamId}"]["put"]
+    update:
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.teams.update()
+      before: sdk.Teams.updateTeam()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/org/logo"]["delete"]
+    update:
+      x-speakeasy-name-override: deleteLogo
+    x-speakeasy-metadata:
+      after: sdk.organizations.deleteLogo()
+      before: sdk.Organizations.deleteOrganizationLogo()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/.well-known/jwks.json"]["get"]
+    update:
+      x-speakeasy-group: openIDConnect
+    x-speakeasy-metadata:
+      after: sdk.openIDConnect.jwks()
+      before: sdk.OpenID Connect.jwks()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/registry/{connectorType}/schema"]["get"]
+    update:
+      x-speakeasy-group: connectorRegistry
+      x-speakeasy-name-override: getSchemaForType
+    x-speakeasy-metadata:
+      after: sdk.connectorRegistry.getSchemaForType()
+      before: sdk.Connector Registry.getConnectorSchema()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/template"]["post"]
+    update:
+      x-speakeasy-group: agentTemplates
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.agentTemplates.create()
+      before: sdk.Agent Templates.createAgentTemplate()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/resync/connector"]["post"]
+    update:
+      x-speakeasy-name-override: resync
+    x-speakeasy-metadata:
+      after: sdk.connector.resync()
+      before: sdk.Connector.resyncConnector()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}"]["get"]
+    update:
+      x-speakeasy-group: connectorInstances
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.connectorInstances.get()
+      before: sdk.Connector Instances.getConnectorInstance()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/crawlingManager/{connector}/{connectorId}/resume"]["post"]
+    update:
+      x-speakeasy-group: crawlingJobs
+      x-speakeasy-name-override: resume
+    x-speakeasy-metadata:
+      after: sdk.crawlingJobs.resume()
+      before: sdk.Crawling Jobs.resumeCrawlingJob()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/search/{searchId}"]["get"]
+    update:
+      x-speakeasy-group: semanticSearch
+      x-speakeasy-name-override: getById
+    x-speakeasy-metadata:
+      after: sdk.semanticSearch.getById()
+      before: sdk.Semantic Search.getSearchById()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/template/{templateId}"]["put"]
+    update:
+      x-speakeasy-group: agentTemplates
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.agentTemplates.update()
+      before: sdk.Agent Templates.updateAgentTemplate()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/instances/{instanceId}/authenticate"]["post"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: authenticate
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.authenticate()
+      before: sdk.Toolset Instances.authenticateToolsetInstance()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/instances"]["get"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.list()
+      before: sdk.Toolset Instances.getToolsetInstances()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/authConfig/azureAd"]["post"]
+    update:
+      x-speakeasy-group: authenticationConfiguration
+    x-speakeasy-metadata:
+      after: sdk.authenticationConfiguration.setAzureAdAuthConfig()
+      before: sdk.Authentication Configuration.setAzureAdAuthConfig()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/userGroups/{groupId}"]["delete"]
+    update:
+      x-speakeasy-group: userGroups
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.userGroups.delete()
+      before: sdk.User Groups.deleteUserGroup()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/slack-bot"]["get"]
+    update:
+      x-speakeasy-group: configurationManager
+    x-speakeasy-metadata:
+      after: sdk.configurationManager.getSlackBotConfigs()
+      before: sdk.Configuration Manager.getSlackBotConfigs()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/users/{id}/email"]["get"]
+    update:
+      x-speakeasy-name-override: getEmail
+    x-speakeasy-metadata:
+      after: sdk.users.getEmail()
+      before: sdk.Users.getUserEmailById()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/authConfig/google"]["post"]
+    update:
+      x-speakeasy-group: authConfig
+      x-speakeasy-name-override: setGoogle
+    x-speakeasy-metadata:
+      after: sdk.authConfig.setGoogle()
+      before: sdk.Authentication Configuration.setGoogleAuthConfig()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/metricsCollection/toggle"]["put"]
+    update:
+      x-speakeasy-group: metricsCollection
+      x-speakeasy-name-override: toggle
+    x-speakeasy-metadata:
+      after: sdk.metricsCollection.toggle()
+      before: sdk.Metrics Collection.toggleMetricsCollection()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/authConfig/microsoft"]["post"]
+    update:
+      x-speakeasy-group: authenticationConfiguration
+      x-speakeasy-name-override: setMicrosoftAuth
+    x-speakeasy-metadata:
+      after: sdk.authenticationConfiguration.setMicrosoftAuth()
+      before: sdk.Authentication Configuration.setMicrosoftAuthConfig()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/org/exists"]["get"]
+    update:
+      x-speakeasy-name-override: checkExists
+    x-speakeasy-metadata:
+      after: sdk.organizations.checkExists()
+      before: sdk.Organizations.checkOrgExists()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/children"]["get"]
+    update:
+      x-speakeasy-name-override: getChildren
+    x-speakeasy-metadata:
+      after: sdk.records.getChildren()
+      before: sdk.Records.getKBChildren()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/folder"]["post"]
+    update:
+      x-speakeasy-name-override: createRoot
+    x-speakeasy-metadata:
+      after: sdk.folders.createRoot()
+      before: sdk.Folders.createRootFolder()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/instances"]["post"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.create()
+      before: sdk.Toolset Instances.createToolsetInstance()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase"]["post"]
+    update:
+      x-speakeasy-group: knowledgeBases
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.knowledgeBases.create()
+      before: sdk.Knowledge Bases.createKnowledgeBase()
+      created_at: 1773129739903
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/stream/record/{recordId}"]["get"]
+    update:
+      x-speakeasy-name-override: streamContent
+    x-speakeasy-metadata:
+      after: sdk.records.streamContent()
+      before: sdk.Records.streamRecordBuffer()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/{toolsetId}/config"]["put"]
+    update:
+      x-speakeasy-group: toolsetConfiguration
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.toolsetConfiguration.update()
+      before: sdk.Toolset Configuration.updateToolsetConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/saml/signIn"]["get"]
+    update:
+      x-speakeasy-group: saml
+      x-speakeasy-name-override: signIn
+    x-speakeasy-metadata:
+      after: sdk.saml.signIn()
+      before: sdk.SAML.signInViaSAML()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/userGroups/{groupId}/users"]["get"]
+    update:
+      x-speakeasy-group: userGroups
+      x-speakeasy-name-override: getInGroup
+    x-speakeasy-metadata:
+      after: sdk.userGroups.getInGroup()
+      before: sdk.User Groups.getUsersInGroup()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth"]["get"]
+    update:
+      x-speakeasy-group: oauthConfigs
+      x-speakeasy-name-override: listAll
+    x-speakeasy-metadata:
+      after: sdk.oauthConfigs.listAll()
+      before: sdk.OAuth Configuration.listOAuthConfigs()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/record/{recordId}/move"]["put"]
+    update:
+      x-speakeasy-group: knowledgeBases
+    x-speakeasy-metadata:
+      after: sdk.knowledgeBases.moveRecord()
+      before: sdk.Knowledge Bases.moveRecord()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth/{connectorType}"]["get"]
+    update:
+      x-speakeasy-group: oauthConfiguration
+      x-speakeasy-name-override: listConfigsByType
+    x-speakeasy-metadata:
+      after: sdk.oauthConfiguration.listConfigsByType()
+      before: sdk.OAuth Configuration.listOAuthConfigsByType()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/metricsCollection/pushInterval"]["patch"]
+    update:
+      x-speakeasy-group: configurationManager
+    x-speakeasy-metadata:
+      after: sdk.configurationManager.setMetricsCollectionPushInterval()
+      before: sdk.Configuration Manager.setMetricsCollectionPushInterval()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/search/{searchId}/unarchive"]["patch"]
+    update:
+      x-speakeasy-group: semanticSearch
+      x-speakeasy-name-override: unarchive
+    x-speakeasy-metadata:
+      after: sdk.semanticSearch.unarchive()
+      before: sdk.Semantic Search.unarchiveSearch()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/org"]["post"]
+    update:
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.organizations.create()
+      before: sdk.Organizations.createOrganization()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth2/token"]["post"]
+    update:
+      x-speakeasy-group: oauthProvider
+      x-speakeasy-name-override: exchangeToken
+    x-speakeasy-metadata:
+      after: sdk.oauthProvider.exchangeToken()
+      before: sdk.OAuth Provider.oauthToken()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/mcp"]["get"]
+    update:
+      x-speakeasy-group: mcp
+      x-speakeasy-name-override: stream
+    x-speakeasy-metadata:
+      after: sdk.mcp.stream()
+      before: sdk.MCP.handleMCPStreamingRequest()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/ai-models"]["get"]
+    update:
+      x-speakeasy-group: configurationManager
+    x-speakeasy-metadata:
+      after: sdk.configurationManager.getAIModelsProviders()
+      before: sdk.Configuration Manager.getAIModelsProviders()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/{toolsetId}/status"]["get"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: checkStatus
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.checkStatus()
+      before: sdk.Toolset Instances.checkToolsetStatus()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/name"]["put"]
+    update:
+      x-speakeasy-group: connectorInstances
+      x-speakeasy-name-override: updateName
+    x-speakeasy-metadata:
+      after: sdk.connectorInstances.updateName()
+      before: sdk.Connector Instances.updateConnectorName()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/conversations"]["post"]
+    update:
+      x-speakeasy-group: agentConversations
+      x-speakeasy-name-override: createConversation
+    x-speakeasy-metadata:
+      after: sdk.agentConversations.createConversation()
+      before: sdk.Agent Conversations.createAgentConversation()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth/{connectorType}/{configId}"]["delete"]
+    update:
+      x-speakeasy-group: oauthConfigurations
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.oauthConfigurations.delete()
+      before: sdk.OAuth Configuration.deleteOAuthConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/crawlingManager/{connector}/{connectorId}/pause"]["post"]
+    update:
+      x-speakeasy-group: crawlingJobs
+      x-speakeasy-name-override: pause
+    x-speakeasy-metadata:
+      after: sdk.crawlingJobs.pause()
+      before: sdk.Crawling Jobs.pauseCrawlingJob()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth-clients/{appId}/revoke-all-tokens"]["post"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: revokeAllTokens
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.revokeAllTokens()
+      before: sdk.OAuth Apps.revokeAllOAuthAppTokens()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/configured"]["get"]
+    update:
+      x-speakeasy-group: connectorInstances
+      x-speakeasy-name-override: listConfigured
+    x-speakeasy-metadata:
+      after: sdk.connectorInstances.listConfigured()
+      before: sdk.Connector Instances.listConfiguredConnectors()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/conversations/show/archives"]["get"]
+    update:
+      x-speakeasy-name-override: listArchives
+    x-speakeasy-metadata:
+      after: sdk.conversations.listArchives()
+      before: sdk.Conversations.getArchivedConversations()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/users/dp"]["put"]
+    update:
+      x-speakeasy-name-override: uploadDisplayPicture
+    x-speakeasy-metadata:
+      after: sdk.users.uploadDisplayPicture()
+      before: sdk.Users.uploadUserDisplayPicture()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/userGroups/{groupId}"]["get"]
+    update:
+      x-speakeasy-group: userGroups
+      x-speakeasy-name-override: getById
+    x-speakeasy-metadata:
+      after: sdk.userGroups.getById()
+      before: sdk.User Groups.getUserGroupById()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/conversations/{conversationId}/unarchive"]["patch"]
+    update:
+      x-speakeasy-name-override: unarchive
+    x-speakeasy-metadata:
+      after: sdk.conversations.unarchive()
+      before: sdk.Conversations.unarchiveConversation()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/slack-bot"]["post"]
+    update:
+      x-speakeasy-group: configurationManager
+    x-speakeasy-metadata:
+      after: sdk.configurationManager.createSlackBotConfig()
+      before: sdk.Configuration Manager.createSlackBotConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/teams/{teamId}"]["delete"]
+    update:
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.teams.delete()
+      before: sdk.Teams.deleteTeam()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/search"]["get"]
+    update:
+      x-speakeasy-group: semanticSearch
+      x-speakeasy-name-override: getHistory
+    x-speakeasy-metadata:
+      after: sdk.semanticSearch.getHistory()
+      before: sdk.Semantic Search.searchHistory()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/conversations/{conversationId}"]["delete"]
+    update:
+      x-speakeasy-group: agentConversations
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.agentConversations.delete()
+      before: sdk.Agent Conversations.deleteAgentConversation()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/users/{id}/adminCheck"]["get"]
+    update:
+      x-speakeasy-name-override: checkAdmin
+    x-speakeasy-metadata:
+      after: sdk.users.checkAdmin()
+      before: sdk.Users.adminCheck()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/registry/{toolsetType}/schema"]["get"]
+    update:
+      x-speakeasy-group: toolsetRegistry
+      x-speakeasy-name-override: getSchema
+    x-speakeasy-metadata:
+      after: sdk.toolsetRegistry.getSchema()
+      before: sdk.Toolset Registry.getToolsetSchema()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/teams/user/teams"]["get"]
+    update:
+      x-speakeasy-name-override: listUserTeams
+    x-speakeasy-metadata:
+      after: sdk.teams.listUserTeams()
+      before: sdk.Teams.getUserTeams()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}"]["delete"]
+    update:
+      x-speakeasy-group: connectorInstances
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.connectorInstances.delete()
+      before: sdk.Connector Instances.deleteConnectorInstance()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/org/logo"]["put"]
+    update:
+      x-speakeasy-name-override: uploadLogo
+    x-speakeasy-metadata:
+      after: sdk.organizations.uploadLogo()
+      before: sdk.Organizations.uploadOrganizationLogo()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/conversations/{conversationId}"]["delete"]
+    update:
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.conversations.delete()
+      before: sdk.Conversations.deleteConversationById()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/users/{id}"]["delete"]
+    update:
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.users.delete()
+      before: sdk.Users.deleteUser()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/smtpConfig"]["post"]
+    update:
+      x-speakeasy-group: smtpConfiguration
+      x-speakeasy-name-override: createOrUpdate
+    x-speakeasy-metadata:
+      after: sdk.smtpConfiguration.createOrUpdate()
+      before: sdk.SMTP Configuration.createSMTPConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/users/teams/list"]["get"]
+    update:
+      x-speakeasy-name-override: listTeams
+    x-speakeasy-metadata:
+      after: sdk.users.listTeams()
+      before: sdk.Users.getUserTeamsViaUsers()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/users"]["post"]
+    update:
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.users.create()
+      before: sdk.Users.createUser()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/userGroups/{groupId}"]["put"]
+    update:
+      x-speakeasy-group: userGroups
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.userGroups.update()
+      before: sdk.User Groups.updateUserGroup()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/crawlingManager/schedule/all"]["delete"]
+    update:
+      x-speakeasy-group: crawlingJobs
+      x-speakeasy-name-override: removeAll
+    x-speakeasy-metadata:
+      after: sdk.crawlingJobs.removeAll()
+      before: sdk.Crawling Jobs.removeAllCrawlingJob()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/prompts/system"]["put"]
+    update:
+      x-speakeasy-group: platformSettings
+    x-speakeasy-metadata:
+      after: sdk.platformSettings.setCustomSystemPrompt()
+      before: sdk.Platform Settings.setCustomSystemPrompt()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth/registry/{connectorType}"]["get"]
+    update:
+      x-speakeasy-group: oauthConfiguration
+      x-speakeasy-name-override: getConnectorTypeDetails
+    x-speakeasy-metadata:
+      after: sdk.oauthConfiguration.getConnectorTypeDetails()
+      before: sdk.OAuth Configuration.getOAuthConnectorType()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/template/{templateId}"]["delete"]
+    update:
+      x-speakeasy-group: agentTemplates
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.agentTemplates.delete()
+      before: sdk.Agent Templates.deleteAgentTemplate()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth2/authorize"]["get"]
+    update:
+      x-speakeasy-group: oauthProvider
+      x-speakeasy-name-override: authorize
+    x-speakeasy-metadata:
+      after: sdk.oauthProvider.authorize()
+      before: sdk.OAuth Provider.oauthAuthorize()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/record/{recordId}"]["put"]
+    update:
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.records.update()
+      before: sdk.Records.updateRecord()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/unshare"]["post"]
+    update:
+      x-speakeasy-name-override: unshare
+    x-speakeasy-metadata:
+      after: sdk.agents.unshare()
+      before: sdk.Agents.unshareAgent()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/toggle"]["post"]
+    update:
+      x-speakeasy-group: connectorControl
+      x-speakeasy-name-override: toggle
+    x-speakeasy-metadata:
+      after: sdk.connectorControl.toggle()
+      before: sdk.Connector Control.toggleConnector()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/userAccount/refresh/token"]["post"]
+    update:
+      x-speakeasy-group: userAccount
+    x-speakeasy-metadata:
+      after: sdk.userAccount.refreshToken()
+      before: sdk.User Account.refreshToken()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/registry"]["get"]
+    update:
+      x-speakeasy-group: connectorRegistry
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.connectorRegistry.list()
+      before: sdk.Connector Registry.getConnectorRegistry()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/userGroups"]["get"]
+    update:
+      x-speakeasy-group: userGroups
+      x-speakeasy-name-override: getAll
+    x-speakeasy-metadata:
+      after: sdk.userGroups.getAll()
+      before: sdk.User Groups.getAllUserGroups()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/authConfig/sso"]["post"]
+    update:
+      x-speakeasy-group: authenticationConfiguration
+    x-speakeasy-metadata:
+      after: sdk.authenticationConfiguration.setSsoAuthConfig()
+      before: sdk.Authentication Configuration.setSsoAuthConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/{toolsetId}/oauth/authorize"]["get"]
+    update:
+      x-speakeasy-group: toolsetOAuth
+      x-speakeasy-name-override: authorize
+    x-speakeasy-metadata:
+      after: sdk.toolsetOAuth.authorize()
+      before: sdk.Toolset OAuth.getToolsetOAuthUrl()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/toolsets/instances/{instanceId}/status"]["get"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: getStatus
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.getStatus()
+      before: sdk.Toolset Instances.getToolsetInstanceStatus()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/userAccount/password/forgot"]["post"]
+    update:
+      x-speakeasy-group: userAccount
+      x-speakeasy-name-override: requestPasswordReset
+    x-speakeasy-metadata:
+      after: sdk.userAccount.requestPasswordReset()
+      before: sdk.User Account.forgotPassword()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/ai-models/{modelType}"]["get"]
+    update:
+      x-speakeasy-group: aiModelsProviders
+      x-speakeasy-name-override: getByType
+    x-speakeasy-metadata:
+      after: sdk.aiModelsProviders.getByType()
+      before: sdk.AI Models Providers.getModelsByType()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/config"]["get"]
+    update:
+      x-speakeasy-group: connectorConfiguration
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.connectorConfiguration.get()
+      before: sdk.Connector Configuration.getConnectorConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth/{connectorType}/{configId}"]["put"]
+    update:
+      x-speakeasy-group: oauthConfigs
+      x-speakeasy-name-override: updateById
+    x-speakeasy-metadata:
+      after: sdk.oauthConfigs.updateById()
+      before: sdk.OAuth Configuration.updateOAuthConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase"]["get"]
+    update:
+      x-speakeasy-group: knowledgeBases
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.knowledgeBases.list()
+      before: sdk.Knowledge Bases.listKnowledgeBases()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/users/fetch/with-groups"]["get"]
+    update:
+      x-speakeasy-name-override: getAllWithGroups
+    x-speakeasy-metadata:
+      after: sdk.users.getAllWithGroups()
+      before: sdk.Users.getAllUsersWithGroups()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/conversations"]["get"]
+    update:
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.conversations.list()
+      before: sdk.Conversations.getAllConversations()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/crawlingManager/{connector}/{connectorId}/remove"]["delete"]
+    update:
+      x-speakeasy-group: crawlingJobs
+      x-speakeasy-name-override: remove
+    x-speakeasy-metadata:
+      after: sdk.crawlingJobs.remove()
+      before: sdk.Crawling Jobs.removeCrawlingJob()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/oauth/registry"]["get"]
+    update:
+      x-speakeasy-group: oauthConfiguration
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.oauthConfiguration.list()
+      before: sdk.OAuth Configuration.getOAuthRegistry()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/permissions"]["get"]
+    update:
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.permissions.list()
+      before: sdk.Permissions.listKBPermissions()
+      created_at: 1773129739904
+      reviewed_at: 1773129741827
+      type: method-name
+  - target: $["paths"]["/configurationManager/authConfig/oauth"]["get"]
+    update:
+      x-speakeasy-group: authenticationConfiguration
+      x-speakeasy-name-override: getGenericOAuth
+    x-speakeasy-metadata:
+      after: sdk.authenticationConfiguration.getGenericOAuth()
+      before: sdk.Authentication Configuration.getGenericOAuthConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/instances/{instanceId}"]["get"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.get()
+      before: sdk.Toolset Instances.getToolsetInstance()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/oauth2/revoke"]["post"]
+    update:
+      x-speakeasy-group: oauthProvider
+      x-speakeasy-name-override: revokeToken
+    x-speakeasy-metadata:
+      after: sdk.oauthProvider.revokeToken()
+      before: sdk.OAuth Provider.oauthRevoke()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/connectorPublicUrl"]["get"]
+    update:
+      x-speakeasy-group: publicUrls
+      x-speakeasy-name-override: getConnector
+    x-speakeasy-metadata:
+      after: sdk.publicUrls.getConnector()
+      before: sdk.Public URLs.getConnectorPublicUrl()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/oauth-clients/{appId}"]["delete"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.delete()
+      before: sdk.OAuth Apps.deleteOAuthApp()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/users/bulk/invite"]["post"]
+    update:
+      x-speakeasy-name-override: bulkInvite
+    x-speakeasy-metadata:
+      after: sdk.users.bulkInvite()
+      before: sdk.Users.bulkInviteUsers()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/config/auth"]["put"]
+    update:
+      x-speakeasy-group: connectorConfiguration
+      x-speakeasy-name-override: updateAuth
+    x-speakeasy-metadata:
+      after: sdk.connectorConfiguration.updateAuth()
+      before: sdk.Connector Configuration.updateConnectorAuthConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/filters/{filterKey}/options"]["get"]
+    update:
+      x-speakeasy-group: connectorFilters
+      x-speakeasy-name-override: getFilterOptions
+    x-speakeasy-metadata:
+      after: sdk.connectorFilters.getFilterOptions()
+      before: sdk.Connector Filters.getFilterFieldOptions()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/oauth-clients/{appId}/suspend"]["post"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: suspend
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.suspend()
+      before: sdk.OAuth Apps.suspendOAuthApp()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/my-toolsets"]["get"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: listMine
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.listMine()
+      before: sdk.Toolset Instances.getMyToolsets()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/instances/{instanceId}/credentials"]["delete"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: deleteCredentials
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.deleteCredentials()
+      before: sdk.Toolset Instances.removeToolsetCredentials()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/teams/{teamId}"]["get"]
+    update:
+      x-speakeasy-name-override: getById
+    x-speakeasy-metadata:
+      after: sdk.teams.getById()
+      before: sdk.Teams.getTeamById()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/search"]["post"]
+    update:
+      x-speakeasy-group: semanticSearch
+      x-speakeasy-name-override: execute
+    x-speakeasy-metadata:
+      after: sdk.semanticSearch.execute()
+      before: sdk.Semantic Search.search()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/connectors/inactive"]["get"]
+    update:
+      x-speakeasy-group: connectorInstances
+      x-speakeasy-name-override: listInactive
+    x-speakeasy-metadata:
+      after: sdk.connectorInstances.listInactive()
+      before: sdk.Connector Instances.listInactiveConnectors()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/teams/user/teams/created"]["get"]
+    update:
+      x-speakeasy-name-override: getUserCreated
+    x-speakeasy-metadata:
+      after: sdk.teams.getUserCreated()
+      before: sdk.Teams.getUserCreatedTeams()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/records"]["get"]
+    update:
+      x-speakeasy-name-override: getAll
+    x-speakeasy-metadata:
+      after: sdk.records.getAll()
+      before: sdk.Records.getAllRecords()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}"]["put"]
+    update:
+      x-speakeasy-group: knowledgeBases
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.knowledgeBases.update()
+      before: sdk.Knowledge Bases.updateKnowledgeBase()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/teams/{teamId}/users/permissions"]["put"]
+    update:
+      x-speakeasy-name-override: updateUserPermissions
+    x-speakeasy-metadata:
+      after: sdk.teams.updateUserPermissions()
+      before: sdk.Teams.updateTeamUsersPermissions()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/metricsCollection"]["get"]
+    update:
+      x-speakeasy-group: metricsCollection
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.metricsCollection.get()
+      before: sdk.Metrics Collection.getMetricsCollection()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userGroups"]["post"]
+    update:
+      x-speakeasy-group: userGroups
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.userGroups.create()
+      before: sdk.User Groups.createUserGroup()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/instances/{instanceId}"]["delete"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.delete()
+      before: sdk.Toolset Instances.deleteToolsetInstance()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/teams"]["get"]
+    update:
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.teams.list()
+      before: sdk.Teams.listTeams()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/{toolsetId}/config"]["get"]
+    update:
+      x-speakeasy-group: toolsetConfiguration
+      x-speakeasy-name-override: getConfig
+    x-speakeasy-metadata:
+      after: sdk.toolsetConfiguration.getConfig()
+      before: sdk.Toolset Configuration.getToolsetConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/folder/{folderId}"]["put"]
+    update:
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.folders.update()
+      before: sdk.Folders.updateFolder()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/.well-known/oauth-authorization-server"]["get"]
+    update:
+      x-speakeasy-group: openIDConnect
+    x-speakeasy-metadata:
+      after: sdk.openIDConnect.oauthAuthorizationServerMetadata()
+      before: sdk.OpenID Connect.oauthAuthorizationServerMetadata()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userAccount/authenticate"]["post"]
+    update:
+      x-speakeasy-group: userAccount
+    x-speakeasy-metadata:
+      after: sdk.userAccount.authenticate()
+      before: sdk.User Account.authenticate()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/aiModelsConfig"]["post"]
+    update:
+      x-speakeasy-group: configurationManager
+    x-speakeasy-metadata:
+      after: sdk.configurationManager.createAIModelsConfig()
+      before: sdk.Configuration Manager.createAIModelsConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userGroups/remove-users"]["post"]
+    update:
+      x-speakeasy-group: userGroups
+      x-speakeasy-name-override: removeUsers
+    x-speakeasy-metadata:
+      after: sdk.userGroups.removeUsers()
+      before: sdk.User Groups.removeUsersFromGroup()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/saml/signIn/callback"]["post"]
+    update:
+      x-speakeasy-group: saml
+      x-speakeasy-name-override: signInCallback
+    x-speakeasy-metadata:
+      after: sdk.saml.signInCallback()
+      before: sdk.SAML.samlSignInCallback()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/frontendPublicUrl"]["post"]
+    update:
+      x-speakeasy-group: publicUrls
+      x-speakeasy-name-override: setFrontend
+    x-speakeasy-metadata:
+      after: sdk.publicUrls.setFrontend()
+      before: sdk.Public URLs.setFrontendPublicUrl()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/permissions"]["delete"]
+    update:
+      x-speakeasy-name-override: deleteFromKB
+    x-speakeasy-metadata:
+      after: sdk.permissions.deleteFromKB()
+      before: sdk.Permissions.deleteKBPermissions()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/oauth/callback"]["get"]
+    update:
+      x-speakeasy-group: toolsetOAuth
+      x-speakeasy-name-override: callback
+    x-speakeasy-metadata:
+      after: sdk.toolsetOAuth.callback()
+      before: sdk.Toolset OAuth.handleToolsetOAuthCallback()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/org"]["delete"]
+    update:
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.organizations.delete()
+      before: sdk.Organizations.deleteOrganization()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/users/dp"]["delete"]
+    update:
+      x-speakeasy-name-override: removeDisplayPicture
+    x-speakeasy-metadata:
+      after: sdk.users.removeDisplayPicture()
+      before: sdk.Users.removeUserDisplayPicture()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userAccount/login/otp/generate"]["post"]
+    update:
+      x-speakeasy-group: userAccount
+    x-speakeasy-metadata:
+      after: sdk.userAccount.generateLoginOtp()
+      before: sdk.User Account.generateLoginOtp()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/conversations/stream"]["post"]
+    update:
+      x-speakeasy-name-override: stream
+    x-speakeasy-metadata:
+      after: sdk.conversations.stream()
+      before: sdk.Conversations.streamChat()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/slack-bot/{configId}"]["put"]
+    update:
+      x-speakeasy-group: configurationManager
+    x-speakeasy-metadata:
+      after: sdk.configurationManager.updateSlackBotConfig()
+      before: sdk.Configuration Manager.updateSlackBotConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}"]["get"]
+    update:
+      x-speakeasy-group: knowledgeBases
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.knowledgeBases.get()
+      before: sdk.Knowledge Bases.getKnowledgeBase()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/registry"]["get"]
+    update:
+      x-speakeasy-group: toolsetRegistry
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.toolsetRegistry.list()
+      before: sdk.Toolset Registry.listToolsetRegistry()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/oauth-configs/{toolsetType}"]["get"]
+    update:
+      x-speakeasy-group: oauthConfiguration
+      x-speakeasy-name-override: listToolsetConfigs
+    x-speakeasy-metadata:
+      after: sdk.oauthConfiguration.listToolsetConfigs()
+      before: sdk.OAuth Configuration.listToolsetOAuthConfigs()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/oauth-clients/{appId}/regenerate-secret"]["post"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: regenerateSecret
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.regenerateSecret()
+      before: sdk.OAuth Apps.regenerateOAuthAppSecret()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/connectors/getTokenFromCode"]["post"]
+    update:
+      x-speakeasy-group: connectorOAuth
+      x-speakeasy-name-override: exchangeLegacyToken
+    x-speakeasy-metadata:
+      after: sdk.connectorOAuth.exchangeLegacyToken()
+      before: sdk.Connector OAuth.getTokenFromCode()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/aiModelsConfig"]["get"]
+    update:
+      x-speakeasy-group: configurationManager
+      x-speakeasy-name-override: getAIModels
+    x-speakeasy-metadata:
+      after: sdk.configurationManager.getAIModels()
+      before: sdk.Configuration Manager.getAIModelsConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/folder/{folderId}/children"]["get"]
+    update:
+      x-speakeasy-name-override: getChildren
+    x-speakeasy-metadata:
+      after: sdk.folders.getChildren()
+      before: sdk.Folders.getFolderChildren()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/search/{searchId}/archive"]["patch"]
+    update:
+      x-speakeasy-group: semanticSearch
+      x-speakeasy-name-override: archive
+    x-speakeasy-metadata:
+      after: sdk.semanticSearch.archive()
+      before: sdk.Semantic Search.archiveSearch()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userAccount/initAuth"]["post"]
+    update:
+      x-speakeasy-group: userAccount
+    x-speakeasy-metadata:
+      after: sdk.userAccount.initAuth()
+      before: sdk.User Account.initAuth()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/document/{documentId}/download"]["get"]
+    update:
+      x-speakeasy-group: documentManagement
+      x-speakeasy-name-override: download
+    x-speakeasy-metadata:
+      after: sdk.documentManagement.download()
+      before: sdk.Document Management.downloadDocument()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/platform/settings"]["get"]
+    update:
+      x-speakeasy-group: platformSettings
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.platformSettings.get()
+      before: sdk.Platform Settings.getPlatformSettings()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/config"]["put"]
+    update:
+      x-speakeasy-group: connectorConfiguration
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.connectorConfiguration.update()
+      before: sdk.Connector Configuration.updateConnectorConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/create"]["post"]
+    update:
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.agents.create()
+      before: sdk.Agents.createAgent()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/users/{id}/unblock"]["put"]
+    update:
+      x-speakeasy-name-override: unblock
+    x-speakeasy-metadata:
+      after: sdk.users.unblock()
+      before: sdk.Users.unblockUser()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/permissions"]["put"]
+    update:
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.permissions.update()
+      before: sdk.Permissions.updateKBPermissions()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}"]["delete"]
+    update:
+      x-speakeasy-group: knowledgeBases
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.knowledgeBases.delete()
+      before: sdk.Knowledge Bases.deleteKnowledgeBase()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/search"]["delete"]
+    update:
+      x-speakeasy-group: semanticSearch
+      x-speakeasy-name-override: deleteAllHistory
+    x-speakeasy-metadata:
+      after: sdk.semanticSearch.deleteAllHistory()
+      before: sdk.Semantic Search.deleteAllSearchHistory()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/template/{templateId}"]["get"]
+    update:
+      x-speakeasy-group: agentTemplates
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.agentTemplates.get()
+      before: sdk.Agent Templates.getAgentTemplate()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/users/dp"]["get"]
+    update:
+      x-speakeasy-name-override: getDisplayPicture
+    x-speakeasy-metadata:
+      after: sdk.users.getDisplayPicture()
+      before: sdk.Users.getUserDisplayPicture()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userGroups/stats/list"]["get"]
+    update:
+      x-speakeasy-group: userGroups
+      x-speakeasy-name-override: getStatistics
+    x-speakeasy-metadata:
+      after: sdk.userGroups.getStatistics()
+      before: sdk.User Groups.getGroupStatistics()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/users/{id}/resend-invite"]["post"]
+    update:
+      x-speakeasy-name-override: resendInvite
+    x-speakeasy-metadata:
+      after: sdk.users.resendInvite()
+      before: sdk.Users.resendUserInvite()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/oauth2/userinfo"]["get"]
+    update:
+      x-speakeasy-group: openIDConnect
+      x-speakeasy-name-override: userInfo
+    x-speakeasy-metadata:
+      after: sdk.openIDConnect.userInfo()
+      before: sdk.OpenID Connect.oauthUserInfo()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/connectorPublicUrl"]["post"]
+    update:
+      x-speakeasy-group: publicUrls
+      x-speakeasy-name-override: set
+    x-speakeasy-metadata:
+      after: sdk.publicUrls.set()
+      before: sdk.Public URLs.setConnectorPublicUrl()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userGroups/add-users"]["post"]
+    update:
+      x-speakeasy-group: userGroups
+      x-speakeasy-name-override: addUsers
+    x-speakeasy-metadata:
+      after: sdk.userGroups.addUsers()
+      before: sdk.User Groups.addUsersToGroup()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userAccount/logout/manual"]["post"]
+    update:
+      x-speakeasy-group: userAccount
+    x-speakeasy-metadata:
+      after: sdk.userAccount.logout()
+      before: sdk.User Account.logout()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/conversations"]["get"]
+    update:
+      x-speakeasy-group: agentConversations
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.agentConversations.list()
+      before: sdk.Agent Conversations.listAgentConversations()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/conversations/{conversationId}/messages"]["post"]
+    update:
+      x-speakeasy-group: agentConversations
+      x-speakeasy-name-override: addMessage
+    x-speakeasy-metadata:
+      after: sdk.agentConversations.addMessage()
+      before: sdk.Agent Conversations.addAgentMessage()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/platform/settings"]["post"]
+    update:
+      x-speakeasy-group: platformSettings
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.platformSettings.update()
+      before: sdk.Platform Settings.setPlatformSettings()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/connectors"]["post"]
+    update:
+      x-speakeasy-group: connectorInstances
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.connectorInstances.create()
+      before: sdk.Connector Instances.createConnectorInstance()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userGroups/users/{userId}"]["get"]
+    update:
+      x-speakeasy-group: userGroups
+      x-speakeasy-name-override: getUserGroups
+    x-speakeasy-metadata:
+      after: sdk.userGroups.getUserGroups()
+      before: sdk.User Groups.getGroupsForUser()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/conversations/{conversationId}/title"]["patch"]
+    update:
+      x-speakeasy-name-override: updateTitle
+    x-speakeasy-metadata:
+      after: sdk.conversations.updateTitle()
+      before: sdk.Conversations.updateConversationTitle()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/connectors/agents/active"]["get"]
+    update:
+      x-speakeasy-group: connectorInstances
+      x-speakeasy-name-override: listActiveAgents
+    x-speakeasy-metadata:
+      after: sdk.connectorInstances.listActiveAgents()
+      before: sdk.Connector Instances.listActiveAgentConnectors()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/oauth/{connectorType}"]["post"]
+    update:
+      x-speakeasy-group: oauthConfiguration
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.oauthConfiguration.create()
+      before: sdk.OAuth Configuration.createOAuthConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userAccount/oauth/exchange"]["post"]
+    update:
+      x-speakeasy-group: oauth
+      x-speakeasy-name-override: exchangeCode
+    x-speakeasy-metadata:
+      after: sdk.oauth.exchangeCode()
+      before: sdk.OAuth.exchangeOAuthCode()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/{toolsetId}/config"]["delete"]
+    update:
+      x-speakeasy-group: toolsetConfiguration
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.toolsetConfiguration.delete()
+      before: sdk.Toolset Configuration.deleteToolsetConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/storageConfig"]["get"]
+    update:
+      x-speakeasy-group: storageConfiguration
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.storageConfiguration.get()
+      before: sdk.Storage Configuration.getStorageConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/ai-models/default/{modelType}/{modelKey}"]["put"]
+    update:
+      x-speakeasy-group: aiModelsProviders
+      x-speakeasy-name-override: setDefault
+    x-speakeasy-metadata:
+      after: sdk.aiModelsProviders.setDefault()
+      before: sdk.AI Models Providers.setDefaultAIModel()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/org/logo"]["get"]
+    update:
+      x-speakeasy-name-override: getLogo
+    x-speakeasy-metadata:
+      after: sdk.organizations.getLogo()
+      before: sdk.Organizations.getOrganizationLogo()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/oauth-clients/{appId}/activate"]["post"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: activate
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.activate()
+      before: sdk.OAuth Apps.activateOAuthApp()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/oauth-clients/{appId}"]["get"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: get
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.get()
+      before: sdk.OAuth Apps.getOAuthApp()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/share"]["post"]
+    update:
+      x-speakeasy-name-override: share
+    x-speakeasy-metadata:
+      after: sdk.agents.share()
+      before: sdk.Agents.shareAgent()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/conversations/{conversationId}/share"]["post"]
+    update:
+      x-speakeasy-name-override: share
+    x-speakeasy-metadata:
+      after: sdk.conversations.share()
+      before: sdk.Conversations.shareConversation()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/search/{searchId}"]["delete"]
+    update:
+      x-speakeasy-group: semanticSearch
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.semanticSearch.delete()
+      before: sdk.Semantic Search.deleteSearchById()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/permissions"]["put"]
+    update:
+      x-speakeasy-name-override: updatePermissions
+    x-speakeasy-metadata:
+      after: sdk.agents.updatePermissions()
+      before: sdk.Agents.updateAgentPermissions()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/crawlingManager/{connector}/{connectorId}/schedule"]["get"]
+    update:
+      x-speakeasy-group: crawlingJobs
+      x-speakeasy-name-override: getStatus
+    x-speakeasy-metadata:
+      after: sdk.crawlingJobs.getStatus()
+      before: sdk.Crawling Jobs.getCrawlingJobStatus()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/authConfig/microsoft"]["get"]
+    update:
+      x-speakeasy-group: authenticationConfiguration
+      x-speakeasy-name-override: getMicrosoft
+    x-speakeasy-metadata:
+      after: sdk.authenticationConfiguration.getMicrosoft()
+      before: sdk.Authentication Configuration.getMicrosoftAuthConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/authConfig/sso"]["get"]
+    update:
+      x-speakeasy-group: authenticationConfiguration
+      x-speakeasy-name-override: getSSO
+    x-speakeasy-metadata:
+      after: sdk.authenticationConfiguration.getSSO()
+      before: sdk.Authentication Configuration.getSsoAuthConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/conversations/create"]["post"]
+    update:
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.conversations.create()
+      before: sdk.Conversations.createConversation()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/config/filters-sync"]["put"]
+    update:
+      x-speakeasy-group: connectorConfiguration
+      x-speakeasy-name-override: updateFiltersSync
+    x-speakeasy-metadata:
+      after: sdk.connectorConfiguration.updateFiltersSync()
+      before: sdk.Connector Configuration.updateConnectorFiltersSyncConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/folder/{folderId}/upload"]["post"]
+    update:
+      x-speakeasy-name-override: toFolder
+    x-speakeasy-metadata:
+      after: sdk.upload.toFolder()
+      before: sdk.Upload.uploadRecordsToFolder()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/filters"]["post"]
+    update:
+      x-speakeasy-group: connectorFilters
+      x-speakeasy-name-override: save
+    x-speakeasy-metadata:
+      after: sdk.connectorFilters.save()
+      before: sdk.Connector Filters.saveConnectorFilters()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}"]["delete"]
+    update:
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.agents.delete()
+      before: sdk.Agents.deleteAgent()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/tools/list"]["get"]
+    update:
+      x-speakeasy-name-override: listTools
+    x-speakeasy-metadata:
+      after: sdk.agents.listTools()
+      before: sdk.Agents.listAgentTools()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/instances/{instanceId}/reauthenticate"]["post"]
+    update:
+      x-speakeasy-group: toolsetInstances
+      x-speakeasy-name-override: reauthenticate
+    x-speakeasy-metadata:
+      after: sdk.toolsetInstances.reauthenticate()
+      before: sdk.Toolset Instances.reauthenticateToolsetInstance()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/users/by-ids"]["post"]
+    update:
+      x-speakeasy-name-override: getByIds
+    x-speakeasy-metadata:
+      after: sdk.users.getByIds()
+      before: sdk.Users.getUsersByIds()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/conversations/{conversationId}/archive"]["patch"]
+    update:
+      x-speakeasy-name-override: archive
+    x-speakeasy-metadata:
+      after: sdk.conversations.archive()
+      before: sdk.Conversations.archiveConversation()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/users/graph/list"]["get"]
+    update:
+      x-speakeasy-name-override: listGraph
+    x-speakeasy-metadata:
+      after: sdk.users.listGraph()
+      before: sdk.Users.listUsersGraph()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets"]["post"]
+    update:
+      x-speakeasy-group: toolsets
+      x-speakeasy-name-override: createInstance
+    x-speakeasy-metadata:
+      after: sdk.toolsets.createInstance()
+      before: sdk.Toolset Instances.createToolset()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/org"]["get"]
+    update:
+      x-speakeasy-name-override: getCurrent
+    x-speakeasy-metadata:
+      after: sdk.organizations.getCurrent()
+      before: sdk.Organizations.getCurrentOrganization()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/record/{recordId}"]["get"]
+    update:
+      x-speakeasy-name-override: getById
+    x-speakeasy-metadata:
+      after: sdk.records.getById()
+      before: sdk.Records.getRecordById()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/folder/{folderId}"]["delete"]
+    update:
+      x-speakeasy-name-override: delete
+    x-speakeasy-metadata:
+      after: sdk.folders.delete()
+      before: sdk.Folders.deleteFolder()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/platform/feature-flags/available"]["get"]
+    update:
+      x-speakeasy-group: platformSettings
+      x-speakeasy-name-override: listFeatureFlags
+    x-speakeasy-metadata:
+      after: sdk.platformSettings.listFeatureFlags()
+      before: sdk.Platform Settings.getAvailableFeatureFlags()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/metricsCollection/serverUrl"]["patch"]
+    update:
+      x-speakeasy-group: configurationManager
+      x-speakeasy-name-override: setMetricsServerUrl
+    x-speakeasy-metadata:
+      after: sdk.configurationManager.setMetricsServerUrl()
+      before: sdk.Configuration Manager.setMetricsCollectionRemoteServer()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/crawlingManager/{connector}/{connectorId}/schedule"]["post"]
+    update:
+      x-speakeasy-group: crawlingJobs
+      x-speakeasy-name-override: schedule
+    x-speakeasy-metadata:
+      after: sdk.crawlingJobs.schedule()
+      before: sdk.Crawling Jobs.scheduleCrawlingJob()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}"]["put"]
+    update:
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.agents.update()
+      before: sdk.Agents.updateAgent()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/reindex-failed/connector"]["post"]
+    update:
+      x-speakeasy-group: knowledgeBases
+    x-speakeasy-metadata:
+      after: sdk.knowledgeBases.reindexFailedRecords()
+      before: sdk.Knowledge Bases.reindexFailedRecords()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents"]["get"]
+    update:
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.agents.list()
+      before: sdk.Agents.listAgents()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/conversations/{conversationId}/messages/stream"]["post"]
+    update:
+      x-speakeasy-group: agentConversations
+      x-speakeasy-name-override: streamMessage
+    x-speakeasy-metadata:
+      after: sdk.agentConversations.streamMessage()
+      before: sdk.Agent Conversations.streamAgentMessage()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/mcp"]["post"]
+    update:
+      x-speakeasy-group: mcp
+      x-speakeasy-name-override: handleRequest
+    x-speakeasy-metadata:
+      after: sdk.mcp.handleRequest()
+      before: sdk.MCP.handleMCPRequest()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/records"]["get"]
+    update:
+      x-speakeasy-name-override: getByKB
+    x-speakeasy-metadata:
+      after: sdk.records.getByKB()
+      before: sdk.Records.getKBRecords()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/folder/{folderId}"]["get"]
+    update:
+      x-speakeasy-name-override: getContents
+    x-speakeasy-metadata:
+      after: sdk.folders.getContents()
+      before: sdk.Folders.getFolderContents()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/ai-models/providers"]["post"]
+    update:
+      x-speakeasy-group: aiModelsProviders
+      x-speakeasy-name-override: add
+    x-speakeasy-metadata:
+      after: sdk.aiModelsProviders.add()
+      before: sdk.AI Models Providers.addAIModelProvider()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/oauth-clients"]["post"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.create()
+      before: sdk.OAuth Apps.createOAuthApp()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/crawlingManager/stats"]["get"]
+    update:
+      x-speakeasy-group: crawlingJobs
+    x-speakeasy-metadata:
+      after: sdk.crawlingJobs.getQueueStats()
+      before: sdk.Crawling Jobs.getQueueStats()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/stats/{connectorId}"]["get"]
+    update:
+      x-speakeasy-group: connectors
+      x-speakeasy-name-override: getStats
+    x-speakeasy-metadata:
+      after: sdk.connectors.getStats()
+      before: sdk.Connector.getConnectorStats()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/orgAuthConfig/"]["post"]
+    update:
+      x-speakeasy-group: organizationAuthConfig
+      x-speakeasy-name-override: setUp
+    x-speakeasy-metadata:
+      after: sdk.organizationAuthConfig.setUp()
+      before: sdk.Organization Auth Config.setUpAuthConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userAccount/password/reset/token"]["post"]
+    update:
+      x-speakeasy-group: userAccount
+    x-speakeasy-metadata:
+      after: sdk.userAccount.resetPasswordWithToken()
+      before: sdk.User Account.resetPasswordWithToken()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/teams/{teamId}/users"]["post"]
+    update:
+      x-speakeasy-name-override: addUsers
+    x-speakeasy-metadata:
+      after: sdk.teams.addUsers()
+      before: sdk.Teams.addUsersToTeam()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/search/{searchId}/share"]["patch"]
+    update:
+      x-speakeasy-group: semanticSearch
+      x-speakeasy-name-override: share
+    x-speakeasy-metadata:
+      after: sdk.semanticSearch.share()
+      before: sdk.Semantic Search.shareSearch()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/oauth-configs/{toolsetType}/{oauthConfigId}"]["put"]
+    update:
+      x-speakeasy-group: oauthConfigurations
+      x-speakeasy-name-override: update
+    x-speakeasy-metadata:
+      after: sdk.oauthConfigurations.update()
+      before: sdk.OAuth Configuration.updateToolsetOAuthConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/toolsets/{toolsetId}/config"]["post"]
+    update:
+      x-speakeasy-group: toolsetConfigurations
+      x-speakeasy-name-override: save
+    x-speakeasy-metadata:
+      after: sdk.toolsetConfigurations.save()
+      before: sdk.Toolset Configuration.saveToolsetConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/configurationManager/slack-bot/{configId}"]["delete"]
+    update:
+      x-speakeasy-group: configurationManager
+    x-speakeasy-metadata:
+      after: sdk.configurationManager.deleteSlackBotConfig()
+      before: sdk.Configuration Manager.deleteSlackBotConfig()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/userAccount/password/reset"]["post"]
+    update:
+      x-speakeasy-group: userAccount
+    x-speakeasy-metadata:
+      after: sdk.userAccount.resetPassword()
+      before: sdk.User Account.resetPassword()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/oauth-clients"]["get"]
+    update:
+      x-speakeasy-group: oauthApps
+      x-speakeasy-name-override: list
+    x-speakeasy-metadata:
+      after: sdk.oauthApps.list()
+      before: sdk.OAuth Apps.listOAuthApps()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name
+  - target: $["paths"]["/agents/{agentKey}/conversations/{conversationId}/message/{messageId}/regenerate"]["post"]
+    update:
+      x-speakeasy-group: agentConversations
+      x-speakeasy-name-override: regenerateAnswer
+    x-speakeasy-metadata:
+      after: sdk.agentConversations.regenerateAnswer()
+      before: sdk.Agent Conversations.regenerateAgentAnswer()
+      created_at: 1773129739904
+      reviewed_at: 1773129741828
+      type: method-name

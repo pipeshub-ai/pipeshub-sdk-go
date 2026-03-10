@@ -1,0 +1,15 @@
+# KnowledgeBase
+
+
+## Fields
+
+| Field                                                               | Type                                                                | Required                                                            | Description                                                         |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `ID`                                                                | **string*                                                           | :heavy_minus_sign:                                                  | Unique knowledge base identifier                                    |
+| `Name`                                                              | *string*                                                            | :heavy_check_mark:                                                  | Name of the knowledge base                                          |
+| `ConnectorID`                                                       | **string*                                                           | :heavy_minus_sign:                                                  | Associated connector ID (null for manual KBs)                       |
+| `CreatedAtTimestamp`                                                | **int64*                                                            | :heavy_minus_sign:                                                  | Creation timestamp in milliseconds                                  |
+| `UpdatedAtTimestamp`                                                | **int64*                                                            | :heavy_minus_sign:                                                  | Last update timestamp in milliseconds                               |
+| `CreatedBy`                                                         | **string*                                                           | :heavy_minus_sign:                                                  | User ID of the creator                                              |
+| `UserRole`                                                          | [*components.UserRoleEnum](../../models/components/userroleenum.md) | :heavy_minus_sign:                                                  | User's role in this knowledge base                                  |
+| `Folders`                                                           | [][components.Folder](../../models/components/folder.md)            | :heavy_minus_sign:                                                  | Folders in this knowledge base                                      |

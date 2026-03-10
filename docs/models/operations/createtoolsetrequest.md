@@ -1,0 +1,12 @@
+# CreateToolsetRequest
+
+
+## Fields
+
+| Field                                                                        | Type                                                                         | Required                                                                     | Description                                                                  |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `Name`                                                                       | *string*                                                                     | :heavy_check_mark:                                                           | N/A                                                                          |
+| `DisplayName`                                                                | **string*                                                                    | :heavy_minus_sign:                                                           | N/A                                                                          |
+| `Type`                                                                       | **string*                                                                    | :heavy_minus_sign:                                                           | N/A                                                                          |
+| `Auth`                                                                       | [operations.CreateToolsetAuth](../../models/operations/createtoolsetauth.md) | :heavy_check_mark:                                                           | N/A                                                                          |
+| `BaseURL`                                                                    | **string*                                                                    | :heavy_minus_sign:                                                           | N/A                                                                          |

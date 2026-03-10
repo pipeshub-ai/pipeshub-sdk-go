@@ -1,0 +1,9 @@
+# UpdateSlackBotConfigRequest
+
+
+## Fields
+
+| Field                                                                                                    | Type                                                                                                     | Required                                                                                                 | Description                                                                                              |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `ConfigID`                                                                                               | *string*                                                                                                 | :heavy_check_mark:                                                                                       | N/A                                                                                                      |
+| `Body`                                                                                                   | [operations.UpdateSlackBotConfigRequestBody](../../models/operations/updateslackbotconfigrequestbody.md) | :heavy_check_mark:                                                                                       | Request payload                                                                                          |

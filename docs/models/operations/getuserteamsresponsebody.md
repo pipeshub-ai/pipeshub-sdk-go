@@ -1,0 +1,12 @@
+# GetUserTeamsResponseBody
+
+User's teams retrieved successfully
+
+
+## Fields
+
+| Field                                                                                   | Type                                                                                    | Required                                                                                | Description                                                                             | Example                                                                                 |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `Success`                                                                               | **bool*                                                                                 | :heavy_minus_sign:                                                                      | N/A                                                                                     | true                                                                                    |
+| `Data`                                                                                  | [][operations.GetUserTeamsData](../../models/operations/getuserteamsdata.md)            | :heavy_minus_sign:                                                                      | N/A                                                                                     |                                                                                         |
+| `Pagination`                                                                            | [*operations.GetUserTeamsPagination](../../models/operations/getuserteamspagination.md) | :heavy_minus_sign:                                                                      | N/A                                                                                     |                                                                                         |

@@ -1,0 +1,13 @@
+# UpdateAgentToolset
+
+
+## Fields
+
+| Field                                                                      | Type                                                                       | Required                                                                   | Description                                                                |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `Name`                                                                     | **string*                                                                  | :heavy_minus_sign:                                                         | N/A                                                                        |
+| `DisplayName`                                                              | **string*                                                                  | :heavy_minus_sign:                                                         | N/A                                                                        |
+| `Type`                                                                     | **string*                                                                  | :heavy_minus_sign:                                                         | N/A                                                                        |
+| `InstanceID`                                                               | **string*                                                                  | :heavy_minus_sign:                                                         | N/A                                                                        |
+| `InstanceName`                                                             | **string*                                                                  | :heavy_minus_sign:                                                         | N/A                                                                        |
+| `Tools`                                                                    | [][operations.UpdateAgentTool](../../models/operations/updateagenttool.md) | :heavy_minus_sign:                                                         | N/A                                                                        |

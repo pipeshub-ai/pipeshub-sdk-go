@@ -1,0 +1,9 @@
+# GenerateLoginOtpResponse
+
+
+## Fields
+
+| Field                                                                                               | Type                                                                                                | Required                                                                                            | Description                                                                                         |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                          | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                  | :heavy_check_mark:                                                                                  | N/A                                                                                                 |
+| `Object`                                                                                            | [*operations.GenerateLoginOtpResponseBody](../../models/operations/generateloginotpresponsebody.md) | :heavy_minus_sign:                                                                                  | OTP generated and sent successfully                                                                 |

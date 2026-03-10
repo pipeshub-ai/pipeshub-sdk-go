@@ -1,0 +1,9 @@
+# SetUpAuthConfigResponse
+
+
+## Fields
+
+| Field                                                                                             | Type                                                                                              | Required                                                                                          | Description                                                                                       |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                        | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                | :heavy_check_mark:                                                                                | N/A                                                                                               |
+| `Object`                                                                                          | [*operations.SetUpAuthConfigResponseBody](../../models/operations/setupauthconfigresponsebody.md) | :heavy_minus_sign:                                                                                | Auth configuration set up successfully                                                            |

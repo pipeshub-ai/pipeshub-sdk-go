@@ -1,0 +1,23 @@
+# Item
+
+
+## Fields
+
+| Field                                                       | Type                                                        | Required                                                    | Description                                                 |
+| ----------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| `ID`                                                        | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |
+| `Name`                                                      | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |
+| `NodeType`                                                  | [*operations.NodeType](../../models/operations/nodetype.md) | :heavy_minus_sign:                                          | N/A                                                         |
+| `ParentID`                                                  | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |
+| `Origin`                                                    | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |
+| `Connector`                                                 | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |
+| `RecordType`                                                | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |
+| `IndexingStatus`                                            | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |
+| `CreatedAt`                                                 | **int64*                                                    | :heavy_minus_sign:                                          | N/A                                                         |
+| `UpdatedAt`                                                 | **int64*                                                    | :heavy_minus_sign:                                          | N/A                                                         |
+| `SizeInBytes`                                               | **int64*                                                    | :heavy_minus_sign:                                          | N/A                                                         |
+| `MimeType`                                                  | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |
+| `Extension`                                                 | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |
+| `WebURL`                                                    | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |
+| `HasChildren`                                               | **bool*                                                     | :heavy_minus_sign:                                          | N/A                                                         |
+| `SharingStatus`                                             | **string*                                                   | :heavy_minus_sign:                                          | N/A                                                         |

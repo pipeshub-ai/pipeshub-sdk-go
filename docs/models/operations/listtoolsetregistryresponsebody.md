@@ -1,0 +1,13 @@
+# ListToolsetRegistryResponseBody
+
+Toolsets retrieved successfully
+
+
+## Fields
+
+| Field                                                                                            | Type                                                                                             | Required                                                                                         | Description                                                                                      |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `Toolsets`                                                                                       | [][operations.ListToolsetRegistryToolset](../../models/operations/listtoolsetregistrytoolset.md) | :heavy_minus_sign:                                                                               | N/A                                                                                              |
+| `Total`                                                                                          | **int64*                                                                                         | :heavy_minus_sign:                                                                               | N/A                                                                                              |
+| `Page`                                                                                           | **int64*                                                                                         | :heavy_minus_sign:                                                                               | N/A                                                                                              |
+| `Limit`                                                                                          | **int64*                                                                                         | :heavy_minus_sign:                                                                               | N/A                                                                                              |

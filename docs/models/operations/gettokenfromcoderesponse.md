@@ -1,0 +1,10 @@
+# GetTokenFromCodeResponse
+
+
+## Fields
+
+| Field                                                                                                 | Type                                                                                                  | Required                                                                                              | Description                                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                            | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                    | :heavy_check_mark:                                                                                    | N/A                                                                                                   |
+| `TwoHundredApplicationJSONObject`                                                                     | [*operations.GetTokenFromCodeResponseBody1](../../models/operations/gettokenfromcoderesponsebody1.md) | :heavy_minus_sign:                                                                                    | Existing connector enabled successfully                                                               |
+| `TwoHundredAndOneApplicationJSONObject`                                                               | [*operations.GetTokenFromCodeResponseBody2](../../models/operations/gettokenfromcoderesponsebody2.md) | :heavy_minus_sign:                                                                                    | New connector created and enabled                                                                     |

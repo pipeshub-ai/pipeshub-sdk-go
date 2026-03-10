@@ -1,0 +1,39 @@
+speakeasyVersion: 1.718.0
+sources:
+    PipesHub API:
+        sourceNamespace: pipes-hub-api
+        sourceRevisionDigest: sha256:111a80385c3932c3307352148bba30354de64dee3c567b544a87878f2a0ffb23
+        sourceBlobDigest: sha256:990c1b8470746db5387027a45cb1cebd353fae8a3b9a96b142563de5c896721d
+        tags:
+            - latest
+            - 1.0.0
+targets:
+    pipeshub:
+        source: PipesHub API
+        sourceNamespace: pipes-hub-api
+        sourceRevisionDigest: sha256:111a80385c3932c3307352148bba30354de64dee3c567b544a87878f2a0ffb23
+        sourceBlobDigest: sha256:990c1b8470746db5387027a45cb1cebd353fae8a3b9a96b142563de5c896721d
+        codeSamplesNamespace: pipes-hub-api-go-code-samples
+        codeSamplesRevisionDigest: sha256:d77940fb884f0d4b77d17f4e50e997a84bed3ccf3f0f2bd9fde6730f42df113b
+workflow:
+    workflowVersion: 1.0.0
+    speakeasyVersion: latest
+    sources:
+        PipesHub API:
+            inputs:
+                - location: ../pipeshub-ai/backend/nodejs/apps/src/modules/api-docs/pipeshub-openapi.yaml
+            overlays:
+                - location: .speakeasy/speakeasy-modifications-overlay.yaml
+            output: .speakeasy/out.openapi.yaml
+            registry:
+                location: registry.speakeasyapi.dev/pipeshub/test/pipes-hub-api
+    targets:
+        pipeshub:
+            target: go
+            source: PipesHub API
+            codeSamples:
+                registry:
+                    location: registry.speakeasyapi.dev/pipeshub/test/pipes-hub-api-go-code-samples
+                labelOverride:
+                    fixedValue: Go (SDK)
+                blocking: false

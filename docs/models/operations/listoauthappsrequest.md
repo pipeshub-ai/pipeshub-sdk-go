@@ -1,0 +1,11 @@
+# ListOAuthAppsRequest
+
+
+## Fields
+
+| Field                                                                             | Type                                                                              | Required                                                                          | Description                                                                       |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `Page`                                                                            | **int64*                                                                          | :heavy_minus_sign:                                                                | Page number                                                                       |
+| `Limit`                                                                           | **int64*                                                                          | :heavy_minus_sign:                                                                | Items per page                                                                    |
+| `Status`                                                                          | [*operations.ListOAuthAppsStatus](../../models/operations/listoauthappsstatus.md) | :heavy_minus_sign:                                                                | Filter by status                                                                  |
+| `Search`                                                                          | **string*                                                                         | :heavy_minus_sign:                                                                | Search by app name                                                                |

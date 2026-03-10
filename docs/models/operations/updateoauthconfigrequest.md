@@ -1,0 +1,10 @@
+# UpdateOAuthConfigRequest
+
+
+## Fields
+
+| Field                                                                                              | Type                                                                                               | Required                                                                                           | Description                                                                                        |
+| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `ConnectorType`                                                                                    | *string*                                                                                           | :heavy_check_mark:                                                                                 | N/A                                                                                                |
+| `ConfigID`                                                                                         | *string*                                                                                           | :heavy_check_mark:                                                                                 | N/A                                                                                                |
+| `Body`                                                                                             | [operations.UpdateOAuthConfigRequestBody](../../models/operations/updateoauthconfigrequestbody.md) | :heavy_check_mark:                                                                                 | Request payload                                                                                    |

@@ -1,0 +1,9 @@
+# GetAllUsersWithGroupsResponse
+
+
+## Fields
+
+| Field                                                                                                         | Type                                                                                                          | Required                                                                                                      | Description                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                    | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                            | :heavy_check_mark:                                                                                            | N/A                                                                                                           |
+| `Object`                                                                                                      | [*operations.GetAllUsersWithGroupsResponseBody](../../models/operations/getalluserswithgroupsresponsebody.md) | :heavy_minus_sign:                                                                                            | Users with group data retrieved successfully                                                                  |

@@ -1,0 +1,9 @@
+# GetUserTeamsViaUsersResponse
+
+
+## Fields
+
+| Field                                                                                                       | Type                                                                                                        | Required                                                                                                    | Description                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                          | :heavy_check_mark:                                                                                          | N/A                                                                                                         |
+| `Object`                                                                                                    | [*operations.GetUserTeamsViaUsersResponseBody](../../models/operations/getuserteamsviausersresponsebody.md) | :heavy_minus_sign:                                                                                          | User teams retrieved successfully                                                                           |
