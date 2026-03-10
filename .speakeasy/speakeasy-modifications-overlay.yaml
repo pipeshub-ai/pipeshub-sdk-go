@@ -2,7 +2,7 @@ overlay: 1.0.0
 x-speakeasy-jsonpath: rfc9535
 info:
   title: Speakeasy Modifications
-  version: 0.0.2
+  version: 0.0.7
   x-speakeasy-metadata:
     after: ""
     before: ""
@@ -2514,3 +2514,56 @@ actions:
       created_at: 1773129739904
       reviewed_at: 1773129741828
       type: method-name
+  - target: $["paths"]["/knowledgeBase/reindex/record-group/{recordGroupId}"]["post"]
+    update:
+      x-speakeasy-name-override: reindexGroup
+    x-speakeasy-metadata:
+      after: sdk.connector.reindexGroup()
+      before: sdk.Connector.reindexRecordGroup()
+      created_at: 1773150008444
+      reviewed_at: 1773150011723
+      type: method-name
+  - target: $["paths"]["/knowledgeBase/{kbId}/folder/{folderId}/subfolder"]["post"]
+    update:
+      x-speakeasy-name-override: create
+    x-speakeasy-metadata:
+      after: sdk.folders.create()
+      before: sdk.Folders.createSubfolder()
+      created_at: 1773150008444
+      reviewed_at: 1773150011723
+      type: method-name
+  - target: $["paths"]["/conversations/{conversationId}/message/{messageId}/feedback"]["post"]
+    update:
+      x-speakeasy-name-override: submitFeedback
+    x-speakeasy-metadata:
+      after: sdk.conversations.submitFeedback()
+      before: sdk.Conversations.updateMessageFeedback()
+      created_at: 1773150008444
+      reviewed_at: 1773150011723
+      type: method-name
+  - target: $["paths"]["/connectors/{connectorId}/filters/{filterKey}/options"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]["properties"]["options"]["items"]
+    update:
+      x-speakeasy-name-override: FilterFieldOption
+    x-speakeasy-metadata:
+      created_at: 1773151383966
+      type: user-edit
+  - target: $["paths"]["/connectors/{connectorId}/oauth/authorize"]["get"]["parameters"][1]["name"]
+    update: instanceBaseUrl
+    x-speakeasy-metadata:
+      created_at: 1773151603263
+      type: user-edit
+  - target: $["paths"]["/connectors/oauth/callback"]["get"]["parameters"][3]["name"]
+    update: instanceBaseUrl
+    x-speakeasy-metadata:
+      created_at: 1773151603263
+      type: user-edit
+  - target: $["paths"]["/toolsets/{toolsetId}/oauth/authorize"]["get"]["parameters"][1]["name"]
+    update: instance_base_url
+    x-speakeasy-metadata:
+      created_at: 1773151885088
+      type: user-edit
+  - target: $["paths"]["/toolsets/oauth/callback"]["get"]["parameters"][3]["name"]
+    update: instance_base_url
+    x-speakeasy-metadata:
+      created_at: 1773151885088
+      type: user-edit

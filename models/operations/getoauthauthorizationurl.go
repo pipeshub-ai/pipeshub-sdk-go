@@ -10,7 +10,7 @@ import (
 type GetOAuthAuthorizationURLRequest struct {
 	ConnectorID string `pathParam:"style=simple,explode=false,name=connectorId"`
 	// Base URL for self-hosted instances
-	BaseURL *string `queryParam:"style=form,explode=true,name=baseUrl"`
+	InstanceBaseURL *string `queryParam:"style=form,explode=true,name=instanceBaseUrl"`
 }
 
 func (g *GetOAuthAuthorizationURLRequest) GetConnectorID() string {
@@ -20,11 +20,11 @@ func (g *GetOAuthAuthorizationURLRequest) GetConnectorID() string {
 	return g.ConnectorID
 }
 
-func (g *GetOAuthAuthorizationURLRequest) GetBaseURL() *string {
+func (g *GetOAuthAuthorizationURLRequest) GetInstanceBaseURL() *string {
 	if g == nil {
 		return nil
 	}
-	return g.BaseURL
+	return g.InstanceBaseURL
 }
 
 // GetOAuthAuthorizationURLResponseBody - Authorization URL generated

@@ -247,7 +247,7 @@ func main() {
 ### [Connector](docs/sdks/connector/README.md)
 
 * [ReindexRecord](docs/sdks/connector/README.md#reindexrecord) - Reindex single record
-* [ReindexRecordGroup](docs/sdks/connector/README.md#reindexrecordgroup) - Reindex record group
+* [ReindexGroup](docs/sdks/connector/README.md#reindexgroup) - Reindex record group
 * [Resync](docs/sdks/connector/README.md#resync) - Resync connector
 
 ### [ConnectorConfiguration](docs/sdks/connectorconfiguration/README.md)
@@ -309,7 +309,7 @@ func main() {
 * [Archive](docs/sdks/conversations/README.md#archive) - Archive conversation
 * [Unarchive](docs/sdks/conversations/README.md#unarchive) - Unarchive conversation
 * [Regenerate](docs/sdks/conversations/README.md#regenerate) - Regenerate AI response
-* [UpdateMessageFeedback](docs/sdks/conversations/README.md#updatemessagefeedback) - Submit feedback on AI response
+* [SubmitFeedback](docs/sdks/conversations/README.md#submitfeedback) - Submit feedback on AI response
 * [Unshare](docs/sdks/conversations/README.md#unshare) - Unshare a conversation
 
 ### [CrawlingJobs](docs/sdks/crawlingjobs/README.md)
@@ -334,7 +334,7 @@ func main() {
 * [Update](docs/sdks/folders/README.md#update) - Update folder
 * [Delete](docs/sdks/folders/README.md#delete) - Delete folder
 * [GetChildren](docs/sdks/folders/README.md#getchildren) - Get folder children (alias for folder contents)
-* [CreateSubfolder](docs/sdks/folders/README.md#createsubfolder) - Create subfolder
+* [Create](docs/sdks/folders/README.md#create) - Create subfolder
 
 ### [KnowledgeBases](docs/sdks/knowledgebases/README.md)
 

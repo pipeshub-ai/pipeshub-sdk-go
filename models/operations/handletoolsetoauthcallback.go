@@ -8,10 +8,10 @@ import (
 )
 
 type HandleToolsetOAuthCallbackRequest struct {
-	Code    *string `queryParam:"style=form,explode=true,name=code"`
-	State   *string `queryParam:"style=form,explode=true,name=state"`
-	Error   *string `queryParam:"style=form,explode=true,name=error"`
-	BaseURL *string `queryParam:"style=form,explode=true,name=base_url"`
+	Code            *string `queryParam:"style=form,explode=true,name=code"`
+	State           *string `queryParam:"style=form,explode=true,name=state"`
+	Error           *string `queryParam:"style=form,explode=true,name=error"`
+	InstanceBaseURL *string `queryParam:"style=form,explode=true,name=instance_base_url"`
 }
 
 func (h *HandleToolsetOAuthCallbackRequest) GetCode() *string {
@@ -35,11 +35,11 @@ func (h *HandleToolsetOAuthCallbackRequest) GetError() *string {
 	return h.Error
 }
 
-func (h *HandleToolsetOAuthCallbackRequest) GetBaseURL() *string {
+func (h *HandleToolsetOAuthCallbackRequest) GetInstanceBaseURL() *string {
 	if h == nil {
 		return nil
 	}
-	return h.BaseURL
+	return h.InstanceBaseURL
 }
 
 // HandleToolsetOAuthCallbackResponseBody - OAuth callback handled successfully

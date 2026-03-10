@@ -2999,7 +2999,7 @@ func (s *Conversations) Regenerate(ctx context.Context, conversationID string, m
 
 }
 
-// UpdateMessageFeedback - Submit feedback on AI response
+// SubmitFeedback - Submit feedback on AI response
 // Provide feedback on an AI-generated response.<br><br>
 // <b>Overview:</b><br>
 // Feedback helps improve AI response quality over time. You can rate
@@ -3015,7 +3015,7 @@ func (s *Conversations) Regenerate(ctx context.Context, conversationID string, m
 // <b>Restrictions:</b><br>
 // Feedback can only be submitted on <code>bot_response</code> messages,
 // not on user queries or system messages.
-func (s *Conversations) UpdateMessageFeedback(ctx context.Context, conversationID string, messageID string, body components.MessageFeedback, opts ...operations.Option) (*operations.UpdateMessageFeedbackResponse, error) {
+func (s *Conversations) SubmitFeedback(ctx context.Context, conversationID string, messageID string, body components.MessageFeedback, opts ...operations.Option) (*operations.UpdateMessageFeedbackResponse, error) {
 	request := operations.UpdateMessageFeedbackRequest{
 		ConversationID: conversationID,
 		MessageID:      messageID,

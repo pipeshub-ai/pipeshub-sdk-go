@@ -1135,12 +1135,12 @@ func (s *Folders) GetChildren(ctx context.Context, request operations.GetFolderC
 
 }
 
-// CreateSubfolder - Create subfolder
+// Create subfolder
 // Create a nested folder within an existing folder.<br><br>
 // <b>Required Permission:</b> FILEORGANIZER or higher<br><br>
 // <b>Nesting:</b><br>
 // Supports unlimited folder nesting depth for complex organizational structures.
-func (s *Folders) CreateSubfolder(ctx context.Context, kbID string, folderID string, body operations.CreateSubfolderRequestBody, opts ...operations.Option) (*operations.CreateSubfolderResponse, error) {
+func (s *Folders) Create(ctx context.Context, kbID string, folderID string, body operations.CreateSubfolderRequestBody, opts ...operations.Option) (*operations.CreateSubfolderResponse, error) {
 	request := operations.CreateSubfolderRequest{
 		KbID:     kbID,
 		FolderID: folderID,

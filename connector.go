@@ -237,11 +237,11 @@ func (s *Connector) ReindexRecord(ctx context.Context, recordID string, body *op
 
 }
 
-// ReindexRecordGroup - Reindex record group
+// ReindexGroup - Reindex record group
 // Trigger reindexing for all records in a folder or knowledge base.<br><br>
 // <b>Overview:</b><br>
 // Batch reindex operation for entire containers. The recordGroupId can be a folder ID or KB ID.
-func (s *Connector) ReindexRecordGroup(ctx context.Context, recordGroupID string, body *operations.ReindexRecordGroupRequestBody, opts ...operations.Option) (*operations.ReindexRecordGroupResponse, error) {
+func (s *Connector) ReindexGroup(ctx context.Context, recordGroupID string, body *operations.ReindexRecordGroupRequestBody, opts ...operations.Option) (*operations.ReindexRecordGroupResponse, error) {
 	request := operations.ReindexRecordGroupRequest{
 		RecordGroupID: recordGroupID,
 		Body:          body,

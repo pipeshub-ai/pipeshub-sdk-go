@@ -8,8 +8,8 @@ import (
 )
 
 type GetToolsetOAuthURLRequest struct {
-	ToolsetID string  `pathParam:"style=simple,explode=false,name=toolsetId"`
-	BaseURL   *string `queryParam:"style=form,explode=true,name=base_url"`
+	ToolsetID       string  `pathParam:"style=simple,explode=false,name=toolsetId"`
+	InstanceBaseURL *string `queryParam:"style=form,explode=true,name=instance_base_url"`
 }
 
 func (g *GetToolsetOAuthURLRequest) GetToolsetID() string {
@@ -19,11 +19,11 @@ func (g *GetToolsetOAuthURLRequest) GetToolsetID() string {
 	return g.ToolsetID
 }
 
-func (g *GetToolsetOAuthURLRequest) GetBaseURL() *string {
+func (g *GetToolsetOAuthURLRequest) GetInstanceBaseURL() *string {
 	if g == nil {
 		return nil
 	}
-	return g.BaseURL
+	return g.InstanceBaseURL
 }
 
 // GetToolsetOAuthURLResponseBody - Authorization URL generated successfully

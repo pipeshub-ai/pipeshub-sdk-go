@@ -11,7 +11,7 @@ Folder organization and management
 * [Update](#update) - Update folder
 * [Delete](#delete) - Delete folder
 * [GetChildren](#getchildren) - Get folder children (alias for folder contents)
-* [CreateSubfolder](#createsubfolder) - Create subfolder
+* [Create](#create) - Create subfolder
 
 ## CreateRoot
 
@@ -337,7 +337,7 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## CreateSubfolder
+## Create
 
 Create a nested folder within an existing folder.<br><br>
 <b>Required Permission:</b> FILEORGANIZER or higher<br><br>
@@ -369,7 +369,7 @@ func main() {
         }),
     )
 
-    res, err := s.Folders.CreateSubfolder(ctx, "<id>", "<id>", operations.CreateSubfolderRequestBody{
+    res, err := s.Folders.Create(ctx, "<id>", "<id>", operations.CreateSubfolderRequestBody{
         FolderName: "<value>",
     })
     if err != nil {

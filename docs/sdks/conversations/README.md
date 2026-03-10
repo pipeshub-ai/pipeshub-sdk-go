@@ -19,7 +19,7 @@ AI-powered conversational chat management with citations and follow-up questions
 * [Archive](#archive) - Archive conversation
 * [Unarchive](#unarchive) - Unarchive conversation
 * [Regenerate](#regenerate) - Regenerate AI response
-* [UpdateMessageFeedback](#updatemessagefeedback) - Submit feedback on AI response
+* [SubmitFeedback](#submitfeedback) - Submit feedback on AI response
 * [Unshare](#unshare) - Unshare a conversation
 
 ## Create
@@ -964,7 +964,7 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## UpdateMessageFeedback
+## SubmitFeedback
 
 Provide feedback on an AI-generated response.<br><br>
 <b>Overview:</b><br>
@@ -1006,7 +1006,7 @@ func main() {
         }),
     )
 
-    res, err := s.Conversations.UpdateMessageFeedback(ctx, "<value>", "<value>", components.MessageFeedback{})
+    res, err := s.Conversations.SubmitFeedback(ctx, "<value>", "<value>", components.MessageFeedback{})
     if err != nil {
         log.Fatal(err)
     }

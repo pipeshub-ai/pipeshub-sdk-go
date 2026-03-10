@@ -34,10 +34,10 @@ func newToolsetOAuth(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks
 // Authorize - Get OAuth authorization URL
 // Get OAuth authorization URL for a toolset.<br><br>
 // Returns a URL that the user should visit to authorize the toolset.
-func (s *ToolsetOAuth) Authorize(ctx context.Context, toolsetID string, baseURL *string, opts ...operations.Option) (*operations.GetToolsetOAuthURLResponse, error) {
+func (s *ToolsetOAuth) Authorize(ctx context.Context, toolsetID string, instanceBaseURL *string, opts ...operations.Option) (*operations.GetToolsetOAuthURLResponse, error) {
 	request := operations.GetToolsetOAuthURLRequest{
-		ToolsetID: toolsetID,
-		BaseURL:   baseURL,
+		ToolsetID:       toolsetID,
+		InstanceBaseURL: instanceBaseURL,
 	}
 
 	o := operations.Options{}
@@ -254,12 +254,12 @@ func (s *ToolsetOAuth) Authorize(ctx context.Context, toolsetID string, baseURL 
 // Callback - Handle OAuth callback
 // Handle OAuth callback from the authorization server.<br><br>
 // This endpoint processes the authorization code and completes the OAuth flow.
-func (s *ToolsetOAuth) Callback(ctx context.Context, code *string, state *string, error_ *string, baseURL *string, opts ...operations.Option) (*operations.HandleToolsetOAuthCallbackResponse, error) {
+func (s *ToolsetOAuth) Callback(ctx context.Context, code *string, state *string, error_ *string, instanceBaseURL *string, opts ...operations.Option) (*operations.HandleToolsetOAuthCallbackResponse, error) {
 	request := operations.HandleToolsetOAuthCallbackRequest{
-		Code:    code,
-		State:   state,
-		Error:   error_,
-		BaseURL: baseURL,
+		Code:            code,
+		State:           state,
+		Error:           error_,
+		InstanceBaseURL: instanceBaseURL,
 	}
 
 	o := operations.Options{}

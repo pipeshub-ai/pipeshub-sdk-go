@@ -14,7 +14,7 @@ type HandleOAuthCallbackRequest struct {
 	// Error code if authorization failed
 	Error *string `queryParam:"style=form,explode=true,name=error"`
 	// Base URL for redirect
-	BaseURL *string `queryParam:"style=form,explode=true,name=baseUrl"`
+	InstanceBaseURL *string `queryParam:"style=form,explode=true,name=instanceBaseUrl"`
 }
 
 func (h *HandleOAuthCallbackRequest) GetCode() *string {
@@ -38,11 +38,11 @@ func (h *HandleOAuthCallbackRequest) GetError() *string {
 	return h.Error
 }
 
-func (h *HandleOAuthCallbackRequest) GetBaseURL() *string {
+func (h *HandleOAuthCallbackRequest) GetInstanceBaseURL() *string {
 	if h == nil {
 		return nil
 	}
-	return h.BaseURL
+	return h.InstanceBaseURL
 }
 
 type HandleOAuthCallbackResponse struct {

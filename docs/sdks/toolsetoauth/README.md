@@ -53,7 +53,7 @@ func main() {
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
 | `toolsetID`                                              | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `baseURL`                                                | **string*                                                | :heavy_minus_sign:                                       | N/A                                                      |
+| `instanceBaseURL`                                        | **string*                                                | :heavy_minus_sign:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -113,7 +113,7 @@ func main() {
 | `code`                                                   | **string*                                                | :heavy_minus_sign:                                       | N/A                                                      |
 | `state`                                                  | **string*                                                | :heavy_minus_sign:                                       | N/A                                                      |
 | `error_`                                                 | **string*                                                | :heavy_minus_sign:                                       | N/A                                                      |
-| `baseURL`                                                | **string*                                                | :heavy_minus_sign:                                       | N/A                                                      |
+| `instanceBaseURL`                                        | **string*                                                | :heavy_minus_sign:                                       | N/A                                                      |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response

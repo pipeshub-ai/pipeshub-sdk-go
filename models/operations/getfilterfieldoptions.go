@@ -72,31 +72,31 @@ func (g *GetFilterFieldOptionsRequest) GetCursor() *string {
 	return g.Cursor
 }
 
-type Option struct {
+type FilterFieldOption struct {
 	ID    *string `json:"id,omitzero"`
 	Value *string `json:"value,omitzero"`
 	Label *string `json:"label,omitzero"`
 }
 
-func (o *Option) GetID() *string {
-	if o == nil {
+func (f *FilterFieldOption) GetID() *string {
+	if f == nil {
 		return nil
 	}
-	return o.ID
+	return f.ID
 }
 
-func (o *Option) GetValue() *string {
-	if o == nil {
+func (f *FilterFieldOption) GetValue() *string {
+	if f == nil {
 		return nil
 	}
-	return o.Value
+	return f.Value
 }
 
-func (o *Option) GetLabel() *string {
-	if o == nil {
+func (f *FilterFieldOption) GetLabel() *string {
+	if f == nil {
 		return nil
 	}
-	return o.Label
+	return f.Label
 }
 
 type GetFilterFieldOptionsPagination struct {
@@ -137,7 +137,7 @@ func (g *GetFilterFieldOptionsPagination) GetCursor() *string {
 // GetFilterFieldOptionsResponseBody - Options retrieved
 type GetFilterFieldOptionsResponseBody struct {
 	Success    *bool                            `json:"success,omitzero"`
-	Options    []Option                         `json:"options,omitzero"`
+	Options    []FilterFieldOption              `json:"options,omitzero"`
 	Pagination *GetFilterFieldOptionsPagination `json:"pagination,omitzero"`
 }
 
@@ -159,7 +159,7 @@ func (g *GetFilterFieldOptionsResponseBody) GetSuccess() *bool {
 	return g.Success
 }
 
-func (g *GetFilterFieldOptionsResponseBody) GetOptions() []Option {
+func (g *GetFilterFieldOptionsResponseBody) GetOptions() []FilterFieldOption {
 	if g == nil {
 		return nil
 	}

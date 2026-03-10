@@ -44,10 +44,10 @@ func newConnectorOAuth(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hoo
 // <b>State Parameter:</b><br>
 // The response includes a <code>state</code> value that encodes the
 // connector ID. This is validated in the callback.
-func (s *ConnectorOAuth) Authorize(ctx context.Context, connectorID string, baseURL *string, opts ...operations.Option) (*operations.GetOAuthAuthorizationURLResponse, error) {
+func (s *ConnectorOAuth) Authorize(ctx context.Context, connectorID string, instanceBaseURL *string, opts ...operations.Option) (*operations.GetOAuthAuthorizationURLResponse, error) {
 	request := operations.GetOAuthAuthorizationURLRequest{
-		ConnectorID: connectorID,
-		BaseURL:     baseURL,
+		ConnectorID:     connectorID,
+		InstanceBaseURL: instanceBaseURL,
 	}
 
 	o := operations.Options{}
@@ -274,12 +274,12 @@ func (s *ConnectorOAuth) Authorize(ctx context.Context, connectorID string, base
 // <b>Error:</b><br>
 // If the provider returns an error (e.g., user denied access),
 // user is redirected with error information.
-func (s *ConnectorOAuth) HandleCallback(ctx context.Context, code *string, state *string, error_ *string, baseURL *string, opts ...operations.Option) (*operations.HandleOAuthCallbackResponse, error) {
+func (s *ConnectorOAuth) HandleCallback(ctx context.Context, code *string, state *string, error_ *string, instanceBaseURL *string, opts ...operations.Option) (*operations.HandleOAuthCallbackResponse, error) {
 	request := operations.HandleOAuthCallbackRequest{
-		Code:    code,
-		State:   state,
-		Error:   error_,
-		BaseURL: baseURL,
+		Code:            code,
+		State:           state,
+		Error:           error_,
+		InstanceBaseURL: instanceBaseURL,
 	}
 
 	o := operations.Options{}

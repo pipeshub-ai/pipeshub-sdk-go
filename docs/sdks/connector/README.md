@@ -7,7 +7,7 @@ Connector-related operations
 ### Available Operations
 
 * [ReindexRecord](#reindexrecord) - Reindex single record
-* [ReindexRecordGroup](#reindexrecordgroup) - Reindex record group
+* [ReindexGroup](#reindexgroup) - Reindex record group
 * [Resync](#resync) - Resync connector
 
 ## ReindexRecord
@@ -71,7 +71,7 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
-## ReindexRecordGroup
+## ReindexGroup
 
 Trigger reindexing for all records in a folder or knowledge base.<br><br>
 <b>Overview:</b><br>
@@ -101,7 +101,7 @@ func main() {
         }),
     )
 
-    res, err := s.Connector.ReindexRecordGroup(ctx, "<id>", nil)
+    res, err := s.Connector.ReindexGroup(ctx, "<id>", nil)
     if err != nil {
         log.Fatal(err)
     }

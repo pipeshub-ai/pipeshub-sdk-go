@@ -11227,6 +11227,7 @@ paths:
           description: Insufficient permissions
         '404':
           description: Parent folder not found
+      x-speakeasy-name-override: create
   # -------------------- Upload Endpoints --------------------
   /knowledgeBase/{kbId}/upload:
     post:
@@ -11480,6 +11481,7 @@ paths:
           description: Unauthorized
         '404':
           description: Record group not found
+      x-speakeasy-name-override: reindexGroup
   /knowledgeBase/resync/connector:
     post:
       tags:
@@ -12835,6 +12837,7 @@ paths:
           description: Unauthorized
         '404':
           description: Conversation or message not found
+      x-speakeasy-name-override: submitFeedback
   /conversations/{conversationId}/unshare:
     post:
       tags:
@@ -15231,7 +15234,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: baseUrl
+        - name: instanceBaseUrl
           in: query
           description: Base URL for self-hosted instances
           schema:
@@ -15294,7 +15297,7 @@ paths:
           description: Error code if authorization failed
           schema:
             type: string
-        - name: baseUrl
+        - name: instanceBaseUrl
           in: query
           description: Base URL for redirect
           schema:
@@ -15467,6 +15470,7 @@ paths:
                     type: array
                     items:
                       type: object
+                      x-speakeasy-name-override: FilterFieldOption
                       properties:
                         id:
                           type: string
@@ -15966,7 +15970,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: base_url
+        - name: instance_base_url
           in: query
           schema:
             type: string
@@ -16010,7 +16014,7 @@ paths:
           in: query
           schema:
             type: string
-        - name: base_url
+        - name: instance_base_url
           in: query
           schema:
             type: string

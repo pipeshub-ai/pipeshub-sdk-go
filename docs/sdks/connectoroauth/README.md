@@ -63,7 +63,7 @@ func main() {
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
 | `connectorID`                                            | *string*                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `baseURL`                                                | **string*                                                | :heavy_minus_sign:                                       | Base URL for self-hosted instances                       |
+| `instanceBaseURL`                                        | **string*                                                | :heavy_minus_sign:                                       | Base URL for self-hosted instances                       |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -125,7 +125,7 @@ func main() {
 | `code`                                                   | **string*                                                | :heavy_minus_sign:                                       | Authorization code from provider                         |
 | `state`                                                  | **string*                                                | :heavy_minus_sign:                                       | State parameter (contains connector ID)                  |
 | `error_`                                                 | **string*                                                | :heavy_minus_sign:                                       | Error code if authorization failed                       |
-| `baseURL`                                                | **string*                                                | :heavy_minus_sign:                                       | Base URL for redirect                                    |
+| `instanceBaseURL`                                        | **string*                                                | :heavy_minus_sign:                                       | Base URL for redirect                                    |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
