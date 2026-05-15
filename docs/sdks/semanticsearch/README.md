@@ -12,6 +12,17 @@
 * [ArchiveSearch](#archivesearch) - Archive a search
 * [UnarchiveSearch](#unarchivesearch) - Unarchive a search
 
+### [Sample App](https://github.com/pipeshub-ai/notebook/tree/main/sample_apps/sdksampleapps/go/enterprise_search)
+
+Runnable Go programs under `semantic_search/` demonstrate `SemanticSearch.Search` with knowledge-base or connector filters. Clone the [notebook](https://github.com/pipeshub-ai/notebook) repo, copy `.env.example` to `.env` in `enterprise_search/`, set your PipesHub URL, credentials, and `KB_ID` / `CONNECTOR_ID`, then from that directory:
+
+```bash
+go run ./semantic_search/knowledgebase .env
+go run ./semantic_search/connector .env
+```
+
+Each program prints the top hits as `Record / ID / Chunk` blocks; edit the `Query` field in the corresponding `main.go` to try different searches.
+
 ## Search
 
 Run a semantic search across your organization's knowledge base.

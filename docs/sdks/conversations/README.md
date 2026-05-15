@@ -17,6 +17,20 @@
 * [RegenerateAnswer](#regenerateanswer) - Regenerate AI response
 * [UpdateMessageFeedback](#updatemessagefeedback) - Submit feedback on AI response
 
+
+### [Sample App](https://github.com/pipeshub-ai/notebook/tree/main/sample_apps/sdksampleapps/go/enterprise_search)
+
+Runnable Go programs under `conversation/` demonstrate `Conversations.StreamChat` with different scopes: knowledge base, connector, web search, and internal search. Clone the [notebook](https://github.com/pipeshub-ai/notebook) repo, copy `.env.example` to `.env` in `enterprise_search/`, set your PipesHub URL and credentials, then from that directory:
+
+```bash
+go run ./conversation/knowledgebase .env
+go run ./conversation/connector .env
+go run ./conversation/web_search .env
+go run ./conversation/internal_search .env
+```
+
+Each program streams the AI reply to stdout; edit the `Query` field in the corresponding `main.go` to try different prompts.
+
 ## StreamChat
 
 Start a new conversation and stream the AI response over Server-Sent
