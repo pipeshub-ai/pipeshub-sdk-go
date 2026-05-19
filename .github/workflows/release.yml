@@ -1,0 +1,38 @@
+name: Release to GitHub
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Extract version from .speakeasy/gen.yaml
+        id: version
+        run: |
+          VERSION=$(python3 -c "import yaml; data=yaml.safe_load(open('.speakeasy/gen.yaml')); print(data['go']['version'])")
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        run: |
+          git tag "v${{ steps.version.outputs.VERSION }}"
+          git push origin "v${{ steps.version.outputs.VERSION }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: v${{ steps.version.outputs.VERSION }}
+          generate_release_notes: true
