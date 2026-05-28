@@ -72,7 +72,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("search: %v", err)
 	}
-	if res == nil || res.SemanticSearchExecuteResponse == nil {
+	if res.SemanticSearchExecuteResponse == nil {
 		log.Fatal("search: empty response")
 	}
 
