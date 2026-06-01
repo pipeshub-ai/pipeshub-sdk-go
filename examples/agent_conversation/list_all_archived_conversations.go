@@ -67,7 +67,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("list archived conversations (page %d): %v", page, err)
 		}
-		if res == nil || res.AgentArchivedConversationListResponse == nil {
+		if res.AgentArchivedConversationListResponse == nil {
 			log.Fatalf("no archive list response returned (page %d)", page)
 		}
 

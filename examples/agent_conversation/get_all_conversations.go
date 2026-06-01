@@ -68,7 +68,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("list conversations (page %d): %v", page, err)
 		}
-		if res == nil || res.AgentConversationListResponse == nil {
+		if res.AgentConversationListResponse == nil {
 			log.Fatalf("no conversation list response returned (page %d)", page)
 		}
 

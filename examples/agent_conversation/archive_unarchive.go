@@ -4,7 +4,7 @@
 //
 // Usage (from examples/):
 //
-//	go run ./agent_conversation/archive_urarchive.go <path-to-.env>
+//	go run ./agent_conversation/archive_unarchive.go <path-to-.env>
 package main
 
 import (
@@ -38,7 +38,7 @@ const (
 
 func main() {
 	if len(os.Args) < 2 {
-		log.Fatal("usage: go run ./agent_conversation/archive_urarchive.go <path-to-.env>")
+		log.Fatal("usage: go run ./agent_conversation/archive_unarchive.go <path-to-.env>")
 	}
 	if err := godotenv.Load(os.Args[1]); err != nil {
 		log.Fatalf("load .env: %v", err)
@@ -88,7 +88,7 @@ func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query 
 	if err != nil {
 		return "", "", fmt.Errorf("stream agent conversation: %w", err)
 	}
-	if res == nil || res.AgentStreamSSEEvent == nil {
+	if res.AgentStreamSSEEvent == nil {
 		return "", "", fmt.Errorf("no SSE stream returned")
 	}
 	stream := res.AgentStreamSSEEvent
@@ -124,13 +124,13 @@ func archiveAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, convI
 	if err != nil {
 		return fmt.Errorf("archive agent conversation: %w", err)
 	}
-	if res == nil || res.AgentConversationArchiveResponse == nil {
+	if res.AgentConversationArchiveResponse == nil {
 		return fmt.Errorf("no archive response returned")
 	}
 
 	body := res.AgentConversationArchiveResponse
 	at := body.GetArchivedAt()
-	if at.IsZero() {
+	if at == nil || at.IsZero() {
 		fmt.Println("Archived (by you): conversation is now in archives")
 		return nil
 	}
@@ -143,13 +143,13 @@ func unarchiveAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, con
 	if err != nil {
 		return fmt.Errorf("unarchive agent conversation: %w", err)
 	}
-	if res == nil || res.AgentConversationUnarchiveResponse == nil {
+	if res.AgentConversationUnarchiveResponse == nil {
 		return fmt.Errorf("no unarchive response returned")
 	}
 
 	body := res.AgentConversationUnarchiveResponse
 	at := body.GetUnarchivedAt()
-	if at.IsZero() {
+	if at == nil || at.IsZero() {
 		fmt.Println("Unarchived: conversation is back in your active list")
 		return nil
 	}

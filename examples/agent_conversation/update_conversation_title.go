@@ -86,7 +86,7 @@ func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query 
 	if err != nil {
 		return "", "", fmt.Errorf("stream agent conversation: %w", err)
 	}
-	if res == nil || res.AgentStreamSSEEvent == nil {
+	if res.AgentStreamSSEEvent == nil {
 		return "", "", fmt.Errorf("no SSE stream returned")
 	}
 	stream := res.AgentStreamSSEEvent
@@ -130,7 +130,7 @@ func updateAgentConversationTitle(ctx context.Context, sdk *pipeshub.Pipeshub, c
 	if err != nil {
 		return "", fmt.Errorf("update agent conversation title: %w", err)
 	}
-	if res == nil || res.AgentConversationTitleUpdateResponse == nil {
+	if res.AgentConversationTitleUpdateResponse == nil {
 		return "", fmt.Errorf("no title update response returned")
 	}
 
