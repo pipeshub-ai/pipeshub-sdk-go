@@ -82,9 +82,6 @@ func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query 
 	if err != nil {
 		return "", fmt.Errorf("stream agent conversation: %w", err)
 	}
-	if res.AgentStreamSSEEvent == nil {
-		return "", fmt.Errorf("no SSE stream returned")
-	}
 	stream := res.AgentStreamSSEEvent
 	defer stream.Close()
 
@@ -126,9 +123,6 @@ func addAgentConversationMessage(ctx context.Context, sdk *pipeshub.Pipeshub, co
 	})
 	if err != nil {
 		return fmt.Errorf("stream agent conversation message: %w", err)
-	}
-	if res.AgentMessageStreamSSEEvent == nil {
-		return fmt.Errorf("no SSE stream returned")
 	}
 	stream := res.AgentMessageStreamSSEEvent
 	defer stream.Close()

@@ -80,9 +80,6 @@ func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query 
 	if err != nil {
 		return "", fmt.Errorf("stream agent conversation: %w", err)
 	}
-	if res.AgentStreamSSEEvent == nil {
-		return "", fmt.Errorf("no SSE stream returned")
-	}
 	stream := res.AgentStreamSSEEvent
 	defer stream.Close()
 
@@ -130,12 +127,12 @@ func printAgentConversationByID(ctx context.Context, sdk *pipeshub.Pipeshub, con
 	if err != nil {
 		return err
 	}
-	if res.AgentConversationDetailResponse == nil {
-		return fmt.Errorf("empty response")
-	}
-
 	conv := res.AgentConversationDetailResponse.GetConversation()
-	fmt.Printf("\n--- conversation by id: %s ---\n", conv.GetID())
+	id := ""
+	if v := conv.GetID(); v != nil {
+		id = *v
+	}
+	fmt.Printf("\n--- conversation by id: %s ---\n", id)
 	if conv.GetTitle() != nil {
 		fmt.Printf("title: %q\n", *conv.GetTitle())
 	}

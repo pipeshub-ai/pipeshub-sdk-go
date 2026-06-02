@@ -88,9 +88,6 @@ func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query 
 	if err != nil {
 		return "", "", fmt.Errorf("stream agent conversation: %w", err)
 	}
-	if res.AgentStreamSSEEvent == nil {
-		return "", "", fmt.Errorf("no SSE stream returned")
-	}
 	stream := res.AgentStreamSSEEvent
 	defer stream.Close()
 
@@ -124,10 +121,6 @@ func archiveAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, convI
 	if err != nil {
 		return fmt.Errorf("archive agent conversation: %w", err)
 	}
-	if res.AgentConversationArchiveResponse == nil {
-		return fmt.Errorf("no archive response returned")
-	}
-
 	body := res.AgentConversationArchiveResponse
 	at := body.GetArchivedAt()
 	if at == nil || at.IsZero() {
@@ -143,10 +136,6 @@ func unarchiveAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, con
 	if err != nil {
 		return fmt.Errorf("unarchive agent conversation: %w", err)
 	}
-	if res.AgentConversationUnarchiveResponse == nil {
-		return fmt.Errorf("no unarchive response returned")
-	}
-
 	body := res.AgentConversationUnarchiveResponse
 	at := body.GetUnarchivedAt()
 	if at == nil || at.IsZero() {

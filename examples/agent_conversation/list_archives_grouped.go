@@ -84,10 +84,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("list archived conversations grouped: %v", err)
 	}
-	if res.AgentArchivedGroupsResponse == nil {
-		log.Fatal("no grouped archive response returned")
-	}
-
 	groups := res.AgentArchivedGroupsResponse.GetGroups()
 	var agentGroup *components.AgentArchivedConversationGroup
 	for i := range groups {
@@ -144,9 +140,6 @@ func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query 
 	if err != nil {
 		return "", "", fmt.Errorf("stream agent conversation: %w", err)
 	}
-	if res.AgentStreamSSEEvent == nil {
-		return "", "", fmt.Errorf("no SSE stream returned")
-	}
 	stream := res.AgentStreamSSEEvent
 	defer stream.Close()
 
@@ -176,12 +169,9 @@ func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query 
 }
 
 func archiveAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, convID string) error {
-	res, err := sdk.Agents.ArchiveAgentConversation(ctx, agentKey, convID)
+	_, err := sdk.Agents.ArchiveAgentConversation(ctx, agentKey, convID)
 	if err != nil {
 		return fmt.Errorf("archive agent conversation: %w", err)
-	}
-	if res.AgentConversationArchiveResponse == nil {
-		return fmt.Errorf("no archive response returned")
 	}
 	return nil
 }

@@ -84,9 +84,6 @@ func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query 
 	if err != nil {
 		return "", "", "", fmt.Errorf("stream agent conversation: %w", err)
 	}
-	if res.AgentStreamSSEEvent == nil {
-		return "", "", "", fmt.Errorf("no SSE stream returned")
-	}
 	stream := res.AgentStreamSSEEvent
 	defer stream.Close()
 
@@ -139,9 +136,6 @@ func submitMessageFeedback(ctx context.Context, sdk *pipeshub.Pipeshub, convID, 
 	if err != nil {
 		return fmt.Errorf("update agent conversation message feedback: %w", err)
 	}
-	if res.MessageFeedbackUpdateResponse == nil {
-		return fmt.Errorf("no feedback response returned")
-	}
 	logFeedbackUpdateResponse(res.MessageFeedbackUpdateResponse)
 	return nil
 }
@@ -166,17 +160,20 @@ func logFeedbackUpdateResponse(resp *components.MessageFeedbackUpdateResponse) {
 			log.Printf("feedback comments.positive (%d chars): %s", len(*positive), *positive)
 		}
 	}
-	if provider := fb.GetFeedbackProvider(); provider != "" {
-		log.Printf("feedback provider: %s", provider)
+	if provider := fb.GetFeedbackProvider(); provider != nil && *provider != "" {
+		log.Printf("feedback provider: %s", *provider)
 	}
-	if ts := fb.GetTimestamp(); ts != 0 {
-		log.Printf("feedback timestamp (epoch ms): %d", ts)
+	if ts := fb.GetTimestamp(); ts != nil && *ts != 0 {
+		log.Printf("feedback timestamp (epoch ms): %d", *ts)
 	}
 
-	metrics := fb.GetMetrics()
-	log.Printf("feedback metrics timeToFeedback(ms): %.0f", metrics.GetTimeToFeedback())
-	if ua := metrics.GetUserAgent(); ua != nil && *ua != "" {
-		log.Printf("feedback metrics userAgent: %s", *ua)
+	if metrics := fb.GetMetrics(); metrics != nil {
+		if t := metrics.GetTimeToFeedback(); t != nil {
+			log.Printf("feedback metrics timeToFeedback(ms): %.0f", *t)
+		}
+		if ua := metrics.GetUserAgent(); ua != nil && *ua != "" {
+			log.Printf("feedback metrics userAgent: %s", *ua)
+		}
 	}
 
 	meta := resp.GetMeta()

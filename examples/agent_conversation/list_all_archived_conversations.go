@@ -67,10 +67,6 @@ func main() {
 		if err != nil {
 			log.Fatalf("list archived conversations (page %d): %v", page, err)
 		}
-		if res.AgentArchivedConversationListResponse == nil {
-			log.Fatalf("no archive list response returned (page %d)", page)
-		}
-
 		body := res.AgentArchivedConversationListResponse
 		if page == 1 {
 			totalCount = body.GetPagination().TotalCount
