@@ -24,13 +24,13 @@ import (
 
 const (
 	// Stable key for the agent that owns the conversation.
-	agentKey = "02a7d998-d21b-4015-aaf7-5cda765c1012"
+	agentKey = "ddff45f7-e534-4726-92e8-5e8e6338ad41"
 
 	// Knowledge-base / record-group id (Filters.Kb).
-	kbID = "8747da12-4724-4a95-ac92-827b88d79647"
+	kbID = "45d5aa5b-2b2c-408d-bcd3-ce4de6dfcd5b"
 
 	// First user message when creating the conversation.
-	firstMessage = "What are some latest tech news?"
+	firstMessage = "Who moved the cheese?"
 
 	// Positive free-text feedback (no negative comment — omit that field).
 	positiveFeedbackComment = "The answer stayed on topic and covered the main points without filler. " +
@@ -160,20 +160,19 @@ func logFeedbackUpdateResponse(resp *components.MessageFeedbackUpdateResponse) {
 			log.Printf("feedback comments.positive (%d chars): %s", len(*positive), *positive)
 		}
 	}
-	if provider := fb.GetFeedbackProvider(); provider != nil && *provider != "" {
-		log.Printf("feedback provider: %s", *provider)
+	if provider := fb.GetFeedbackProvider(); provider != "" {
+		log.Printf("feedback provider: %s", provider)
 	}
-	if ts := fb.GetTimestamp(); ts != nil && *ts != 0 {
-		log.Printf("feedback timestamp (epoch ms): %d", *ts)
+	if ts := fb.GetTimestamp(); ts != 0 {
+		log.Printf("feedback timestamp (epoch ms): %d", ts)
 	}
 
-	if metrics := fb.GetMetrics(); metrics != nil {
-		if t := metrics.GetTimeToFeedback(); t != nil {
-			log.Printf("feedback metrics timeToFeedback(ms): %.0f", *t)
-		}
-		if ua := metrics.GetUserAgent(); ua != nil && *ua != "" {
-			log.Printf("feedback metrics userAgent: %s", *ua)
-		}
+	metrics := fb.GetMetrics()
+	if t := metrics.GetTimeToFeedback(); t != 0 {
+		log.Printf("feedback metrics timeToFeedback(ms): %.0f", t)
+	}
+	if ua := metrics.GetUserAgent(); ua != nil && *ua != "" {
+		log.Printf("feedback metrics userAgent: %s", *ua)
 	}
 
 	meta := resp.GetMeta()

@@ -23,16 +23,16 @@ import (
 
 const (
 	// Stable key for the agent that owns the conversation.
-	agentKey = "02a7d998-d21b-4015-aaf7-5cda765c1012"
+	agentKey = "ddff45f7-e534-4726-92e8-5e8e6338ad41"
 
 	// Knowledge-base / record-group id (Filters.Kb).
-	kbID = "8747da12-4724-4a95-ac92-827b88d79647"
+	kbID = "45d5aa5b-2b2c-408d-bcd3-ce4de6dfcd5b"
 
 	// Connector instance id (Filters.Apps).
-	connectorID = "aeab9ddc-fb9b-47c8-ad98-bd4744e19555"
+	connectorID = "270d4bac-234a-4c0d-963f-84f152cd21f0"
 
 	// First user message when creating the conversation.
-	firstMessage = "What are some latest tech news?"
+	firstMessage = "Who moved the cheese?"
 
 	// Follow-up user message appended to the same conversation.
 	followUpMessage = "Can you give me more details on that?"
