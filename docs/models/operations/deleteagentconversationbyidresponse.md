@@ -1,0 +1,9 @@
+# DeleteAgentConversationByIDResponse
+
+
+## Fields
+
+| Field                                                                                                     | Type                                                                                                      | Required                                                                                                  | Description                                                                                               |
+| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                        | :heavy_check_mark:                                                                                        | N/A                                                                                                       |
+| `AgentConversationDeleteResponse`                                                                         | [*components.AgentConversationDeleteResponse](../../models/components/agentconversationdeleteresponse.md) | :heavy_minus_sign:                                                                                        | Conversation deleted or no-op delete completed successfully                                               |

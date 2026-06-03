@@ -1,0 +1,15 @@
+# OAuthIntrospectRequest
+
+OAuth 2.0 Token Introspection Request (RFC 7662).
+Check if a token is active and get its metadata.
+
+
+
+## Fields
+
+| Field                                                                                                             | Type                                                                                                              | Required                                                                                                          | Description                                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `Token`                                                                                                           | *string*                                                                                                          | :heavy_check_mark:                                                                                                | The token to introspect                                                                                           |
+| `TokenTypeHint`                                                                                                   | [*components.OAuthIntrospectRequestTokenTypeHint](../../models/components/oauthintrospectrequesttokentypehint.md) | :heavy_minus_sign:                                                                                                | Hint about token type                                                                                             |
+| `ClientID`                                                                                                        | *string*                                                                                                          | :heavy_check_mark:                                                                                                | Client ID                                                                                                         |
+| `ClientSecret`                                                                                                    | **string*                                                                                                         | :heavy_minus_sign:                                                                                                | Client secret                                                                                                     |

@@ -72,13 +72,13 @@ func main() {
 
 	s := pipeshub.New()
 
-	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
-		Email: pipeshub.Pointer("user@example.com"),
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.InitAuthResponse != nil {
+	if res.OAuthTokenResponse != nil {
 		// handle response
 	}
 }
@@ -119,13 +119,13 @@ func main() {
 		}),
 	)
 
-	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
-		Email: pipeshub.Pointer("user@example.com"),
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.InitAuthResponse != nil {
+	if res.OAuthTokenResponse != nil {
 		// handle response
 	}
 }
@@ -141,7 +141,6 @@ package main
 import (
 	"context"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 	"log"
 	"os"
@@ -152,15 +151,13 @@ func main() {
 
 	s := pipeshub.New()
 
-	res, err := s.UserAccount.ResetPasswordWithToken(ctx, components.TokenPasswordResetRequest{
-		Password: "H9GEHoL829GXj06",
-	}, operations.ResetPasswordWithTokenSecurity{
+	res, err := s.UserAccount.RefreshToken(ctx, operations.RefreshTokenSecurity{
 		ScopedToken: os.Getenv("PIPESHUB_SCOPED_TOKEN"),
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.DataStringResponse != nil {
+	if res.RefreshTokenResponse != nil {
 		// handle response
 	}
 }
@@ -173,6 +170,28 @@ func main() {
 
 <details open>
 <summary>Available methods</summary>
+
+### [Agents](docs/sdks/agents/README.md)
+
+* [ListAgents](docs/sdks/agents/README.md#listagents) - List agents
+* [CreateAgent](docs/sdks/agents/README.md#createagent) - Create agent
+* [GetAgent](docs/sdks/agents/README.md#getagent) - Get agent
+* [UpdateAgent](docs/sdks/agents/README.md#updateagent) - Update agent
+* [DeleteAgent](docs/sdks/agents/README.md#deleteagent) - Delete agent
+* [ListAgentArchivedConversationsGrouped](docs/sdks/agents/README.md#listagentarchivedconversationsgrouped) - List archived agent conversations grouped by agent
+* [ListAgentConversationArchives](docs/sdks/agents/README.md#listagentconversationarchives) - List archived conversations for an agent
+* [UploadAgentConversationChatAttachments](docs/sdks/agents/README.md#uploadagentconversationchatattachments) - Upload agent chat attachments
+* [DeleteAgentConversationChatAttachment](docs/sdks/agents/README.md#deleteagentconversationchatattachment) - Delete an agent chat attachment
+* [StreamAgentConversation](docs/sdks/agents/README.md#streamagentconversation) - Create agent conversation with streaming response
+* [StreamAgentConversationMessage](docs/sdks/agents/README.md#streamagentconversationmessage) - Add message to agent conversation with streaming response
+* [RegenerateAgentConversationMessage](docs/sdks/agents/README.md#regenerateagentconversationmessage) - Regenerate agent conversation message
+* [UpdateAgentConversationMessageFeedback](docs/sdks/agents/README.md#updateagentconversationmessagefeedback) - Submit feedback for an agent message
+* [ArchiveAgentConversation](docs/sdks/agents/README.md#archiveagentconversation) - Archive an agent conversation
+* [UnarchiveAgentConversation](docs/sdks/agents/README.md#unarchiveagentconversation) - Unarchive an agent conversation
+* [UpdateAgentConversationTitle](docs/sdks/agents/README.md#updateagentconversationtitle) - Update agent conversation title
+* [DeleteAgentConversationByID](docs/sdks/agents/README.md#deleteagentconversationbyid) - Delete an agent conversation
+* [GetAgentConversationByID](docs/sdks/agents/README.md#getagentconversationbyid) - Get agent conversation by ID
+* [ListAgentConversations](docs/sdks/agents/README.md#listagentconversations) - List agent conversations
 
 ### [AIModelsProviders](docs/sdks/aimodelsproviders/README.md)
 
@@ -198,6 +217,30 @@ func main() {
 * [GetKnowledgeHubRootNodes](docs/sdks/knowledgehub/README.md#getknowledgehubrootnodes) - Get knowledge hub root nodes
 * [GetKnowledgeHubChildNodes](docs/sdks/knowledgehub/README.md#getknowledgehubchildnodes) - Get knowledge hub child nodes
 
+### [OAuthApps](docs/sdks/oauthapps/README.md)
+
+* [ListOAuthApps](docs/sdks/oauthapps/README.md#listoauthapps) - List OAuth apps
+* [CreateOAuthApp](docs/sdks/oauthapps/README.md#createoauthapp) - Create OAuth app
+* [ListOAuthScopes](docs/sdks/oauthapps/README.md#listoauthscopes) - List available scopes
+* [GetOAuthApp](docs/sdks/oauthapps/README.md#getoauthapp) - Get OAuth app details
+* [UpdateOAuthApp](docs/sdks/oauthapps/README.md#updateoauthapp) - Update OAuth app
+* [DeleteOAuthApp](docs/sdks/oauthapps/README.md#deleteoauthapp) - Delete OAuth app
+* [RegenerateOAuthAppSecret](docs/sdks/oauthapps/README.md#regenerateoauthappsecret) - Regenerate client secret
+* [SuspendOAuthApp](docs/sdks/oauthapps/README.md#suspendoauthapp) - Suspend OAuth app
+* [ActivateOAuthApp](docs/sdks/oauthapps/README.md#activateoauthapp) - Activate suspended OAuth app
+* [ListOAuthAppTokens](docs/sdks/oauthapps/README.md#listoauthapptokens) - List app tokens
+* [RevokeAllOAuthAppTokens](docs/sdks/oauthapps/README.md#revokealloauthapptokens) - Revoke all app tokens
+
+### [OAuthProvider](docs/sdks/oauthprovider/README.md)
+
+* [OauthToken](docs/sdks/oauthprovider/README.md#oauthtoken) - Exchange authorization code for tokens
+* [OauthRevoke](docs/sdks/oauthprovider/README.md#oauthrevoke) - Revoke an access or refresh token
+* [OauthIntrospect](docs/sdks/oauthprovider/README.md#oauthintrospect) - Introspect a token
+
+### [OpenIDConnect](docs/sdks/openidconnect/README.md)
+
+* [OauthUserInfo](docs/sdks/openidconnect/README.md#oauthuserinfo) - Get authenticated user information
+
 ### [OrganizationAuthConfig](docs/sdks/organizationauthconfig/README.md)
 
 * [GetAuthMethods](docs/sdks/organizationauthconfig/README.md#getauthmethods) - Get organization authentication methods
@@ -222,8 +265,12 @@ func main() {
 
 * [InitAuth](docs/sdks/useraccount/README.md#initauth) - Initialize authentication session
 * [Authenticate](docs/sdks/useraccount/README.md#authenticate) - Authenticate user with credentials
-* [ResetPasswordWithToken](docs/sdks/useraccount/README.md#resetpasswordwithtoken) - Reset password with email token
+* [RefreshToken](docs/sdks/useraccount/README.md#refreshtoken) - Refresh access token
 * [ResetPassword](docs/sdks/useraccount/README.md#resetpassword) - Reset password
+
+### [WebSearch](docs/sdks/websearch/README.md)
+
+* [GetWebSearchProviders](docs/sdks/websearch/README.md#getwebsearchproviders) - Get all web search providers
 
 </details>
 <!-- End Available Resources and Operations [operations] -->
@@ -267,7 +314,7 @@ func main() {
 		ModelKey:          pipeshub.Pointer("gpt-4-turbo"),
 		ModelName:         pipeshub.Pointer("GPT-4 Turbo"),
 		ModelFriendlyName: pipeshub.Pointer("GPT-4 Turbo"),
-		ChatMode:          pipeshub.Pointer("balanced"),
+		ChatMode:          components.CreateConversationRequestChatModeWebSearch.ToPointer(),
 		Timezone:          pipeshub.Pointer("America/New_York"),
 		CurrentTime:       types.MustNewTimeFromString("2026-04-12T16:00:00+05:30"),
 		Tools: []string{
@@ -317,8 +364,8 @@ func main() {
 
 	s := pipeshub.New()
 
-	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
-		Email: pipeshub.Pointer("user@example.com"),
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
 	}, operations.WithRetries(
 		retry.Config{
 			Strategy: "backoff",
@@ -333,7 +380,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.InitAuthResponse != nil {
+	if res.OAuthTokenResponse != nil {
 		// handle response
 	}
 }
@@ -369,13 +416,13 @@ func main() {
 			}),
 	)
 
-	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
-		Email: pipeshub.Pointer("user@example.com"),
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.InitAuthResponse != nil {
+	if res.OAuthTokenResponse != nil {
 		// handle response
 	}
 }
@@ -390,13 +437,14 @@ Handling errors in this SDK should largely match your expectations. All operatio
 
 By Default, an API error will return `apierrors.APIError`. When custom error responses are specified for an operation, the SDK may also return their associated error. You can refer to respective *Errors* tables in SDK docs for more details on possible error types for each operation.
 
-For example, the `InitAuth` function may return the following errors:
+For example, the `OauthToken` function may return the following errors:
 
-| Error Type              | Status Code | Content Type     |
-| ----------------------- | ----------- | ---------------- |
-| apierrors.ErrorResponse | 400         | application/json |
-| apierrors.ErrorResponse | 500         | application/json |
-| apierrors.APIError      | 4XX, 5XX    | \*/\*            |
+| Error Type                                    | Status Code | Content Type     |
+| --------------------------------------------- | ----------- | ---------------- |
+| apierrors.ErrorResponse                       | 400         | application/json |
+| apierrors.OAuthErrorResponse                  | 401         | application/json |
+| apierrors.OAuthClientManagementRateLimitError | 429         | application/json |
+| apierrors.APIError                            | 4XX, 5XX    | \*/\*            |
 
 ### Example
 
@@ -417,8 +465,8 @@ func main() {
 
 	s := pipeshub.New()
 
-	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
-		Email: pipeshub.Pointer("user@example.com"),
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
 	})
 	if err != nil {
 
@@ -428,7 +476,13 @@ func main() {
 			log.Fatal(e.Error())
 		}
 
-		var e *apierrors.ErrorResponse
+		var e *apierrors.OAuthErrorResponse
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.OAuthClientManagementRateLimitError
 		if errors.As(err, &e) {
 			// handle error
 			log.Fatal(e.Error())
@@ -483,13 +537,13 @@ func main() {
 		pipeshub.WithInstanceURL("https://app.pipeshub.com"),
 	)
 
-	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
-		Email: pipeshub.Pointer("user@example.com"),
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.InitAuthResponse != nil {
+	if res.OAuthTokenResponse != nil {
 		// handle response
 	}
 }
@@ -516,13 +570,13 @@ func main() {
 		pipeshub.WithServerURL("https://https://app.pipeshub.com"),
 	)
 
-	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
-		Email: pipeshub.Pointer("user@example.com"),
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.InitAuthResponse != nil {
+	if res.OAuthTokenResponse != nil {
 		// handle response
 	}
 }

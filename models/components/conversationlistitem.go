@@ -75,19 +75,19 @@ func (m *ModelInfo) GetChatMode() *string {
 	return m.ChatMode
 }
 
-type SharedWithAccessLevel string
+type ConversationListItemSharedWithAccessLevel string
 
 const (
-	SharedWithAccessLevelRead  SharedWithAccessLevel = "read"
-	SharedWithAccessLevelWrite SharedWithAccessLevel = "write"
+	ConversationListItemSharedWithAccessLevelRead  ConversationListItemSharedWithAccessLevel = "read"
+	ConversationListItemSharedWithAccessLevelWrite ConversationListItemSharedWithAccessLevel = "write"
 )
 
-func (e SharedWithAccessLevel) ToPointer() *SharedWithAccessLevel {
+func (e ConversationListItemSharedWithAccessLevel) ToPointer() *ConversationListItemSharedWithAccessLevel {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *SharedWithAccessLevel) IsExact() bool {
+func (e *ConversationListItemSharedWithAccessLevel) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "read", "write":
@@ -97,26 +97,26 @@ func (e *SharedWithAccessLevel) IsExact() bool {
 	return false
 }
 
-type SharedWith struct {
-	UserID      *string                `json:"userId,omitzero"`
-	AccessLevel *SharedWithAccessLevel `json:"accessLevel,omitzero"`
+type ConversationListItemSharedWith struct {
+	UserID      *string                                    `json:"userId,omitzero"`
+	AccessLevel *ConversationListItemSharedWithAccessLevel `json:"accessLevel,omitzero"`
 }
 
-func (s *SharedWith) GetUserID() *string {
-	if s == nil {
+func (c *ConversationListItemSharedWith) GetUserID() *string {
+	if c == nil {
 		return nil
 	}
-	return s.UserID
+	return c.UserID
 }
 
-func (s *SharedWith) GetAccessLevel() *SharedWithAccessLevel {
-	if s == nil {
+func (c *ConversationListItemSharedWith) GetAccessLevel() *ConversationListItemSharedWithAccessLevel {
+	if c == nil {
 		return nil
 	}
-	return s.AccessLevel
+	return c.AccessLevel
 }
 
-type ConversationError struct {
+type ConversationListItemConversationError struct {
 	Message   *string        `json:"message,omitzero"`
 	ErrorType *string        `json:"errorType,omitzero"`
 	Timestamp *time.Time     `json:"timestamp,omitzero"`
@@ -125,53 +125,53 @@ type ConversationError struct {
 	Metadata  map[string]any `json:"metadata,omitzero"`
 }
 
-func (c ConversationError) MarshalJSON() ([]byte, error) {
+func (c ConversationListItemConversationError) MarshalJSON() ([]byte, error) {
 	return utils.MarshalJSON(c, "", false)
 }
 
-func (c *ConversationError) UnmarshalJSON(data []byte) error {
+func (c *ConversationListItemConversationError) UnmarshalJSON(data []byte) error {
 	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *ConversationError) GetMessage() *string {
+func (c *ConversationListItemConversationError) GetMessage() *string {
 	if c == nil {
 		return nil
 	}
 	return c.Message
 }
 
-func (c *ConversationError) GetErrorType() *string {
+func (c *ConversationListItemConversationError) GetErrorType() *string {
 	if c == nil {
 		return nil
 	}
 	return c.ErrorType
 }
 
-func (c *ConversationError) GetTimestamp() *time.Time {
+func (c *ConversationListItemConversationError) GetTimestamp() *time.Time {
 	if c == nil {
 		return nil
 	}
 	return c.Timestamp
 }
 
-func (c *ConversationError) GetMessageID() *string {
+func (c *ConversationListItemConversationError) GetMessageID() *string {
 	if c == nil {
 		return nil
 	}
 	return c.MessageID
 }
 
-func (c *ConversationError) GetStack() *string {
+func (c *ConversationListItemConversationError) GetStack() *string {
 	if c == nil {
 		return nil
 	}
 	return c.Stack
 }
 
-func (c *ConversationError) GetMetadata() map[string]any {
+func (c *ConversationListItemConversationError) GetMetadata() map[string]any {
 	if c == nil {
 		return nil
 	}
@@ -204,18 +204,18 @@ func (e *ConversationListItemAccessLevel) IsExact() bool {
 // `Conversation` but omits `messages` to keep list payloads small.
 // Fetch a single conversation to retrieve its messages.
 type ConversationListItem struct {
-	ID         *string                     `json:"_id,omitzero"`
-	UserID     *string                     `json:"userId,omitzero"`
-	OrgID      *string                     `json:"orgId,omitzero"`
-	Title      *string                     `json:"title,omitzero"`
-	Initiator  *string                     `json:"initiator,omitzero"`
-	Status     *ConversationListItemStatus `json:"status,omitzero"`
-	FailReason *string                     `json:"failReason,omitzero"`
-	ModelInfo  *ModelInfo                  `json:"modelInfo,omitzero"`
-	IsShared   *bool                       `json:"isShared,omitzero"`
-	ShareLink  *string                     `json:"shareLink,omitzero"`
-	SharedWith []SharedWith                `json:"sharedWith,omitzero"`
-	IsArchived *bool                       `json:"isArchived,omitzero"`
+	ID         *string                          `json:"_id,omitzero"`
+	UserID     *string                          `json:"userId,omitzero"`
+	OrgID      *string                          `json:"orgId,omitzero"`
+	Title      *string                          `json:"title,omitzero"`
+	Initiator  *string                          `json:"initiator,omitzero"`
+	Status     *ConversationListItemStatus      `json:"status,omitzero"`
+	FailReason *string                          `json:"failReason,omitzero"`
+	ModelInfo  *ModelInfo                       `json:"modelInfo,omitzero"`
+	IsShared   *bool                            `json:"isShared,omitzero"`
+	ShareLink  *string                          `json:"shareLink,omitzero"`
+	SharedWith []ConversationListItemSharedWith `json:"sharedWith,omitzero"`
+	IsArchived *bool                            `json:"isArchived,omitzero"`
 	// User ID of the last user who archived this row, or `null` after
 	// unarchive cleared the archive state. Absent on rows that have
 	// never been archived.
@@ -223,7 +223,7 @@ type ConversationListItem struct {
 	ArchivedBy         optionalnullable.OptionalNullable[string] `json:"archivedBy,omitzero"`
 	IsDeleted          *bool                                     `json:"isDeleted,omitzero"`
 	DeletedBy          *string                                   `json:"deletedBy,omitzero"`
-	ConversationErrors []ConversationError                       `json:"conversationErrors,omitzero"`
+	ConversationErrors []ConversationListItemConversationError   `json:"conversationErrors,omitzero"`
 	Metadata           map[string]any                            `json:"metadata,omitzero"`
 	LastActivityAt     *int64                                    `json:"lastActivityAt,omitzero"`
 	CreatedAt          *time.Time                                `json:"createdAt,omitzero"`
@@ -313,7 +313,7 @@ func (c *ConversationListItem) GetShareLink() *string {
 	return c.ShareLink
 }
 
-func (c *ConversationListItem) GetSharedWith() []SharedWith {
+func (c *ConversationListItem) GetSharedWith() []ConversationListItemSharedWith {
 	if c == nil {
 		return nil
 	}
@@ -348,7 +348,7 @@ func (c *ConversationListItem) GetDeletedBy() *string {
 	return c.DeletedBy
 }
 
-func (c *ConversationListItem) GetConversationErrors() []ConversationError {
+func (c *ConversationListItem) GetConversationErrors() []ConversationListItemConversationError {
 	if c == nil {
 		return nil
 	}

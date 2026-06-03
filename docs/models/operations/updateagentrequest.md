@@ -1,0 +1,9 @@
+# UpdateAgentRequest
+
+
+## Fields
+
+| Field                                                                          | Type                                                                           | Required                                                                       | Description                                                                    | Example                                                                        |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `AgentKey`                                                                     | *string*                                                                       | :heavy_check_mark:                                                             | Unique agent identifier                                                        | customer-support-agent                                                         |
+| `Body`                                                                         | [components.AgentUpdateRequest](../../models/components/agentupdaterequest.md) | :heavy_check_mark:                                                             | Partial agent configuration fields to update                                   |                                                                                |

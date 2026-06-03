@@ -6,7 +6,7 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
 
-type Error struct {
+type ErrorResponseError struct {
 	// Machine-readable error code. For application errors it takes the form `HTTP_<VARIANT>`
 	// For unhandled runtime errors (e.g. database unavailable) it is `INTERNAL_ERROR`.
 	//
@@ -17,32 +17,32 @@ type Error struct {
 	Metadata map[string]any `json:"metadata,omitzero"`
 }
 
-func (e Error) MarshalJSON() ([]byte, error) {
+func (e ErrorResponseError) MarshalJSON() ([]byte, error) {
 	return utils.MarshalJSON(e, "", false)
 }
 
-func (e *Error) UnmarshalJSON(data []byte) error {
+func (e *ErrorResponseError) UnmarshalJSON(data []byte) error {
 	if err := utils.UnmarshalJSON(data, &e, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (e *Error) GetCode() string {
+func (e *ErrorResponseError) GetCode() string {
 	if e == nil {
 		return ""
 	}
 	return e.Code
 }
 
-func (e *Error) GetMessage() string {
+func (e *ErrorResponseError) GetMessage() string {
 	if e == nil {
 		return ""
 	}
 	return e.Message
 }
 
-func (e *Error) GetMetadata() map[string]any {
+func (e *ErrorResponseError) GetMetadata() map[string]any {
 	if e == nil {
 		return nil
 	}

@@ -29,11 +29,14 @@ type PersistedSemanticSearchCitationMetadata struct {
 	SheetNum          optionalnullable.OptionalNullable[float64]                              `json:"sheetNum,omitzero"`
 	SheetName         optionalnullable.OptionalNullable[string]                               `json:"sheetName,omitzero"`
 	BoundingBox       optionalnullable.OptionalNullable[[]PersistedSemanticSearchBoundingBox] `json:"bounding_box,omitzero"`
-	BlockType         optionalnullable.OptionalNullable[string]                               `json:"blockType,omitzero"`
-	BlockText         optionalnullable.OptionalNullable[string]                               `json:"blockText,omitzero"`
-	Departments       optionalnullable.OptionalNullable[[]string]                             `json:"departments,omitzero"`
-	Languages         optionalnullable.OptionalNullable[[]string]                             `json:"languages,omitzero"`
-	Topics            optionalnullable.OptionalNullable[[]string]                             `json:"topics,omitzero"`
+	// Block type for this citation. Common values: `text`, `image`, `table_row`, `table`,
+	// `record_summary` (whole-record semantic summary chunk).
+	//
+	BlockType   optionalnullable.OptionalNullable[string]   `json:"blockType,omitzero"`
+	BlockText   optionalnullable.OptionalNullable[string]   `json:"blockText,omitzero"`
+	Departments optionalnullable.OptionalNullable[[]string] `json:"departments,omitzero"`
+	Languages   optionalnullable.OptionalNullable[[]string] `json:"languages,omitzero"`
+	Topics      optionalnullable.OptionalNullable[[]string] `json:"topics,omitzero"`
 }
 
 func (p PersistedSemanticSearchCitationMetadata) MarshalJSON() ([]byte, error) {

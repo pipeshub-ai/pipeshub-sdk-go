@@ -18,6 +18,7 @@ import (
 	"time"
 )
 
+// SemanticSearch - Enterprise semantic search across all indexed knowledge with relevance scoring
 type SemanticSearch struct {
 	rootSDK          *Pipeshub
 	sdkConfiguration config.SDKConfiguration

@@ -2,11 +2,13 @@
 
 ## Overview
 
+User authentication including multi-step MFA, password reset, OTP login, and token management
+
 ### Available Operations
 
 * [InitAuth](#initauth) - Initialize authentication session
 * [Authenticate](#authenticate) - Authenticate user with credentials
-* [ResetPasswordWithToken](#resetpasswordwithtoken) - Reset password with email token
+* [RefreshToken](#refreshtoken) - Refresh access token
 * [ResetPassword](#resetpassword) - Reset password
 
 ## InitAuth
@@ -185,34 +187,36 @@ func main() {
 | apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
-## ResetPasswordWithToken
+## RefreshToken
 
-Reset password using a token received via email from the forgot password flow.
+Get a new access token using a valid refresh token.
 
-**Password Requirements:**
+**Usage:**
 
-- Minimum 8 characters
-- At least 1 uppercase letter
-- At least 1 lowercase letter
-- At least 1 number
-- At least 1 special character (#?!@$%^&*-)
+- Pass the refresh token as a Bearer token in the Authorization header
+- Returns a new access token and basic user information
 
-**Security Notes:**
+**Token Lifetimes:**
 
-- Token is single-use and expires after a set time
-- Response body contains a confirmation string in `data`
+- Access token: 24 hours (configurable via `ACCESS_TOKEN_EXPIRY` environment variable)
+- Refresh token: 30 days (configurable via `REFRESH_TOKEN_EXPIRY` environment variable)
+
+**Best Practices:**
+
+- Call this endpoint before the access token expires
+- Store the new access token and continue using it for authenticated requests
+- If refresh fails with 401, redirect user to login flow
 
 
 ### Example Usage
 
-<!-- UsageSnippet language="go" operationID="resetPasswordWithToken" method="post" path="/userAccount/password/reset/token" -->
+<!-- UsageSnippet language="go" operationID="refreshToken" method="post" path="/userAccount/refresh/token" -->
 ```go
 package main
 
 import(
 	"context"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 	"os"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 	"log"
@@ -223,15 +227,13 @@ func main() {
 
     s := pipeshub.New()
 
-    res, err := s.UserAccount.ResetPasswordWithToken(ctx, components.TokenPasswordResetRequest{
-        Password: "H9GEHoL829GXj06",
-    }, operations.ResetPasswordWithTokenSecurity{
+    res, err := s.UserAccount.RefreshToken(ctx, operations.RefreshTokenSecurity{
         ScopedToken: os.Getenv("PIPESHUB_SCOPED_TOKEN"),
     })
     if err != nil {
         log.Fatal(err)
     }
-    if res.DataStringResponse != nil {
+    if res.RefreshTokenResponse != nil {
         // handle response
     }
 }
@@ -239,16 +241,15 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                                              | Type                                                                                                   | Required                                                                                               | Description                                                                                            |
-| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `ctx`                                                                                                  | [context.Context](https://pkg.go.dev/context#Context)                                                  | :heavy_check_mark:                                                                                     | The context to use for the request.                                                                    |
-| `request`                                                                                              | [components.TokenPasswordResetRequest](../../models/components/tokenpasswordresetrequest.md)           | :heavy_check_mark:                                                                                     | The request object to use for the request.                                                             |
-| `security`                                                                                             | [operations.ResetPasswordWithTokenSecurity](../../models/operations/resetpasswordwithtokensecurity.md) | :heavy_check_mark:                                                                                     | The security requirements to use for the request.                                                      |
-| `opts`                                                                                                 | [][operations.Option](../../models/operations/option.md)                                               | :heavy_minus_sign:                                                                                     | The options for this request.                                                                          |
+| Parameter                                                                          | Type                                                                               | Required                                                                           | Description                                                                        |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `ctx`                                                                              | [context.Context](https://pkg.go.dev/context#Context)                              | :heavy_check_mark:                                                                 | The context to use for the request.                                                |
+| `security`                                                                         | [operations.RefreshTokenSecurity](../../models/operations/refreshtokensecurity.md) | :heavy_check_mark:                                                                 | The security requirements to use for the request.                                  |
+| `opts`                                                                             | [][operations.Option](../../models/operations/option.md)                           | :heavy_minus_sign:                                                                 | The options for this request.                                                      |
 
 ### Response
 
-**[*operations.ResetPasswordWithTokenResponse](../../models/operations/resetpasswordwithtokenresponse.md), error**
+**[*operations.RefreshTokenResponse](../../models/operations/refreshtokenresponse.md), error**
 
 ### Errors
 

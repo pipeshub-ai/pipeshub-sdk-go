@@ -68,21 +68,21 @@ func (e *GetConversationByIDSortOrderEnum) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// QueryParamMessageType - Filter messages by type
-type QueryParamMessageType string
+// GetConversationByIDQueryParamMessageType - Filter messages by type
+type GetConversationByIDQueryParamMessageType string
 
 const (
-	QueryParamMessageTypeUserQuery   QueryParamMessageType = "user_query"
-	QueryParamMessageTypeBotResponse QueryParamMessageType = "bot_response"
-	QueryParamMessageTypeError       QueryParamMessageType = "error"
-	QueryParamMessageTypeFeedback    QueryParamMessageType = "feedback"
-	QueryParamMessageTypeSystem      QueryParamMessageType = "system"
+	GetConversationByIDQueryParamMessageTypeUserQuery   GetConversationByIDQueryParamMessageType = "user_query"
+	GetConversationByIDQueryParamMessageTypeBotResponse GetConversationByIDQueryParamMessageType = "bot_response"
+	GetConversationByIDQueryParamMessageTypeError       GetConversationByIDQueryParamMessageType = "error"
+	GetConversationByIDQueryParamMessageTypeFeedback    GetConversationByIDQueryParamMessageType = "feedback"
+	GetConversationByIDQueryParamMessageTypeSystem      GetConversationByIDQueryParamMessageType = "system"
 )
 
-func (e QueryParamMessageType) ToPointer() *QueryParamMessageType {
+func (e GetConversationByIDQueryParamMessageType) ToPointer() *GetConversationByIDQueryParamMessageType {
 	return &e
 }
-func (e *QueryParamMessageType) UnmarshalJSON(data []byte) error {
+func (e *GetConversationByIDQueryParamMessageType) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -97,10 +97,10 @@ func (e *QueryParamMessageType) UnmarshalJSON(data []byte) error {
 	case "feedback":
 		fallthrough
 	case "system":
-		*e = QueryParamMessageType(v)
+		*e = GetConversationByIDQueryParamMessageType(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for QueryParamMessageType: %v", v)
+		return fmt.Errorf("invalid value for GetConversationByIDQueryParamMessageType: %v", v)
 	}
 }
 
@@ -124,7 +124,7 @@ type GetConversationByIDRequest struct {
 	// Filter by shared status of the conversation
 	Shared *bool `queryParam:"style=form,explode=true,name=shared"`
 	// Filter messages by type
-	MessageType *QueryParamMessageType `queryParam:"style=form,explode=true,name=messageType"`
+	MessageType *GetConversationByIDQueryParamMessageType `queryParam:"style=form,explode=true,name=messageType"`
 }
 
 func (g GetConversationByIDRequest) MarshalJSON() ([]byte, error) {
@@ -201,7 +201,7 @@ func (g *GetConversationByIDRequest) GetShared() *bool {
 	return g.Shared
 }
 
-func (g *GetConversationByIDRequest) GetMessageType() *QueryParamMessageType {
+func (g *GetConversationByIDRequest) GetMessageType() *GetConversationByIDQueryParamMessageType {
 	if g == nil {
 		return nil
 	}
@@ -516,7 +516,7 @@ type GetConversationByIDMessage struct {
 	Content       *string                                `json:"content,omitzero"`
 	ContentFormat *GetConversationByIDContentFormat      `json:"contentFormat,omitzero"`
 	// AI confidence in the answer. Present only on `bot_response` messages, and only when the model emitted a trailing confidence block.
-	Confidence *Confidence `json:"confidence,omitzero"`
+	Confidence optionalnullable.OptionalNullable[Confidence] `json:"confidence,omitzero"`
 	// Citations attached to this message. `citationData` is the populated citation document.
 	Citations         []Citation                    `json:"citations,omitzero"`
 	FollowUpQuestions []components.FollowUpQuestion `json:"followUpQuestions,omitzero"`
@@ -526,9 +526,13 @@ type GetConversationByIDMessage struct {
 	// AI model configuration recorded against a conversation or message.
 	ModelInfo      *components.ConversationModelInfo  `json:"modelInfo,omitzero"`
 	AppliedFilters *GetConversationByIDAppliedFilters `json:"appliedFilters,omitzero"`
-	Metadata       *GetConversationByIDMetadata       `json:"metadata,omitzero"`
-	CreatedAt      *time.Time                         `json:"createdAt,omitzero"`
-	UpdatedAt      *time.Time                         `json:"updatedAt,omitzero"`
+	// Files uploaded for this message turn (see
+	// `POST /conversations/attachments/upload`).
+	//
+	Attachments []components.ChatAttachmentRef `json:"attachments,omitzero"`
+	Metadata    *GetConversationByIDMetadata   `json:"metadata,omitzero"`
+	CreatedAt   *time.Time                     `json:"createdAt,omitzero"`
+	UpdatedAt   *time.Time                     `json:"updatedAt,omitzero"`
 }
 
 func (g GetConversationByIDMessage) MarshalJSON() ([]byte, error) {
@@ -570,7 +574,7 @@ func (g *GetConversationByIDMessage) GetContentFormat() *GetConversationByIDCont
 	return g.ContentFormat
 }
 
-func (g *GetConversationByIDMessage) GetConfidence() *Confidence {
+func (g *GetConversationByIDMessage) GetConfidence() optionalnullable.OptionalNullable[Confidence] {
 	if g == nil {
 		return nil
 	}
@@ -617,6 +621,13 @@ func (g *GetConversationByIDMessage) GetAppliedFilters() *GetConversationByIDApp
 		return nil
 	}
 	return g.AppliedFilters
+}
+
+func (g *GetConversationByIDMessage) GetAttachments() []components.ChatAttachmentRef {
+	if g == nil {
+		return nil
+	}
+	return g.Attachments
 }
 
 func (g *GetConversationByIDMessage) GetMetadata() *GetConversationByIDMetadata {

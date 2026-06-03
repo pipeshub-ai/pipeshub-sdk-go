@@ -2,6 +2,8 @@
 
 ## Overview
 
+Manage individual AI model providers - add, update, delete, and set defaults.
+
 ### Available Operations
 
 * [GetAvailableModelsByType](#getavailablemodelsbytype) - Get available models by type

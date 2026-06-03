@@ -252,9 +252,13 @@ type UpdateConversationTitleMessage struct {
 	// AI model configuration recorded against a conversation or message.
 	ModelInfo      *components.ConversationModelInfo      `json:"modelInfo,omitzero"`
 	AppliedFilters *UpdateConversationTitleAppliedFilters `json:"appliedFilters,omitzero"`
-	Metadata       *UpdateConversationTitleMetadata       `json:"metadata,omitzero"`
-	CreatedAt      time.Time                              `json:"createdAt"`
-	UpdatedAt      time.Time                              `json:"updatedAt"`
+	// Files uploaded for this message turn (see
+	// `POST /conversations/attachments/upload`).
+	//
+	Attachments []components.ChatAttachmentRef   `json:"attachments,omitzero"`
+	Metadata    *UpdateConversationTitleMetadata `json:"metadata,omitzero"`
+	CreatedAt   time.Time                        `json:"createdAt"`
+	UpdatedAt   time.Time                        `json:"updatedAt"`
 }
 
 func (u UpdateConversationTitleMessage) MarshalJSON() ([]byte, error) {
@@ -343,6 +347,13 @@ func (u *UpdateConversationTitleMessage) GetAppliedFilters() *UpdateConversation
 		return nil
 	}
 	return u.AppliedFilters
+}
+
+func (u *UpdateConversationTitleMessage) GetAttachments() []components.ChatAttachmentRef {
+	if u == nil {
+		return nil
+	}
+	return u.Attachments
 }
 
 func (u *UpdateConversationTitleMessage) GetMetadata() *UpdateConversationTitleMetadata {

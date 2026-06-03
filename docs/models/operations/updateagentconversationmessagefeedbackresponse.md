@@ -1,0 +1,9 @@
+# UpdateAgentConversationMessageFeedbackResponse
+
+
+## Fields
+
+| Field                                                                                                 | Type                                                                                                  | Required                                                                                              | Description                                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                            | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                    | :heavy_check_mark:                                                                                    | N/A                                                                                                   |
+| `MessageFeedbackUpdateResponse`                                                                       | [*components.MessageFeedbackUpdateResponse](../../models/components/messagefeedbackupdateresponse.md) | :heavy_minus_sign:                                                                                    | Feedback stored                                                                                       |

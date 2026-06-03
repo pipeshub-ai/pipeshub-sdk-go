@@ -1,0 +1,9 @@
+# RevokeAllOAuthAppTokensResponse
+
+
+## Fields
+
+| Field                                                                                                             | Type                                                                                                              | Required                                                                                                          | Description                                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                        | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                                | :heavy_check_mark:                                                                                                | N/A                                                                                                               |
+| `Object`                                                                                                          | [*operations.RevokeAllOAuthAppTokensResponseBody](../../models/operations/revokealloauthapptokensresponsebody.md) | :heavy_minus_sign:                                                                                                | All tokens revoked                                                                                                |

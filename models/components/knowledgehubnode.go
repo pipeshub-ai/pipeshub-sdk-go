@@ -2,7 +2,7 @@
 
 package components
 
-// NodeType - Type of the node.
+// NodeType - Type of the node (app, recordGroup, folder, or record).
 type NodeType string
 
 const (
@@ -85,7 +85,7 @@ type KnowledgeHubNode struct {
 	ID string `json:"id"`
 	// Display name of the node.
 	Name string `json:"name"`
-	// Type of the node.
+	// Type of the node (app, recordGroup, folder, or record).
 	NodeType NodeType `json:"nodeType"`
 	// Parent node ID, or `null` at the root browse level.
 	ParentID *string `json:"parentId"`

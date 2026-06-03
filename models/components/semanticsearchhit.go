@@ -20,8 +20,11 @@ type SemanticSearchHit struct {
 	Metadata        *SemanticSearchHitMetadata                `json:"metadata,omitzero"`
 	Content         optionalnullable.OptionalNullable[string] `json:"content,omitzero"`
 	VirtualRecordID optionalnullable.OptionalNullable[string] `json:"virtual_record_id,omitzero"`
-	BlockType       optionalnullable.OptionalNullable[string] `json:"block_type,omitzero"`
-	BlockIndex      optionalnullable.OptionalNullable[int64]  `json:"block_index,omitzero"`
+	// Block type for this hit. Common values: `text`, `image`, `table_row`, `table`,
+	// `record_summary` (whole-record semantic summary — `block_index` is `null` for these hits).
+	//
+	BlockType  optionalnullable.OptionalNullable[string] `json:"block_type,omitzero"`
+	BlockIndex optionalnullable.OptionalNullable[int64]  `json:"block_index,omitzero"`
 }
 
 func (s SemanticSearchHit) MarshalJSON() ([]byte, error) {

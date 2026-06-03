@@ -2,6 +2,8 @@
 
 ## Overview
 
+AI-powered conversational chat management with citations and follow-up questions
+
 ### Available Operations
 
 * [StreamChat](#streamchat) - Create conversation with streaming response
@@ -100,7 +102,7 @@ func main() {
         ModelKey: pipeshub.Pointer("gpt-4-turbo"),
         ModelName: pipeshub.Pointer("GPT-4 Turbo"),
         ModelFriendlyName: pipeshub.Pointer("GPT-4 Turbo"),
-        ChatMode: pipeshub.Pointer("balanced"),
+        ChatMode: components.CreateConversationRequestChatModeWebSearch.ToPointer(),
         Timezone: pipeshub.Pointer("America/New_York"),
         CurrentTime: types.MustNewTimeFromString("2026-04-12T16:00:00+05:30"),
         Tools: []string{
@@ -922,19 +924,15 @@ Append a feedback entry to a bot-response message.
 **Overview**
 
 Feedback helps improve AI response quality over time. You can record an
-overall helpfulness signal, per-aspect ratings, issue categories, and
-free-text comments. Each call appends a new entry to the message;
-previous entries are preserved.
+overall helpfulness signal, issue categories, and free-text comments.
+Each call appends a new entry to the message; previous entries are
+preserved.
 
 **Feedback options**
 
 - `isHelpful` — overall thumbs up/down.
-- `ratings` — 1–5 scores keyed by an aspect name you choose
-  (e.g. `accuracy`, `relevance`, `completeness`, `clarity`).
 - `categories` — issue or positive categories from a fixed list.
-- `comments` — free-text `positive`, `negative`, and `suggestions`.
-- `metrics` — optional client-side telemetry
-  (`userInteractionTime`, `feedbackSessionId`).
+- `comments` — free-text `positive` and `negative`.
 
 **Restrictions**
 
@@ -953,7 +951,6 @@ import(
 	"os"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 	"log"
 )
 
@@ -966,11 +963,11 @@ func main() {
         }),
     )
 
-    res, err := s.Conversations.UpdateMessageFeedback(ctx, "<value>", "<value>", operations.UpdateMessageFeedbackRequestBody{})
+    res, err := s.Conversations.UpdateMessageFeedback(ctx, "<value>", "<value>", components.MessageFeedbackSubmitRequest{})
     if err != nil {
         log.Fatal(err)
     }
-    if res.Object != nil {
+    if res.MessageFeedbackUpdateResponse != nil {
         // handle response
     }
 }
@@ -978,13 +975,13 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                                                  | Type                                                                                                       | Required                                                                                                   | Description                                                                                                |
-| ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `ctx`                                                                                                      | [context.Context](https://pkg.go.dev/context#Context)                                                      | :heavy_check_mark:                                                                                         | The context to use for the request.                                                                        |
-| `conversationID`                                                                                           | *string*                                                                                                   | :heavy_check_mark:                                                                                         | Unique conversation identifier.                                                                            |
-| `messageID`                                                                                                | *string*                                                                                                   | :heavy_check_mark:                                                                                         | Identifier of the bot-response message being rated.                                                        |
-| `body`                                                                                                     | [operations.UpdateMessageFeedbackRequestBody](../../models/operations/updatemessagefeedbackrequestbody.md) | :heavy_check_mark:                                                                                         | Request payload                                                                                            |
-| `opts`                                                                                                     | [][operations.Option](../../models/operations/option.md)                                                   | :heavy_minus_sign:                                                                                         | The options for this request.                                                                              |
+| Parameter                                                                                          | Type                                                                                               | Required                                                                                           | Description                                                                                        |
+| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                              | [context.Context](https://pkg.go.dev/context#Context)                                              | :heavy_check_mark:                                                                                 | The context to use for the request.                                                                |
+| `conversationID`                                                                                   | *string*                                                                                           | :heavy_check_mark:                                                                                 | Unique conversation identifier.                                                                    |
+| `messageID`                                                                                        | *string*                                                                                           | :heavy_check_mark:                                                                                 | Identifier of the bot-response message being rated.                                                |
+| `body`                                                                                             | [components.MessageFeedbackSubmitRequest](../../models/components/messagefeedbacksubmitrequest.md) | :heavy_check_mark:                                                                                 | Request payload                                                                                    |
+| `opts`                                                                                             | [][operations.Option](../../models/operations/option.md)                                           | :heavy_minus_sign:                                                                                 | The options for this request.                                                                      |
 
 ### Response
 

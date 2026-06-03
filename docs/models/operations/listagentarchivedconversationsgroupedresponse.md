@@ -1,0 +1,9 @@
+# ListAgentArchivedConversationsGroupedResponse
+
+
+## Fields
+
+| Field                                                                                             | Type                                                                                              | Required                                                                                          | Description                                                                                       |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                        | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                | :heavy_check_mark:                                                                                | N/A                                                                                               |
+| `AgentArchivedGroupsResponse`                                                                     | [*components.AgentArchivedGroupsResponse](../../models/components/agentarchivedgroupsresponse.md) | :heavy_minus_sign:                                                                                | Grouped archived conversations                                                                    |

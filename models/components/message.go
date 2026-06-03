@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// MessageType - Type of message:
+// MessageMessageType - Type of message:
 // <ul>
 // <li><code>user_query</code> - User's question or input</li>
 // <li><code>bot_response</code> - AI-generated response</li>
@@ -15,22 +15,22 @@ import (
 // <li><code>feedback</code> - User feedback on a response</li>
 // <li><code>system</code> - System notification or status</li>
 // </ul>
-type MessageType string
+type MessageMessageType string
 
 const (
-	MessageTypeUserQuery   MessageType = "user_query"
-	MessageTypeBotResponse MessageType = "bot_response"
-	MessageTypeError       MessageType = "error"
-	MessageTypeFeedback    MessageType = "feedback"
-	MessageTypeSystem      MessageType = "system"
+	MessageMessageTypeUserQuery   MessageMessageType = "user_query"
+	MessageMessageTypeBotResponse MessageMessageType = "bot_response"
+	MessageMessageTypeError       MessageMessageType = "error"
+	MessageMessageTypeFeedback    MessageMessageType = "feedback"
+	MessageMessageTypeSystem      MessageMessageType = "system"
 )
 
-func (e MessageType) ToPointer() *MessageType {
+func (e MessageMessageType) ToPointer() *MessageMessageType {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *MessageType) IsExact() bool {
+func (e *MessageMessageType) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "user_query", "bot_response", "error", "feedback", "system":
@@ -40,21 +40,21 @@ func (e *MessageType) IsExact() bool {
 	return false
 }
 
-// ContentFormat - Format of the content for rendering
-type ContentFormat string
+// MessageContentFormat - Format of the content for rendering
+type MessageContentFormat string
 
 const (
-	ContentFormatMarkdown ContentFormat = "MARKDOWN"
-	ContentFormatJSON     ContentFormat = "JSON"
-	ContentFormatHTML     ContentFormat = "HTML"
+	MessageContentFormatMarkdown MessageContentFormat = "MARKDOWN"
+	MessageContentFormatJSON     MessageContentFormat = "JSON"
+	MessageContentFormatHTML     MessageContentFormat = "HTML"
 )
 
-func (e ContentFormat) ToPointer() *ContentFormat {
+func (e MessageContentFormat) ToPointer() *MessageContentFormat {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *ContentFormat) IsExact() bool {
+func (e *MessageContentFormat) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "MARKDOWN", "JSON", "HTML":
@@ -64,7 +64,7 @@ func (e *ContentFormat) IsExact() bool {
 	return false
 }
 
-type Metadata struct {
+type MessageMetadata struct {
 	// Time taken to generate response in milliseconds
 	ProcessingTimeMs *float64 `json:"processingTimeMs,omitzero"`
 	// Version of the AI model used
@@ -75,35 +75,35 @@ type Metadata struct {
 	Reason *string `json:"reason,omitzero"`
 }
 
-func (m *Metadata) GetProcessingTimeMs() *float64 {
+func (m *MessageMetadata) GetProcessingTimeMs() *float64 {
 	if m == nil {
 		return nil
 	}
 	return m.ProcessingTimeMs
 }
 
-func (m *Metadata) GetModelVersion() *string {
+func (m *MessageMetadata) GetModelVersion() *string {
 	if m == nil {
 		return nil
 	}
 	return m.ModelVersion
 }
 
-func (m *Metadata) GetAiTransactionID() *string {
+func (m *MessageMetadata) GetAiTransactionID() *string {
 	if m == nil {
 		return nil
 	}
 	return m.AiTransactionID
 }
 
-func (m *Metadata) GetReason() *string {
+func (m *MessageMetadata) GetReason() *string {
 	if m == nil {
 		return nil
 	}
 	return m.Reason
 }
 
-type ReferenceDatum struct {
+type MessageReferenceDatum struct {
 	// Display name shown to the user.
 	Name *string `json:"name,omitzero"`
 	// Technical identifier (numeric ID, UUID, etc.).
@@ -122,57 +122,57 @@ type ReferenceDatum struct {
 	Metadata map[string]string `json:"metadata,omitzero"`
 }
 
-func (r ReferenceDatum) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(r, "", false)
+func (m MessageReferenceDatum) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(m, "", false)
 }
 
-func (r *ReferenceDatum) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
+func (m *MessageReferenceDatum) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &m, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ReferenceDatum) GetName() *string {
-	if r == nil {
+func (m *MessageReferenceDatum) GetName() *string {
+	if m == nil {
 		return nil
 	}
-	return r.Name
+	return m.Name
 }
 
-func (r *ReferenceDatum) GetID() *string {
-	if r == nil {
+func (m *MessageReferenceDatum) GetID() *string {
+	if m == nil {
 		return nil
 	}
-	return r.ID
+	return m.ID
 }
 
-func (r *ReferenceDatum) GetType() *string {
-	if r == nil {
+func (m *MessageReferenceDatum) GetType() *string {
+	if m == nil {
 		return nil
 	}
-	return r.Type
+	return m.Type
 }
 
-func (r *ReferenceDatum) GetApp() *string {
-	if r == nil {
+func (m *MessageReferenceDatum) GetApp() *string {
+	if m == nil {
 		return nil
 	}
-	return r.App
+	return m.App
 }
 
-func (r *ReferenceDatum) GetWebURL() *string {
-	if r == nil {
+func (m *MessageReferenceDatum) GetWebURL() *string {
+	if m == nil {
 		return nil
 	}
-	return r.WebURL
+	return m.WebURL
 }
 
-func (r *ReferenceDatum) GetMetadata() map[string]string {
-	if r == nil {
+func (m *MessageReferenceDatum) GetMetadata() map[string]string {
+	if m == nil {
 		return nil
 	}
-	return r.Metadata
+	return m.Metadata
 }
 
 // Message - A single message within a conversation. Messages can be user queries,
@@ -189,11 +189,11 @@ type Message struct {
 	// <li><code>system</code> - System notification or status</li>
 	// </ul>
 	//
-	MessageType *MessageType `json:"messageType,omitzero"`
+	MessageType *MessageMessageType `json:"messageType,omitzero"`
 	// The message text content
 	Content *string `json:"content,omitzero"`
 	// Format of the content for rendering
-	ContentFormat *ContentFormat `default:"MARKDOWN" json:"contentFormat"`
+	ContentFormat *MessageContentFormat `default:"MARKDOWN" json:"contentFormat"`
 	// References to source documents used in the response
 	Citations []CitationReference `json:"citations,omitzero"`
 	// AI's confidence level in the response
@@ -202,7 +202,7 @@ type Message struct {
 	FollowUpQuestions []FollowUpQuestion `json:"followUpQuestions,omitzero"`
 	// User feedback on this message
 	Feedback []MessageFeedback `json:"feedback,omitzero"`
-	Metadata *Metadata         `json:"metadata,omitzero"`
+	Metadata *MessageMetadata  `json:"metadata,omitzero"`
 	// AI model configuration recorded against a conversation or message.
 	ModelInfo *ConversationModelInfo `json:"modelInfo,omitzero"`
 	// Rich filter state selected by the user, used for display and persistence only.
@@ -213,11 +213,13 @@ type Message struct {
 	// Reference identifiers extracted from tool responses, used to scope
 	// follow-up queries (for example Jira project keys or record IDs).
 	//
-	ReferenceData []ReferenceDatum `json:"referenceData,omitzero"`
-	// Files or media attached to this message
-	Attachments []map[string]any `json:"attachments,omitzero"`
-	CreatedAt   *time.Time       `json:"createdAt,omitzero"`
-	UpdatedAt   *time.Time       `json:"updatedAt,omitzero"`
+	ReferenceData []MessageReferenceDatum `json:"referenceData,omitzero"`
+	// Files uploaded for this message turn (see
+	// `POST /conversations/attachments/upload`).
+	//
+	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
+	CreatedAt   *time.Time          `json:"createdAt,omitzero"`
+	UpdatedAt   *time.Time          `json:"updatedAt,omitzero"`
 }
 
 func (m Message) MarshalJSON() ([]byte, error) {
@@ -238,7 +240,7 @@ func (m *Message) GetID() *string {
 	return m.ID
 }
 
-func (m *Message) GetMessageType() *MessageType {
+func (m *Message) GetMessageType() *MessageMessageType {
 	if m == nil {
 		return nil
 	}
@@ -252,7 +254,7 @@ func (m *Message) GetContent() *string {
 	return m.Content
 }
 
-func (m *Message) GetContentFormat() *ContentFormat {
+func (m *Message) GetContentFormat() *MessageContentFormat {
 	if m == nil {
 		return nil
 	}
@@ -287,7 +289,7 @@ func (m *Message) GetFeedback() []MessageFeedback {
 	return m.Feedback
 }
 
-func (m *Message) GetMetadata() *Metadata {
+func (m *Message) GetMetadata() *MessageMetadata {
 	if m == nil {
 		return nil
 	}
@@ -308,14 +310,14 @@ func (m *Message) GetAppliedFilters() *AppliedFilters {
 	return m.AppliedFilters
 }
 
-func (m *Message) GetReferenceData() []ReferenceDatum {
+func (m *Message) GetReferenceData() []MessageReferenceDatum {
 	if m == nil {
 		return nil
 	}
 	return m.ReferenceData
 }
 
-func (m *Message) GetAttachments() []map[string]any {
+func (m *Message) GetAttachments() []ChatAttachmentRef {
 	if m == nil {
 		return nil
 	}

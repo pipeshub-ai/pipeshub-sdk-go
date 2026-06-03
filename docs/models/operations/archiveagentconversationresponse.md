@@ -1,0 +1,9 @@
+# ArchiveAgentConversationResponse
+
+
+## Fields
+
+| Field                                                                                                       | Type                                                                                                        | Required                                                                                                    | Description                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                          | :heavy_check_mark:                                                                                          | N/A                                                                                                         |
+| `AgentConversationArchiveResponse`                                                                          | [*components.AgentConversationArchiveResponse](../../models/components/agentconversationarchiveresponse.md) | :heavy_minus_sign:                                                                                          | Conversation archived                                                                                       |

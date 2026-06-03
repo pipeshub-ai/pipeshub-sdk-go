@@ -17,6 +17,7 @@ import (
 	"net/url"
 )
 
+// KnowledgeHub - Unified browse API for root and child nodes (apps, record groups, folders, records) with filtering and search
 type KnowledgeHub struct {
 	rootSDK          *Pipeshub
 	sdkConfiguration config.SDKConfiguration

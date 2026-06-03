@@ -14,13 +14,13 @@ func main() {
 
 	s := pipeshub.New()
 
-	res, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{
-		Email: pipeshub.Pointer("user@example.com"),
+	res, err := s.OAuthProvider.OauthToken(ctx, components.OAuthTokenRequest{
+		GrantType: components.GrantTypeClientCredentials,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.InitAuthResponse != nil {
+	if res.OAuthTokenResponse != nil {
 		// handle response
 	}
 }

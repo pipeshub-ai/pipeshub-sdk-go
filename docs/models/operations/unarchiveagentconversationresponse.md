@@ -1,0 +1,9 @@
+# UnarchiveAgentConversationResponse
+
+
+## Fields
+
+| Field                                                                                                           | Type                                                                                                            | Required                                                                                                        | Description                                                                                                     |
+| --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                              | :heavy_check_mark:                                                                                              | N/A                                                                                                             |
+| `AgentConversationUnarchiveResponse`                                                                            | [*components.AgentConversationUnarchiveResponse](../../models/components/agentconversationunarchiveresponse.md) | :heavy_minus_sign:                                                                                              | Conversation unarchived                                                                                         |

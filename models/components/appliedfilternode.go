@@ -8,7 +8,7 @@ type AppliedFilterNode struct {
 	ID *string `json:"id,omitzero"`
 	// Display name of the filter node
 	Name *string `json:"name,omitzero"`
-	// Type of the node (e.g. app, kb)
+	// Type of the node (e.g. app, recordGroup, folder, record)
 	NodeType *string `json:"nodeType,omitzero"`
 	// Connector identifier associated with this node
 	Connector *string `json:"connector,omitzero"`

@@ -269,17 +269,20 @@ func (u PointID) MarshalJSON() ([]byte, error) {
 // SemanticSearchHitMetadata - Per-hit metadata after retrieval enrichment (record + vector context).
 // Listed fields are the documented contract; Qdrant or pipeline updates may add more keys over time—extend this schema when new stable fields appear.
 type SemanticSearchHitMetadata struct {
-	OrgID             optionalnullable.OptionalNullable[string]                      `json:"orgId,omitzero"`
-	RecordID          optionalnullable.OptionalNullable[string]                      `json:"recordId,omitzero"`
-	VirtualRecordID   optionalnullable.OptionalNullable[string]                      `json:"virtualRecordId,omitzero"`
-	RecordName        optionalnullable.OptionalNullable[string]                      `json:"recordName,omitzero"`
-	RecordType        optionalnullable.OptionalNullable[string]                      `json:"recordType,omitzero"`
-	RecordVersion     optionalnullable.OptionalNullable[RecordVersion]               `json:"recordVersion,omitzero"`
-	Origin            optionalnullable.OptionalNullable[string]                      `json:"origin,omitzero"`
-	Connector         optionalnullable.OptionalNullable[string]                      `json:"connector,omitzero"`
-	ConnectorID       optionalnullable.OptionalNullable[string]                      `json:"connectorId,omitzero"`
-	ConnectorName     optionalnullable.OptionalNullable[string]                      `json:"connectorName,omitzero"`
-	BlockText         optionalnullable.OptionalNullable[string]                      `json:"blockText,omitzero"`
+	OrgID           optionalnullable.OptionalNullable[string]        `json:"orgId,omitzero"`
+	RecordID        optionalnullable.OptionalNullable[string]        `json:"recordId,omitzero"`
+	VirtualRecordID optionalnullable.OptionalNullable[string]        `json:"virtualRecordId,omitzero"`
+	RecordName      optionalnullable.OptionalNullable[string]        `json:"recordName,omitzero"`
+	RecordType      optionalnullable.OptionalNullable[string]        `json:"recordType,omitzero"`
+	RecordVersion   optionalnullable.OptionalNullable[RecordVersion] `json:"recordVersion,omitzero"`
+	Origin          optionalnullable.OptionalNullable[string]        `json:"origin,omitzero"`
+	Connector       optionalnullable.OptionalNullable[string]        `json:"connector,omitzero"`
+	ConnectorID     optionalnullable.OptionalNullable[string]        `json:"connectorId,omitzero"`
+	ConnectorName   optionalnullable.OptionalNullable[string]        `json:"connectorName,omitzero"`
+	BlockText       optionalnullable.OptionalNullable[string]        `json:"blockText,omitzero"`
+	// Block type for this hit. Common values: `text`, `image`, `table_row`, `table`,
+	// `record_summary` (whole-record semantic summary chunk — no block index).
+	//
 	BlockType         optionalnullable.OptionalNullable[string]                      `json:"blockType,omitzero"`
 	BoundingBox       optionalnullable.OptionalNullable[[]SemanticSearchBoundingBox] `json:"bounding_box,omitzero"`
 	PageNum           optionalnullable.OptionalNullable[[]*int64]                    `json:"pageNum,omitzero"`
@@ -306,6 +309,11 @@ type SemanticSearchHitMetadata struct {
 	BlockID           optionalnullable.OptionalNullable[string]                      `json:"blockId,omitzero"`
 	IsBlock           optionalnullable.OptionalNullable[bool]                        `json:"isBlock,omitzero"`
 	IsBlockGroup      optionalnullable.OptionalNullable[bool]                        `json:"isBlockGroup,omitzero"`
+	// Set to `true` by the indexing pipeline when this vector chunk represents a
+	// whole-record semantic summary rather than an individual block. When true,
+	// `blockIndex` is absent and `block_type` on the parent hit is `record_summary`.
+	//
+	IsRecordSummary optionalnullable.OptionalNullable[bool] `json:"isRecordSummary,omitzero"`
 	// Knowledge base id merged from graph record during retrieval (when present).
 	KbID optionalnullable.OptionalNullable[string] `json:"kbId,omitzero"`
 	// Qdrant point identifier attached during vector lookup (shape varies by deployment).
@@ -580,6 +588,13 @@ func (s *SemanticSearchHitMetadata) GetIsBlockGroup() optionalnullable.OptionalN
 		return nil
 	}
 	return s.IsBlockGroup
+}
+
+func (s *SemanticSearchHitMetadata) GetIsRecordSummary() optionalnullable.OptionalNullable[bool] {
+	if s == nil {
+		return nil
+	}
+	return s.IsRecordSummary
 }
 
 func (s *SemanticSearchHitMetadata) GetKbID() optionalnullable.OptionalNullable[string] {

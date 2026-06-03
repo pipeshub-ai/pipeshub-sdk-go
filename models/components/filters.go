@@ -13,9 +13,17 @@ import (
 // `{ "apps": [], "kb": [] }` on an agent stream means **no** knowledge sources for that
 // turn (it is not “full org default”).
 type Filters struct {
-	// Filter by application connector instance IDs
+	// Connector instance ids to scope retrieval for this turn. Each element
+	// must be a UUID (connector instance id, record-group id, etc.) or the
+	// org knowledge-base collection sentinel `knowledgeBase_<orgId>`
+	// (pattern `knowledgeBase_[a-zA-Z0-9_-]+`). Gateway validation matches
+	// Zod `appOrKbIdSchema`.
+	//
 	Apps []string `json:"apps,omitzero"`
-	// Filter by knowledge base IDs
+	// Knowledge-base / record-group ids to scope retrieval for this turn.
+	// Each element uses the same accepted formats as `apps`: a UUID or
+	// `knowledgeBase_<orgId>` (pattern `knowledgeBase_[a-zA-Z0-9_-]+`).
+	//
 	Kb []string `json:"kb,omitzero"`
 }
 
