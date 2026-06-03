@@ -1,0 +1,11 @@
+# OAuthClientManagementRateLimitError
+
+JSON body when OAuth client management routes exceed the per-minute rate limit (same limiter as other `/oauth-clients/*` routes).
+
+
+## Fields
+
+| Field                                                                                                                      | Type                                                                                                                       | Required                                                                                                                   | Description                                                                                                                |
+| -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `Error`                                                                                                                    | [components.OAuthClientManagementRateLimitErrorError](../../models/components/oauthclientmanagementratelimiterrorerror.md) | :heavy_check_mark:                                                                                                         | N/A                                                                                                                        |
+| `HTTPMeta`                                                                                                                 | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                                         | :heavy_check_mark:                                                                                                         | N/A                                                                                                                        |

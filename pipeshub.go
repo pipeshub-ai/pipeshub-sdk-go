@@ -70,14 +70,95 @@ func Pointer[T any](v T) *T { return &v }
 // ## Base URLs
 // All endpoints use the `/api/v1` prefix unless otherwise noted.
 type Pipeshub struct {
-	SDKVersion             string
-	UserAccount            *UserAccount
+	SDKVersion string
+	// PipesHub OAuth 2.0 Authorization Server implementing RFC 6749, RFC 7636 (PKCE), and OpenID Connect.
+	//
+	// **Supported Grant Types:**
+	// - `authorization_code` - Standard OAuth flow with PKCE support
+	// - `client_credentials` - Machine-to-machine authentication
+	// - `refresh_token` - Token refresh for long-lived access
+	//
+	// **Security Features:**
+	// - PKCE (Proof Key for Code Exchange) for public clients
+	// - State parameter for CSRF protection
+	// - Configurable token lifetimes
+	// - Token revocation and introspection
+	//
+	// **OpenID Connect:**
+	// - ID tokens with standard claims
+	// - UserInfo endpoint for profile data
+	// - Discovery endpoint for automatic configuration
+	//
+	// **Machine tokens (`client_credentials`) — gateway and downstream identity:**
+	// Access tokens may encode **`userId === client_id`**. The **Node.js API gateway** resolves the effective user to the OAuth **app creator**: first using the JWT **`createdBy`** claim when present, otherwise by loading the OAuth app by **`client_id`** from the registry. After verification it sets the authenticated session to that creator and may attach **`x-oauth-user-id`** (resolved user id) on **outbound** HTTP calls to Python microservices so authorization and retrieval match the same principal. **Inbound** `x-oauth-user-id` from external clients is **removed** at the gateway to prevent spoofing.
+	//
+	// **Python services:** Validate `Authorization: Bearer` as today. When **`x-oauth-user-id`** is present (normally only when the Node gateway added it), use it as the effective **`userId`** for scopes and user-scoped logic; otherwise use the JWT payload’s **`userId`** as-is (which may still equal **`client_id`** if the caller bypassed the gateway).
+	//
+	// **Operational note:** Prefer tokens whose JWT already carries the creator as **`userId`**; use **`POST /oauth-clients/{appId}/revoke-all-tokens`** and obtain new tokens from **`POST /oauth2/token`** when rotating integrations.
+	//
+	OAuthProvider *OAuthProvider
+	// OpenID Connect 1.0 endpoints for identity federation and discovery.
+	//
+	// **Discovery:**
+	// - `/.well-known/openid-configuration` - Authorization server metadata
+	// - `/.well-known/oauth-authorization-server` - Authorization server metadata (RFC 8414)
+	// - `/.well-known/oauth-protected-resource/mcp` - Protected resource metadata (RFC 9728)
+	// - `/.well-known/jwks.json` - Public keys for token verification
+	//
+	// **UserInfo:**
+	// - `/oauth2/userinfo` - Get authenticated user's profile information
+	//
+	// **Supported Claims:**
+	// - `user_id` - User identifier
+	// - `email`, `email_verified` - Email information
+	// - `name`, `given_name`, `family_name` - Name information
+	//
+	OpenIDConnect *OpenIDConnect
+	// Manage OAuth 2.0 client applications registered with PipesHub.
+	//
+	// OAuth apps allow third-party applications to access PipesHub APIs on behalf of users
+	// or organizations. Each app receives a client ID and secret for authentication.
+	//
+	// **Who can see which apps**
+	// - **Everyone (including org admins)** sees and manages only OAuth apps **they created** (`createdBy`). Other members' apps are hidden (not listed; individual operations return not found).
+	//
+	// **Who authorizes vs. client credentials**
+	// - **Authorization code:** Any authenticated user in the workspace may complete consent for a valid `client_id`; issued tokens represent **that user**.
+	// - **Client credentials:** Access tokens represent the **OAuth app creator** (who registered the client), not the caller.
+	//
+	// **Scopes**
+	// - `GET /oauth-clients/scopes` returns scopes grouped by category for the **signed-in user's role**.
+	// - **Org admins** may register apps that request additional **admin-only** scopes; non-admins cannot select those scopes when creating or updating an app.
+	//
+	// **App Types:**
+	// - **Confidential clients**: Server-side apps that can securely store secrets
+	// - **Public clients**: Browser/mobile apps that cannot securely store secrets (use PKCE)
+	//
+	// **App Lifecycle:**
+	// - Create apps with name, redirect URIs, allowed scopes, and optional URLs (homepage, privacy, terms)
+	// - Regenerate secrets if compromised
+	// - Suspend/activate apps to control access
+	// - Revoke all tokens for emergency access removal
+	//
+	OAuthApps *OAuthApps
+	// User authentication including multi-step MFA, password reset, OTP login, and token management
+	UserAccount *UserAccount
+	// Admin configuration of authentication methods including MFA steps and allowed providers
 	OrganizationAuthConfig *OrganizationAuthConfig
-	Organizations          *Organizations
-	KnowledgeHub           *KnowledgeHub
-	Conversations          *Conversations
-	SemanticSearch         *SemanticSearch
-	AIModelsProviders      *AIModelsProviders
+	// Organization management operations
+	Organizations *Organizations
+	// Unified browse API for root and child nodes (apps, record groups, folders, records) with filtering and search
+	KnowledgeHub *KnowledgeHub
+	// AI-powered conversational chat management with citations and follow-up questions
+	Conversations *Conversations
+	// Enterprise semantic search across all indexed knowledge with relevance scoring
+	SemanticSearch *SemanticSearch
+	// Custom AI agents with specialized capabilities and tool integrations
+	Agents *Agents
+	// Manage individual AI model providers - add, update, delete, and set defaults.
+	AIModelsProviders *AIModelsProviders
+	// Manage web search providers (DuckDuckGo, Serper, Tavily, Exa) and settings for internet search.
+	WebSearch *WebSearch
 
 	sdkConfiguration config.SDKConfiguration
 	hooks            *hooks.Hooks
@@ -166,9 +247,9 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *Pipeshub {
 	sdk := &Pipeshub{
-		SDKVersion: "0.2.0",
+		SDKVersion: "1.2.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 0.2.0 2.846.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
+			UserAgent:  "speakeasy-sdk/go 1.2.0 2.846.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
 			ServerList: ServerList,
 			ServerVariables: []map[string]string{
 				{
@@ -199,13 +280,18 @@ func New(opts ...SDKOption) *Pipeshub {
 
 	sdk.sdkConfiguration = sdk.hooks.SDKInit(sdk.sdkConfiguration)
 
+	sdk.OAuthProvider = newOAuthProvider(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.OpenIDConnect = newOpenIDConnect(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.OAuthApps = newOAuthApps(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.UserAccount = newUserAccount(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.OrganizationAuthConfig = newOrganizationAuthConfig(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Organizations = newOrganizations(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.KnowledgeHub = newKnowledgeHub(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Conversations = newConversations(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.SemanticSearch = newSemanticSearch(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.Agents = newAgents(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.AIModelsProviders = newAIModelsProviders(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.WebSearch = newWebSearch(sdk, sdk.sdkConfiguration, sdk.hooks)
 
 	return sdk
 }

@@ -45,26 +45,26 @@ func (r *Ratings) GetClarity() *int64 {
 	return r.Clarity
 }
 
-type Category string
+type MessageFeedbackCategory string
 
 const (
-	CategoryIncorrectInformation  Category = "incorrect_information"
-	CategoryMissingInformation    Category = "missing_information"
-	CategoryIrrelevantInformation Category = "irrelevant_information"
-	CategoryUnclearExplanation    Category = "unclear_explanation"
-	CategoryPoorCitations         Category = "poor_citations"
-	CategoryExcellentAnswer       Category = "excellent_answer"
-	CategoryHelpfulCitations      Category = "helpful_citations"
-	CategoryWellExplained         Category = "well_explained"
-	CategoryOther                 Category = "other"
+	MessageFeedbackCategoryIncorrectInformation  MessageFeedbackCategory = "incorrect_information"
+	MessageFeedbackCategoryMissingInformation    MessageFeedbackCategory = "missing_information"
+	MessageFeedbackCategoryIrrelevantInformation MessageFeedbackCategory = "irrelevant_information"
+	MessageFeedbackCategoryUnclearExplanation    MessageFeedbackCategory = "unclear_explanation"
+	MessageFeedbackCategoryPoorCitations         MessageFeedbackCategory = "poor_citations"
+	MessageFeedbackCategoryExcellentAnswer       MessageFeedbackCategory = "excellent_answer"
+	MessageFeedbackCategoryHelpfulCitations      MessageFeedbackCategory = "helpful_citations"
+	MessageFeedbackCategoryWellExplained         MessageFeedbackCategory = "well_explained"
+	MessageFeedbackCategoryOther                 MessageFeedbackCategory = "other"
 )
 
-func (e Category) ToPointer() *Category {
+func (e MessageFeedbackCategory) ToPointer() *MessageFeedbackCategory {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *Category) IsExact() bool {
+func (e *MessageFeedbackCategory) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "incorrect_information", "missing_information", "irrelevant_information", "unclear_explanation", "poor_citations", "excellent_answer", "helpful_citations", "well_explained", "other":
@@ -74,7 +74,7 @@ func (e *Category) IsExact() bool {
 	return false
 }
 
-type Comments struct {
+type MessageFeedbackComments struct {
 	// What was good about the response
 	Positive *string `json:"positive,omitzero"`
 	// What could be improved
@@ -83,25 +83,25 @@ type Comments struct {
 	Suggestions *string `json:"suggestions,omitzero"`
 }
 
-func (c *Comments) GetPositive() *string {
-	if c == nil {
+func (m *MessageFeedbackComments) GetPositive() *string {
+	if m == nil {
 		return nil
 	}
-	return c.Positive
+	return m.Positive
 }
 
-func (c *Comments) GetNegative() *string {
-	if c == nil {
+func (m *MessageFeedbackComments) GetNegative() *string {
+	if m == nil {
 		return nil
 	}
-	return c.Negative
+	return m.Negative
 }
 
-func (c *Comments) GetSuggestions() *string {
-	if c == nil {
+func (m *MessageFeedbackComments) GetSuggestions() *string {
+	if m == nil {
 		return nil
 	}
-	return c.Suggestions
+	return m.Suggestions
 }
 
 type CitationFeedback struct {
@@ -286,8 +286,8 @@ type MessageFeedback struct {
 	IsHelpful *bool    `json:"isHelpful,omitzero"`
 	Ratings   *Ratings `json:"ratings,omitzero"`
 	// Categories of issues or positive attributes identified
-	Categories []Category `json:"categories,omitzero"`
-	Comments   *Comments  `json:"comments,omitzero"`
+	Categories []MessageFeedbackCategory `json:"categories,omitzero"`
+	Comments   *MessageFeedbackComments  `json:"comments,omitzero"`
 	// Feedback on individual citations
 	CitationFeedback []CitationFeedback `json:"citationFeedback,omitzero"`
 	// Were the suggested follow-up questions helpful
@@ -334,14 +334,14 @@ func (m *MessageFeedback) GetRatings() *Ratings {
 	return m.Ratings
 }
 
-func (m *MessageFeedback) GetCategories() []Category {
+func (m *MessageFeedback) GetCategories() []MessageFeedbackCategory {
 	if m == nil {
 		return nil
 	}
 	return m.Categories
 }
 
-func (m *MessageFeedback) GetComments() *Comments {
+func (m *MessageFeedback) GetComments() *MessageFeedbackComments {
 	if m == nil {
 		return nil
 	}

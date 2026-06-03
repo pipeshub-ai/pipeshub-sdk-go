@@ -18,6 +18,7 @@ import (
 	"net/url"
 )
 
+// Conversations - AI-powered conversational chat management with citations and follow-up questions
 type Conversations struct {
 	rootSDK          *Pipeshub
 	sdkConfiguration config.SDKConfiguration
@@ -2661,25 +2662,21 @@ func (s *Conversations) RegenerateAnswer(ctx context.Context, conversationID str
 // **Overview**
 //
 // Feedback helps improve AI response quality over time. You can record an
-// overall helpfulness signal, per-aspect ratings, issue categories, and
-// free-text comments. Each call appends a new entry to the message;
-// previous entries are preserved.
+// overall helpfulness signal, issue categories, and free-text comments.
+// Each call appends a new entry to the message; previous entries are
+// preserved.
 //
 // **Feedback options**
 //
-//   - `isHelpful` — overall thumbs up/down.
-//   - `ratings` — 1–5 scores keyed by an aspect name you choose
-//     (e.g. `accuracy`, `relevance`, `completeness`, `clarity`).
-//   - `categories` — issue or positive categories from a fixed list.
-//   - `comments` — free-text `positive`, `negative`, and `suggestions`.
-//   - `metrics` — optional client-side telemetry
-//     (`userInteractionTime`, `feedbackSessionId`).
+// - `isHelpful` — overall thumbs up/down.
+// - `categories` — issue or positive categories from a fixed list.
+// - `comments` — free-text `positive` and `negative`.
 //
 // **Restrictions**
 //
 // Feedback can only be submitted on `bot_response` messages — user
 // queries and system messages are rejected with `400`.
-func (s *Conversations) UpdateMessageFeedback(ctx context.Context, conversationID string, messageID string, body operations.UpdateMessageFeedbackRequestBody, opts ...operations.Option) (*operations.UpdateMessageFeedbackResponse, error) {
+func (s *Conversations) UpdateMessageFeedback(ctx context.Context, conversationID string, messageID string, body components.MessageFeedbackSubmitRequest, opts ...operations.Option) (*operations.UpdateMessageFeedbackResponse, error) {
 	request := operations.UpdateMessageFeedbackRequest{
 		ConversationID: conversationID,
 		MessageID:      messageID,
@@ -2859,12 +2856,12 @@ func (s *Conversations) UpdateMessageFeedback(ctx context.Context, conversationI
 				return nil, err
 			}
 
-			var out operations.UpdateMessageFeedbackResponseBody
+			var out components.MessageFeedbackUpdateResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.Object = &out
+			res.MessageFeedbackUpdateResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {

@@ -3,9 +3,38 @@
 package components
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"time"
 )
+
+// CreateConversationRequestChatMode - Chat mode affecting response behavior.
+type CreateConversationRequestChatMode string
+
+const (
+	CreateConversationRequestChatModeWebSearch      CreateConversationRequestChatMode = "web_search"
+	CreateConversationRequestChatModeInternalSearch CreateConversationRequestChatMode = "internal_search"
+)
+
+func (e CreateConversationRequestChatMode) ToPointer() *CreateConversationRequestChatMode {
+	return &e
+}
+func (e *CreateConversationRequestChatMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "web_search":
+		fallthrough
+	case "internal_search":
+		*e = CreateConversationRequestChatMode(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for CreateConversationRequestChatMode: %v", v)
+	}
+}
 
 // CreateConversationRequest - Request body for creating a new AI conversation.
 //
@@ -26,8 +55,6 @@ type CreateConversationRequest struct {
 	// When provided, only these records will be searched for context.
 	//
 	RecordIds []string `json:"recordIds,omitzero"`
-	// Filter by department IDs to scope the search
-	Departments []string `json:"departments,omitzero"`
 	// App connector instance ids and knowledge-base / record-group ids that narrow retrieval
 	// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
 	// For **agent** chat streams, send explicit id lists, or **omit** `filters` (and `tools`)
@@ -41,6 +68,10 @@ type CreateConversationRequest struct {
 	// machine-readable `filters` field used for retrieval scoping.
 	//
 	AppliedFilters *AppliedFilters `json:"appliedFilters,omitzero"`
+	// Uploaded chat attachments to associate with this conversation turn (see
+	// `POST /conversations/attachments/upload`).
+	//
+	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
 	// Identifier for the AI model configuration to use.
 	// Available models depend on organization settings.
 	//
@@ -50,9 +81,8 @@ type CreateConversationRequest struct {
 	// Friendly display name of the selected model
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	// Chat mode affecting response behavior.
-	// Different modes optimize for different use cases.
 	//
-	ChatMode *string `json:"chatMode,omitzero"`
+	ChatMode *CreateConversationRequestChatMode `json:"chatMode,omitzero"`
 	// IANA timezone identifier from the client (top-level field).
 	// Used to provide time-aware context to the AI.
 	//
@@ -93,13 +123,6 @@ func (c *CreateConversationRequest) GetRecordIds() []string {
 	return c.RecordIds
 }
 
-func (c *CreateConversationRequest) GetDepartments() []string {
-	if c == nil {
-		return nil
-	}
-	return c.Departments
-}
-
 func (c *CreateConversationRequest) GetFilters() *Filters {
 	if c == nil {
 		return nil
@@ -112,6 +135,13 @@ func (c *CreateConversationRequest) GetAppliedFilters() *AppliedFilters {
 		return nil
 	}
 	return c.AppliedFilters
+}
+
+func (c *CreateConversationRequest) GetAttachments() []ChatAttachmentRef {
+	if c == nil {
+		return nil
+	}
+	return c.Attachments
 }
 
 func (c *CreateConversationRequest) GetModelKey() *string {
@@ -135,7 +165,7 @@ func (c *CreateConversationRequest) GetModelFriendlyName() *string {
 	return c.ModelFriendlyName
 }
 
-func (c *CreateConversationRequest) GetChatMode() *string {
+func (c *CreateConversationRequest) GetChatMode() *CreateConversationRequestChatMode {
 	if c == nil {
 		return nil
 	}

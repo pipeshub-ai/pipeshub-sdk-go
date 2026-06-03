@@ -1,0 +1,11 @@
+# ListOAuthAppsRequest
+
+
+## Fields
+
+| Field                                                                                | Type                                                                                 | Required                                                                             | Description                                                                          |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `Page`                                                                               | **int64*                                                                             | :heavy_minus_sign:                                                                   | Page number (matches `listAppsQuerySchema`: defaults to `1` when omitted or empty).<br/> |
+| `Limit`                                                                              | **int64*                                                                             | :heavy_minus_sign:                                                                   | Items per page (defaults to `20` when omitted or empty; max 100).<br/>               |
+| `Status`                                                                             | [*operations.ListOAuthAppsStatus](../../models/operations/listoauthappsstatus.md)    | :heavy_minus_sign:                                                                   | Filter by status                                                                     |
+| `Search`                                                                             | **string*                                                                            | :heavy_minus_sign:                                                                   | Search by app name or description (case-insensitive)                                 |

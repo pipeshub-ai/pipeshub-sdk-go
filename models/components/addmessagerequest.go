@@ -3,9 +3,38 @@
 package components
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"time"
 )
+
+// AddMessageRequestChatMode - Chat mode for this message
+type AddMessageRequestChatMode string
+
+const (
+	AddMessageRequestChatModeWebSearch      AddMessageRequestChatMode = "web_search"
+	AddMessageRequestChatModeInternalSearch AddMessageRequestChatMode = "internal_search"
+)
+
+func (e AddMessageRequestChatMode) ToPointer() *AddMessageRequestChatMode {
+	return &e
+}
+func (e *AddMessageRequestChatMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "web_search":
+		fallthrough
+	case "internal_search":
+		*e = AddMessageRequestChatMode(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AddMessageRequestChatMode: %v", v)
+	}
+}
 
 // AddMessageRequest - Request body for adding a message to an existing conversation
 type AddMessageRequest struct {
@@ -24,6 +53,10 @@ type AddMessageRequest struct {
 	// machine-readable `filters` field used for retrieval scoping.
 	//
 	AppliedFilters *AppliedFilters `json:"appliedFilters,omitzero"`
+	// Uploaded chat attachments for this follow-up turn (see
+	// `POST /conversations/attachments/upload`).
+	//
+	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
 	// Override the model for this specific message
 	ModelKey *string `json:"modelKey,omitzero"`
 	// Display name of the model
@@ -31,7 +64,7 @@ type AddMessageRequest struct {
 	// Friendly display name of the model
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	// Chat mode for this message
-	ChatMode *string `json:"chatMode,omitzero"`
+	ChatMode *AddMessageRequestChatMode `json:"chatMode,omitzero"`
 	// IANA timezone identifier from the client (top-level field).
 	// Used to provide time-aware context to the AI.
 	//
@@ -78,6 +111,13 @@ func (a *AddMessageRequest) GetAppliedFilters() *AppliedFilters {
 	return a.AppliedFilters
 }
 
+func (a *AddMessageRequest) GetAttachments() []ChatAttachmentRef {
+	if a == nil {
+		return nil
+	}
+	return a.Attachments
+}
+
 func (a *AddMessageRequest) GetModelKey() *string {
 	if a == nil {
 		return nil
@@ -99,7 +139,7 @@ func (a *AddMessageRequest) GetModelFriendlyName() *string {
 	return a.ModelFriendlyName
 }
 
-func (a *AddMessageRequest) GetChatMode() *string {
+func (a *AddMessageRequest) GetChatMode() *AddMessageRequestChatMode {
 	if a == nil {
 		return nil
 	}

@@ -17,6 +17,7 @@ import (
 	"net/url"
 )
 
+// Organizations - Organization management operations
 type Organizations struct {
 	rootSDK          *Pipeshub
 	sdkConfiguration config.SDKConfiguration
@@ -32,26 +33,24 @@ func newOrganizations(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hook
 }
 
 // GetCurrentOrganization - Get current organization
-// Retrieve details about the authenticated user's organization.<br><br>
-// <b>Overview:</b><br>
-// This endpoint returns complete information about the current user's organization, including profile data, settings, and configuration. Use this for organization profile pages and settings.<br><br>
-// <b>Response Includes:</b><br>
-// <ul>
-// <li>Organization profile (name, email, address)</li>
-// <li>Account type and billing status</li>
-// <li>Feature flags and limits</li>
-// <li>Branding settings (logo, colors)</li>
-// <li>Creation and modification timestamps</li>
-// </ul>
-// <b>Use Cases:</b><br>
-// <ul>
-// <li>Organization profile pages</li>
-// <li>Settings and configuration screens</li>
-// <li>Billing and subscription displays</li>
-// <li>White-label branding retrieval</li>
-// </ul>
-// <b>Note:</b><br>
-// All authenticated users can access this endpoint to view their organization's details.
+// Retrieve details about the authenticated user's organization.
+//
+// **Overview:**
+//
+// This endpoint returns the organization document for the current user's org, including profile data and configuration.
+//
+// **Response Includes:**
+//
+// - Organization profile (registeredName, shortName, contactEmail, domain)
+// - Account type
+// - Onboarding status
+// - Permanent address
+// - Creation and modification timestamps
+//
+// **Use Cases:**
+//
+// - Organization profile pages
+// - Settings and configuration screens
 func (s *Organizations) GetCurrentOrganization(ctx context.Context, opts ...operations.Option) (*operations.GetCurrentOrganizationResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -188,7 +187,7 @@ func (s *Organizations) GetCurrentOrganization(ctx context.Context, opts ...oper
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -235,7 +234,55 @@ func (s *Organizations) GetCurrentOrganization(ctx context.Context, opts ...oper
 	case httpRes.StatusCode == 401:
 		fallthrough
 	case httpRes.StatusCode == 404:
-		fallthrough
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {

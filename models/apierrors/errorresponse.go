@@ -12,8 +12,8 @@ import (
 // The `code` field is a machine-readable string identifying the error type (e.g.
 // `HTTP_UNAUTHORIZED`, `HTTP_NOT_FOUND`, `VALIDATION_ERROR`, `INTERNAL_ERROR`).
 type ErrorResponse struct {
-	Error_   components.Error        `json:"error"`
-	HTTPMeta components.HTTPMetadata `json:"-"`
+	Error_   components.ErrorResponseError `json:"error"`
+	HTTPMeta components.HTTPMetadata       `json:"-"`
 }
 
 var _ error = &ErrorResponse{}

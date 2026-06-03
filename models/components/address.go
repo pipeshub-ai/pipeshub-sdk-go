@@ -3,6 +3,8 @@
 package components
 
 type Address struct {
+	// Optional address document id
+	ID *string `json:"_id,omitzero"`
 	// Address line 1
 	AddressLine1 *string `json:"addressLine1,omitzero"`
 	// City
@@ -13,6 +15,13 @@ type Address struct {
 	PostCode *string `json:"postCode,omitzero"`
 	// Country
 	Country *string `json:"country,omitzero"`
+}
+
+func (a *Address) GetID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ID
 }
 
 func (a *Address) GetAddressLine1() *string {

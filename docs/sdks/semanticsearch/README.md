@@ -2,6 +2,8 @@
 
 ## Overview
 
+Enterprise semantic search across all indexed knowledge with relevance scoring
+
 ### Available Operations
 
 * [Search](#search) - Perform semantic search

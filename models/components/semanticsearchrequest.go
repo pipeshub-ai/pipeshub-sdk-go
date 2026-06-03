@@ -33,14 +33,6 @@ type SemanticSearchRequest struct {
 	Filters *Filters `json:"filters,omitzero"`
 	// Maximum number of results to return
 	Limit *int64 `default:"10" json:"limit"`
-	// AI model to use for embeddings
-	ModelKey *string `json:"modelKey,omitzero"`
-	// Display name of the model
-	ModelName *string `json:"modelName,omitzero"`
-	// Friendly display name of the model
-	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
-	// Processing mode configuration
-	ChatMode *string `json:"chatMode,omitzero"`
 }
 
 func (s SemanticSearchRequest) MarshalJSON() ([]byte, error) {
@@ -73,32 +65,4 @@ func (s *SemanticSearchRequest) GetLimit() *int64 {
 		return nil
 	}
 	return s.Limit
-}
-
-func (s *SemanticSearchRequest) GetModelKey() *string {
-	if s == nil {
-		return nil
-	}
-	return s.ModelKey
-}
-
-func (s *SemanticSearchRequest) GetModelName() *string {
-	if s == nil {
-		return nil
-	}
-	return s.ModelName
-}
-
-func (s *SemanticSearchRequest) GetModelFriendlyName() *string {
-	if s == nil {
-		return nil
-	}
-	return s.ModelFriendlyName
-}
-
-func (s *SemanticSearchRequest) GetChatMode() *string {
-	if s == nil {
-		return nil
-	}
-	return s.ChatMode
 }

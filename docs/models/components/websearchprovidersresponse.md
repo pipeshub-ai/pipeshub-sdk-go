@@ -1,0 +1,13 @@
+# WebSearchProvidersResponse
+
+Response for getWebSearchProviders
+
+
+## Fields
+
+| Field                                                                                                      | Type                                                                                                       | Required                                                                                                   | Description                                                                                                |
+| ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `Status`                                                                                                   | [components.WebSearchProvidersResponseStatus](../../models/components/websearchprovidersresponsestatus.md) | :heavy_check_mark:                                                                                         | N/A                                                                                                        |
+| `Providers`                                                                                                | [][components.WebSearchProviderItem](../../models/components/websearchprovideritem.md)                     | :heavy_check_mark:                                                                                         | N/A                                                                                                        |
+| `Settings`                                                                                                 | [components.WebSearchSettings](../../models/components/websearchsettings.md)                               | :heavy_check_mark:                                                                                         | Normalized web search global settings returned by getWebSearchProviders                                    |
+| `Message`                                                                                                  | *string*                                                                                                   | :heavy_check_mark:                                                                                         | Human-readable status (empty list vs populated providers)                                                  |

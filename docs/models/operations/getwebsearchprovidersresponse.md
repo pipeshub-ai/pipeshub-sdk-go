@@ -1,0 +1,9 @@
+# GetWebSearchProvidersResponse
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                              | :heavy_check_mark:                                                                              | N/A                                                                                             |
+| `WebSearchProvidersResponse`                                                                    | [*components.WebSearchProvidersResponse](../../models/components/websearchprovidersresponse.md) | :heavy_minus_sign:                                                                              | Web search providers and settings retrieved                                                     |

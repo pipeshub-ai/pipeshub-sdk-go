@@ -56,11 +56,11 @@ func (e *OnBoardingStatus) IsExact() bool {
 
 type Organization struct {
 	// Unique organization identifier
-	ID *string `json:"_id,omitzero"`
+	ID string `json:"_id"`
 	// Unique slug for the organization
-	Slug *string `json:"slug,omitzero"`
+	Slug string `json:"slug"`
 	// Registered name
-	RegisteredName *string `json:"registeredName,omitzero"`
+	RegisteredName string `json:"registeredName"`
 	// Short name or display name
 	ShortName *string `json:"shortName,omitzero"`
 	// Organization domain
@@ -71,15 +71,15 @@ type Organization struct {
 	AccountType      AccountType `json:"accountType"`
 	PermanentAddress *Address    `json:"permanentAddress,omitzero"`
 	// Onboarding status
-	OnBoardingStatus *OnBoardingStatus `json:"onBoardingStatus,omitzero"`
+	OnBoardingStatus OnBoardingStatus `json:"onBoardingStatus"`
 	// Soft delete flag
 	IsDeleted *bool `default:"false" json:"isDeleted"`
 	// Document version (MongoDB)
-	V *int64 `json:"__v,omitzero"`
+	V int64 `json:"__v"`
 	// Creation timestamp (ISO 8601)
-	CreatedAt *time.Time `json:"createdAt,omitzero"`
+	CreatedAt time.Time `json:"createdAt"`
 	// Last update timestamp (ISO 8601)
-	UpdatedAt *time.Time `json:"updatedAt,omitzero"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (o Organization) MarshalJSON() ([]byte, error) {
@@ -93,23 +93,23 @@ func (o *Organization) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (o *Organization) GetID() *string {
+func (o *Organization) GetID() string {
 	if o == nil {
-		return nil
+		return ""
 	}
 	return o.ID
 }
 
-func (o *Organization) GetSlug() *string {
+func (o *Organization) GetSlug() string {
 	if o == nil {
-		return nil
+		return ""
 	}
 	return o.Slug
 }
 
-func (o *Organization) GetRegisteredName() *string {
+func (o *Organization) GetRegisteredName() string {
 	if o == nil {
-		return nil
+		return ""
 	}
 	return o.RegisteredName
 }
@@ -149,9 +149,9 @@ func (o *Organization) GetPermanentAddress() *Address {
 	return o.PermanentAddress
 }
 
-func (o *Organization) GetOnBoardingStatus() *OnBoardingStatus {
+func (o *Organization) GetOnBoardingStatus() OnBoardingStatus {
 	if o == nil {
-		return nil
+		return OnBoardingStatus("")
 	}
 	return o.OnBoardingStatus
 }
@@ -163,23 +163,23 @@ func (o *Organization) GetIsDeleted() *bool {
 	return o.IsDeleted
 }
 
-func (o *Organization) GetV() *int64 {
+func (o *Organization) GetV() int64 {
 	if o == nil {
-		return nil
+		return 0
 	}
 	return o.V
 }
 
-func (o *Organization) GetCreatedAt() *time.Time {
+func (o *Organization) GetCreatedAt() time.Time {
 	if o == nil {
-		return nil
+		return time.Time{}
 	}
 	return o.CreatedAt
 }
 
-func (o *Organization) GetUpdatedAt() *time.Time {
+func (o *Organization) GetUpdatedAt() time.Time {
 	if o == nil {
-		return nil
+		return time.Time{}
 	}
 	return o.UpdatedAt
 }

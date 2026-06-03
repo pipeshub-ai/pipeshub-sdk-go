@@ -17,6 +17,7 @@ import (
 	"net/url"
 )
 
+// OrganizationAuthConfig - Admin configuration of authentication methods including MFA steps and allowed providers
 type OrganizationAuthConfig struct {
 	rootSDK          *Pipeshub
 	sdkConfiguration config.SDKConfiguration

@@ -1,0 +1,9 @@
+# ListOAuthScopesResponse
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                              | :heavy_check_mark:                                                                              | N/A                                                                                             |
+| `OAuthScopesGroupedResponse`                                                                    | [*components.OAuthScopesGroupedResponse](../../models/components/oauthscopesgroupedresponse.md) | :heavy_minus_sign:                                                                              | List of available scopes                                                                        |

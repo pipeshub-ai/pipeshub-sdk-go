@@ -17,6 +17,7 @@ import (
 	"net/url"
 )
 
+// UserAccount - User authentication including multi-step MFA, password reset, OTP login, and token management
 type UserAccount struct {
 	rootSDK          *Pipeshub
 	sdkConfiguration config.SDKConfiguration
@@ -616,22 +617,25 @@ func (s *UserAccount) Authenticate(ctx context.Context, xSessionToken string, bo
 
 }
 
-// ResetPasswordWithToken - Reset password with email token
-// Reset password using a token received via email from the forgot password flow.
+// RefreshToken - Refresh access token
+// Get a new access token using a valid refresh token.
 //
-// **Password Requirements:**
+// **Usage:**
 //
-// - Minimum 8 characters
-// - At least 1 uppercase letter
-// - At least 1 lowercase letter
-// - At least 1 number
-// - At least 1 special character (#?!@$%^&*-)
+// - Pass the refresh token as a Bearer token in the Authorization header
+// - Returns a new access token and basic user information
 //
-// **Security Notes:**
+// **Token Lifetimes:**
 //
-// - Token is single-use and expires after a set time
-// - Response body contains a confirmation string in `data`
-func (s *UserAccount) ResetPasswordWithToken(ctx context.Context, request components.TokenPasswordResetRequest, security operations.ResetPasswordWithTokenSecurity, opts ...operations.Option) (*operations.ResetPasswordWithTokenResponse, error) {
+// - Access token: 24 hours (configurable via `ACCESS_TOKEN_EXPIRY` environment variable)
+// - Refresh token: 30 days (configurable via `REFRESH_TOKEN_EXPIRY` environment variable)
+//
+// **Best Practices:**
+//
+// - Call this endpoint before the access token expires
+// - Store the new access token and continue using it for authenticated requests
+// - If refresh fails with 401, redirect user to login flow
+func (s *UserAccount) RefreshToken(ctx context.Context, security operations.RefreshTokenSecurity, opts ...operations.Option) (*operations.RefreshTokenResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -650,7 +654,7 @@ func (s *UserAccount) ResetPasswordWithToken(ctx context.Context, request compon
 	} else {
 		baseURL = *o.ServerURL
 	}
-	opURL, err := url.JoinPath(baseURL, "/userAccount/password/reset/token")
+	opURL, err := url.JoinPath(baseURL, "/userAccount/refresh/token")
 	if err != nil {
 		return nil, fmt.Errorf("error generating URL: %w", err)
 	}
@@ -660,13 +664,9 @@ func (s *UserAccount) ResetPasswordWithToken(ctx context.Context, request compon
 		SDKConfiguration: s.sdkConfiguration,
 		BaseURL:          baseURL,
 		Context:          ctx,
-		OperationID:      "resetPasswordWithToken",
+		OperationID:      "refreshToken",
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
-	}
-	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
-	if err != nil {
-		return nil, err
 	}
 
 	timeout := o.Timeout
@@ -680,15 +680,12 @@ func (s *UserAccount) ResetPasswordWithToken(ctx context.Context, request compon
 		defer cancel()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
+	req, err := http.NewRequestWithContext(ctx, "POST", opURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
-	if reqContentType != "" {
-		req.Header.Set("Content-Type", reqContentType)
-	}
 
 	if err := utils.PopulateSecurity(ctx, req, utils.AsSecuritySource(security)); err != nil {
 		return nil, err
@@ -789,7 +786,7 @@ func (s *UserAccount) ResetPasswordWithToken(ctx context.Context, request compon
 		}
 	}
 
-	res := &operations.ResetPasswordWithTokenResponse{
+	res := &operations.RefreshTokenResponse{
 		HTTPMeta: components.HTTPMetadata{
 			Request:  req,
 			Response: httpRes,
@@ -805,12 +802,12 @@ func (s *UserAccount) ResetPasswordWithToken(ctx context.Context, request compon
 				return nil, err
 			}
 
-			var out components.DataStringResponse
+			var out components.RefreshTokenResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.DataStringResponse = &out
+			res.RefreshTokenResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {

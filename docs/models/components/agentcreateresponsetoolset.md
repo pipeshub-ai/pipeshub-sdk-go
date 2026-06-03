@@ -1,0 +1,11 @@
+# AgentCreateResponseToolset
+
+
+## Fields
+
+| Field                                                                                      | Type                                                                                       | Required                                                                                   | Description                                                                                |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `Name`                                                                                     | [components.AgentCreateToolsetName](../../models/components/agentcreatetoolsetname.md)     | :heavy_check_mark:                                                                         | Registered toolset name (lowercase) accepted by the create-agent gateway.                  |
+| `DisplayName`                                                                              | *string*                                                                                   | :heavy_check_mark:                                                                         | Human-readable toolset product label (for example `Jira` or `Slack`).                      |
+| `Key`                                                                                      | *string*                                                                                   | :heavy_check_mark:                                                                         | N/A                                                                                        |
+| `Tools`                                                                                    | [][components.AgentCreateResponseTool](../../models/components/agentcreateresponsetool.md) | :heavy_check_mark:                                                                         | N/A                                                                                        |

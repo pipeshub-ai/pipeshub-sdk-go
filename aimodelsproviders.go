@@ -16,6 +16,7 @@ import (
 	"net/http"
 )
 
+// AIModelsProviders - Manage individual AI model providers - add, update, delete, and set defaults.
 type AIModelsProviders struct {
 	rootSDK          *Pipeshub
 	sdkConfiguration config.SDKConfiguration

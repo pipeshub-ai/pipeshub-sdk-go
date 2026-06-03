@@ -1,0 +1,10 @@
+# UpdateAgentConversationTitleRequest
+
+
+## Fields
+
+| Field                                                                                                  | Type                                                                                                   | Required                                                                                               | Description                                                                                            |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `AgentKey`                                                                                             | *string*                                                                                               | :heavy_check_mark:                                                                                     | N/A                                                                                                    |
+| `ConversationID`                                                                                       | *string*                                                                                               | :heavy_check_mark:                                                                                     | N/A                                                                                                    |
+| `Body`                                                                                                 | [components.ConversationTitleUpdateRequest](../../models/components/conversationtitleupdaterequest.md) | :heavy_check_mark:                                                                                     | New title for the agent conversation.<br/><br/>The server trims the provided string before saving it.<br/> |

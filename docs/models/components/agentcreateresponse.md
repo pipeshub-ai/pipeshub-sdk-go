@@ -1,0 +1,11 @@
+# AgentCreateResponse
+
+
+## Fields
+
+| Field                                                                                        | Type                                                                                         | Required                                                                                     | Description                                                                                  |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `Status`                                                                                     | [components.AgentCreateResponseStatus](../../models/components/agentcreateresponsestatus.md) | :heavy_check_mark:                                                                           | N/A                                                                                          |
+| `Message`                                                                                    | *string*                                                                                     | :heavy_check_mark:                                                                           | N/A                                                                                          |
+| `Agent`                                                                                      | [components.AgentCreateResponseAgent](../../models/components/agentcreateresponseagent.md)   | :heavy_check_mark:                                                                           | N/A                                                                                          |
+| `Warnings`                                                                                   | [][components.AgentCreateWarning](../../models/components/agentcreatewarning.md)             | :heavy_minus_sign:                                                                           | N/A                                                                                          |
