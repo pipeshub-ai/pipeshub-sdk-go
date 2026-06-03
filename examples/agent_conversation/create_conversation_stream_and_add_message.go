@@ -1,4 +1,4 @@
-// Create an agent conversation (streaming), then append a follow-up message (streaming).
+// Create an agent with DuckDuckGo web search, start a streaming conversation, then append a follow-up (streaming).
 //
 // Uses github.com/pipeshub-ai/pipeshub-sdk-go.
 //
@@ -13,28 +13,20 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 
 	"enterprise_search/auth"
 )
 
 const (
-	// Stable key for the agent that owns the conversation.
-	agentKey = "ddff45f7-e534-4726-92e8-5e8e6338ad41"
-
-	// Knowledge-base / record-group id (Filters.Kb).
-	kbID = "45d5aa5b-2b2c-408d-bcd3-ce4de6dfcd5b"
-
-	// Connector instance id (Filters.Apps).
-	connectorID = "270d4bac-234a-4c0d-963f-84f152cd21f0"
-
-	// First user message when creating the conversation.
-	firstMessage = "Who moved the cheese?"
-
-	// Follow-up user message appended to the same conversation.
+	kbID            = "45d5aa5b-2b2c-408d-bcd3-ce4de6dfcd5b"
+	connectorID     = "270d4bac-234a-4c0d-963f-84f152cd21f0"
+	firstMessage    = "Who moved the cheese?"
 	followUpMessage = "Can you give me more details on that?"
 )
 
@@ -55,23 +47,124 @@ func main() {
 	}
 
 	ctx := context.Background()
+
+	webSearch, err := resolveDuckDuckGoWebSearch(ctx, sdk)
+	if err != nil {
+		log.Fatalf("resolve DuckDuckGo web search: %v", err)
+	}
+	fmt.Printf("resolved web search provider: %s\n", webSearch.Provider)
+
+	agentKey, err := createAgentWithWebSearch(ctx, sdk, webSearch)
+	if err != nil {
+		log.Fatalf("create agent: %v", err)
+	}
+	log.Printf("agent key: %s", agentKey)
+
 	filters := &components.Filters{
 		Kb:   []string{kbID},
 		Apps: []string{connectorID},
 	}
 
-	convID, err := createAgentConversation(ctx, sdk, firstMessage, filters)
+	convID, err := createAgentConversation(ctx, sdk, agentKey, firstMessage, filters)
 	if err != nil {
 		log.Fatalf("create conversation: %v", err)
 	}
 	log.Printf("conversation id: %s", convID)
 
-	if err := addAgentConversationMessage(ctx, sdk, convID, followUpMessage, filters); err != nil {
+	if err := addAgentConversationMessage(ctx, sdk, agentKey, convID, followUpMessage, filters); err != nil {
 		log.Fatalf("add message: %v", err)
 	}
 }
 
-func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query string, filters *components.Filters) (string, error) {
+func resolveDuckDuckGoWebSearch(ctx context.Context, sdk *pipeshub.Pipeshub) (components.AgentCreateWebSearch, error) {
+	res, err := sdk.WebSearch.GetWebSearchProviders(ctx)
+	if err != nil {
+		return components.AgentCreateWebSearch{}, fmt.Errorf("get web search providers: %w", err)
+	}
+	if res == nil || res.WebSearchProvidersResponse == nil {
+		return components.AgentCreateWebSearch{}, fmt.Errorf("get web search providers: empty response")
+	}
+
+	for _, item := range res.WebSearchProvidersResponse.GetProviders() {
+		if item.Provider != components.WebSearchProviderTypeDuckduckgo {
+			continue
+		}
+		ws := components.AgentCreateWebSearch{
+			Provider: string(components.WebSearchProviderTypeDuckduckgo),
+		}
+		if key := item.GetProviderKey(); key != "" {
+			ws.ProviderKey = pipeshub.Pointer(key)
+		}
+		return ws, nil
+	}
+
+	return components.AgentCreateWebSearch{
+		Provider: string(components.WebSearchProviderTypeDuckduckgo),
+	}, nil
+}
+
+func createAgentWithWebSearch(ctx context.Context, sdk *pipeshub.Pipeshub, webSearch components.AgentCreateWebSearch) (string, error) {
+	modelKey, err := firstReasoningModelKey(ctx, sdk)
+	if err != nil {
+		return "", err
+	}
+
+	isReasoning := true
+	webSearchUnion := components.CreateAgentCreateWebSearchUnionAgentCreateWebSearch(webSearch)
+
+	res, err := sdk.Agents.CreateAgent(ctx, components.AgentCreateRequest{
+		Name: fmt.Sprintf("SDK example %d", time.Now().Unix()),
+		Models: []components.AgentCreateModelEntryUnion{
+			components.CreateAgentCreateModelEntryUnionAgentCreateModelEntry(components.AgentCreateModelEntry{
+				ModelKey:    modelKey,
+				IsReasoning: &isReasoning,
+			}),
+		},
+		WebSearch: optionalnullable.From(&webSearchUnion),
+	})
+	if err != nil {
+		return "", fmt.Errorf("create agent: %w", err)
+	}
+	if res == nil || res.AgentCreateResponse == nil {
+		return "", fmt.Errorf("create agent: empty response")
+	}
+
+	agent := res.AgentCreateResponse.GetAgent()
+	key := agent.GetKey()
+	if key == "" {
+		return "", fmt.Errorf("create agent: response missing agent key")
+	}
+	return key, nil
+}
+
+func firstReasoningModelKey(ctx context.Context, sdk *pipeshub.Pipeshub) (string, error) {
+	if key := os.Getenv("PIPESHUB_AGENT_MODEL_KEY"); key != "" {
+		return key, nil
+	}
+
+	res, err := sdk.AIModelsProviders.GetAvailableModelsByType(ctx, components.ModelTypeLlm)
+	if err != nil {
+		return "", fmt.Errorf("list LLM models: %w", err)
+	}
+	body := res.GetObject()
+	if body == nil {
+		return "", fmt.Errorf("list LLM models: empty response")
+	}
+
+	for _, m := range body.GetModels() {
+		if m.GetIsReasoning() && m.GetModelKey() != "" {
+			return m.GetModelKey(), nil
+		}
+	}
+	models := body.GetModels()
+	if len(models) > 0 && models[0].GetModelKey() != "" {
+		return models[0].GetModelKey(), nil
+	}
+
+	return "", fmt.Errorf("no LLM model configured; set PIPESHUB_AGENT_MODEL_KEY in .env")
+}
+
+func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, agentKey, query string, filters *components.Filters) (string, error) {
 	chatMode := components.AgentStreamCreateConversationRequestChatModeAuto
 
 	res, err := sdk.Agents.StreamAgentConversation(ctx, agentKey, components.AgentStreamCreateConversationRequest{
@@ -113,7 +206,7 @@ func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query 
 	return "", fmt.Errorf("stream ended without complete event")
 }
 
-func addAgentConversationMessage(ctx context.Context, sdk *pipeshub.Pipeshub, convID, query string, filters *components.Filters) error {
+func addAgentConversationMessage(ctx context.Context, sdk *pipeshub.Pipeshub, agentKey, convID, query string, filters *components.Filters) error {
 	chatMode := components.AgentAddMessageStreamRequestChatModeAuto
 
 	res, err := sdk.Agents.StreamAgentConversationMessage(ctx, agentKey, convID, components.AgentAddMessageStreamRequest{
