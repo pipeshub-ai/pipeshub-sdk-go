@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/joho/godotenv"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
@@ -68,13 +67,13 @@ func main() {
 	}
 	log.Printf("conversation id: %s", convID)
 	log.Printf("last bot message id: %s", botMessageID)
-	fmt.Printf("\nOriginal bot response (%d chars):\n%s\n", len(originalAnswer), summarize(originalAnswer, 400))
+	fmt.Printf("\nOriginal bot response (%d chars):\n%s\n", len(originalAnswer), originalAnswer)
 
 	regenerated, err := regenerateAgentConversationMessage(ctx, sdk, convID, botMessageID, filters)
 	if err != nil {
 		log.Fatalf("regenerate message: %v", err)
 	}
-	fmt.Printf("\nRegenerated bot response (%d chars):\n%s\n", len(regenerated), summarize(regenerated, 400))
+	fmt.Printf("\nRegenerated bot response (%d chars):\n%s\n", len(regenerated), regenerated)
 }
 
 func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, query string, filters *components.Filters) (convID, botMessageID, answer string, err error) {
@@ -190,12 +189,4 @@ func decodeConversationComplete(data string) (answer, convID, botMessageID strin
 		}
 	}
 	return "", convID, "", fmt.Errorf("no bot_response in complete event")
-}
-
-func summarize(s string, max int) string {
-	s = strings.TrimSpace(s)
-	if max <= 0 || len(s) <= max {
-		return s
-	}
-	return s[:max] + "..."
 }
