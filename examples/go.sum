@@ -2,10 +2,10 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
-github.com/pipeshub-ai/pipeshub-sdk-go v0.0.0-20260514190007-8fedf66c6021 h1:mS8AFRmKcherHmgJYT46Iu7yxtQr4zqHcggZAsm6r8M=
-github.com/pipeshub-ai/pipeshub-sdk-go v0.0.0-20260514190007-8fedf66c6021/go.mod h1:4PsOAIt4A9PoqBT4RRjPk5m7s+JPGvtyfUACCR5dNr4=
-github.com/pipeshub-ai/pipeshub-sdk-go v0.1.0 h1:yKnznG+QZrSuePPLR7TPRREf07LFcUlfvSYDJk2ZNNE=
-github.com/pipeshub-ai/pipeshub-sdk-go v0.1.0/go.mod h1:4PsOAIt4A9PoqBT4RRjPk5m7s+JPGvtyfUACCR5dNr4=
+github.com/pipeshub-ai/pipeshub-sdk-go v0.1.1-0.20260603151554-42e148a424a9 h1:Gd0fr4yE0R/t+U2XJBWYRJ2l7Fcujtbv+zkGF0jrc2U=
+github.com/pipeshub-ai/pipeshub-sdk-go v0.1.1-0.20260603151554-42e148a424a9/go.mod h1:4PsOAIt4A9PoqBT4RRjPk5m7s+JPGvtyfUACCR5dNr4=
+github.com/pipeshub-ai/pipeshub-sdk-go v1.2.0 h1:4yW6DRYJ19/UKG5Bry+B5Mpkunj3yDJsPyUlls1CeDM=
+github.com/pipeshub-ai/pipeshub-sdk-go v1.2.0/go.mod h1:4PsOAIt4A9PoqBT4RRjPk5m7s+JPGvtyfUACCR5dNr4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
