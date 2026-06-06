@@ -2,7 +2,7 @@
 
 package pipeshub
 
-// Generated from OpenAPI doc version 1.0.0 and generator version 2.846.1
+// Generated from OpenAPI doc version 1.0.0 and generator version 2.845.1
 
 import (
 	"context"
@@ -166,7 +166,7 @@ type Pipeshub struct {
 
 type SDKOption func(*Pipeshub)
 
-// WithServerURL allows providing an alternative server URL
+// WithServerURL allows the overriding of the default server URL
 func WithServerURL(serverURL string) SDKOption {
 	return func(sdk *Pipeshub) {
 		sdk.sdkConfiguration.ServerURL = serverURL
@@ -247,9 +247,9 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *Pipeshub {
 	sdk := &Pipeshub{
-		SDKVersion: "1.2.0",
+		SDKVersion: "1.3.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 1.2.0 2.846.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
+			UserAgent:  "speakeasy-sdk/go 1.3.0 2.845.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
 			ServerList: ServerList,
 			ServerVariables: []map[string]string{
 				{
