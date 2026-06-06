@@ -105,7 +105,7 @@ func (s *OAuthProvider) OauthToken(ctx context.Context, request components.OAuth
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "oauthToken",
-		OAuth2Scopes:     nil,
+		OAuth2Scopes:     []string{},
 		SecuritySource:   nil,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
@@ -400,7 +400,7 @@ func (s *OAuthProvider) OauthRevoke(ctx context.Context, request components.OAut
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "oauthRevoke",
-		OAuth2Scopes:     nil,
+		OAuth2Scopes:     []string{},
 		SecuritySource:   nil,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
@@ -651,7 +651,7 @@ func (s *OAuthProvider) OauthIntrospect(ctx context.Context, request components.
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "oauthIntrospect",
-		OAuth2Scopes:     nil,
+		OAuth2Scopes:     []string{},
 		SecuritySource:   nil,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)

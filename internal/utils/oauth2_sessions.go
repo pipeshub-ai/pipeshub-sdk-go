@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -60,12 +61,7 @@ func (s oAuth2Session) isExpired() bool {
 
 // Returns the sorted, space-separated scope for the set of scopes.
 func (s oAuth2Session) scope() string {
-	keys := make([]string, 0, len(s.scopes))
-	for k := range s.scopes {
-		keys = append(keys, k)
-	}
-	slices.Sort(keys)
-	return strings.Join(keys, " ")
+	return strings.Join(slices.Sorted(maps.Keys(s.scopes)), " ")
 }
 
 // Describes a collection of OAuth2 sessions.
