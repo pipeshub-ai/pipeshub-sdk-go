@@ -54,8 +54,6 @@ func main() {
 	if res == nil || res.AssistantStreamSSEEvent == nil {
 		log.Fatal("no SSE stream returned")
 	}
-		log.Fatal("no SSE stream returned")
-	}
 	stream := res.AssistantStreamSSEEvent
 	defer stream.Close()
 

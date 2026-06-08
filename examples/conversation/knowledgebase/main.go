@@ -15,7 +15,7 @@ import (
 	"enterprise_search/auth"
 )
 
-const knowledgeBaseName = "SDK-test"
+const knowledgeBaseName = "Go SDK Sample app"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -52,8 +52,6 @@ func main() {
 		log.Fatalf("conversation: %v", err)
 	}
 	if res == nil || res.AssistantStreamSSEEvent == nil {
-		log.Fatal("no SSE stream returned")
-	}
 		log.Fatal("no SSE stream returned")
 	}
 	stream := res.AssistantStreamSSEEvent

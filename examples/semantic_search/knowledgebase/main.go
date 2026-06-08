@@ -13,7 +13,7 @@ import (
 	"enterprise_search/auth"
 )
 
-const knowledgeBaseName = "SDK-test"
+const knowledgeBaseName = "Go SDK Sample app"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -72,7 +72,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("search: %v", err)
 	}
-	if res == nil || res.SemanticSearchExecuteResponse == nil || res.SemanticSearchExecuteResponse.SearchResponse == nil {
+	if res.SemanticSearchExecuteResponse == nil {
 		log.Fatal("search: empty response")
 	}
 
