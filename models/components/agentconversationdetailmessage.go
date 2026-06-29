@@ -4,6 +4,7 @@ package components
 
 import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 	"time"
 )
 
@@ -55,6 +56,8 @@ func (e *AgentConversationDetailMessageContentFormat) IsExact() bool {
 	return false
 }
 
+// Confidence - AI confidence in the answer. Present only on `bot_response` messages,
+// and only when the model emitted a trailing confidence block.
 type Confidence string
 
 const (
@@ -183,14 +186,17 @@ func (a *AgentConversationDetailMessageMetadata) GetAiTransactionID() *string {
 // The response spreads the stored message document and replaces
 // `citations` with populated citation objects.
 type AgentConversationDetailMessage struct {
-	ID                *string                                      `json:"_id,omitzero"`
-	MessageType       *AgentConversationDetailMessageMessageType   `json:"messageType,omitzero"`
-	Content           *string                                      `json:"content,omitzero"`
-	ContentFormat     *AgentConversationDetailMessageContentFormat `json:"contentFormat,omitzero"`
-	Citations         []AgentConversationDetailMessageCitation     `json:"citations,omitzero"`
-	Confidence        *Confidence                                  `json:"confidence,omitzero"`
-	FollowUpQuestions []FollowUpQuestion                           `json:"followUpQuestions,omitzero"`
-	Feedback          []MessageFeedback                            `json:"feedback,omitzero"`
+	ID            *string                                      `json:"_id,omitzero"`
+	MessageType   *AgentConversationDetailMessageMessageType   `json:"messageType,omitzero"`
+	Content       *string                                      `json:"content,omitzero"`
+	ContentFormat *AgentConversationDetailMessageContentFormat `json:"contentFormat,omitzero"`
+	Citations     []AgentConversationDetailMessageCitation     `json:"citations,omitzero"`
+	// AI confidence in the answer. Present only on `bot_response` messages,
+	// and only when the model emitted a trailing confidence block.
+	//
+	Confidence        optionalnullable.OptionalNullable[Confidence] `json:"confidence,omitzero"`
+	FollowUpQuestions []FollowUpQuestion                            `json:"followUpQuestions,omitzero"`
+	Feedback          []MessageFeedback                             `json:"feedback,omitzero"`
 	// Reference identifiers surfaced from tool responses, used to scope
 	// follow-up queries.
 	//
@@ -257,7 +263,7 @@ func (a *AgentConversationDetailMessage) GetCitations() []AgentConversationDetai
 	return a.Citations
 }
 
-func (a *AgentConversationDetailMessage) GetConfidence() *Confidence {
+func (a *AgentConversationDetailMessage) GetConfidence() optionalnullable.OptionalNullable[Confidence] {
 	if a == nil {
 		return nil
 	}

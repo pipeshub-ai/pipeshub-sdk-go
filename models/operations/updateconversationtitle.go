@@ -237,7 +237,7 @@ type UpdateConversationTitleMessage struct {
 	// `bot_response` messages, and only when the
 	// model emitted a trailing confidence block.
 	//
-	Confidence *string `json:"confidence,omitzero"`
+	Confidence optionalnullable.OptionalNullable[string] `json:"confidence,omitzero"`
 	// References to source documents used in the
 	// response, stored as raw citation pointers
 	// (not populated on this endpoint).
@@ -300,7 +300,7 @@ func (u *UpdateConversationTitleMessage) GetContentFormat() *UpdateConversationT
 	return u.ContentFormat
 }
 
-func (u *UpdateConversationTitleMessage) GetConfidence() *string {
+func (u *UpdateConversationTitleMessage) GetConfidence() optionalnullable.OptionalNullable[string] {
 	if u == nil {
 		return nil
 	}

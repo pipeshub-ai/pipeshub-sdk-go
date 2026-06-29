@@ -1,0 +1,9 @@
+# UpdateFolderResponse
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                              | :heavy_check_mark:                                                                              | N/A                                                                                             |
+| `FolderUpdateResponseSchema`                                                                    | [*components.FolderUpdateResponseSchema](../../models/components/folderupdateresponseschema.md) | :heavy_minus_sign:                                                                              | Folder updated successfully                                                                     |

@@ -178,11 +178,10 @@ func main() {
 
 Retrieve agent details by its unique key.
 
-**Observed gateway behavior (localhost integration tests):**
+**Gateway not-found behavior:**
 Unknown `agentKey`, lookup after soft-delete, and other AI-backend failures
-currently return **HTTP 500** with an `ErrorResponse` body (message often
-mentions the agent or "not found"), not 404. The Python query service may
-return 404 when called directly; the Node proxy surfaces 500 instead.
+that return 404 from the Python query service are surfaced by the Node
+gateway as **HTTP 404** with an `ErrorResponse` body.
 
 
 ### Example Usage
@@ -234,7 +233,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
 | apierrors.ErrorResponse | 500, 503                | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
@@ -319,7 +318,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
 | apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
@@ -338,11 +337,9 @@ Only the agent owner may delete (`can_delete` on the permission check).
 **Warning:**
 All conversations with this agent will become inaccessible.
 
-**Observed gateway behavior (localhost integration tests):**
+**Gateway not-found behavior:**
 Unknown `agentKey`, deleting an already-deleted agent, and `GET /agents/{agentKey}`
-after delete currently return **HTTP 500** with an `ErrorResponse` body (message
-often mentions the agent or "not found"), not 404. The Python backend raises 404
-for not-found when called directly; the Node proxy may surface 500 instead.
+after delete return **HTTP 404** with an `ErrorResponse` body.
 
 
 ### Example Usage
@@ -394,7 +391,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 401                     | application/json        |
+| apierrors.ErrorResponse | 401, 404                | application/json        |
 | apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
@@ -548,7 +545,7 @@ func main() {
     )
 
     res, err := s.Agents.UploadAgentConversationChatAttachments(ctx, "<value>", operations.UploadAgentConversationChatAttachmentsRequestBody{
-        Files: []operations.File{},
+        Files: []operations.UploadAgentConversationChatAttachmentsFile{},
     })
     if err != nil {
         log.Fatal(err)

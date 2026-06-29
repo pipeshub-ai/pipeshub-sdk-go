@@ -27,20 +27,20 @@ func (e *NodeType) IsExact() bool {
 	return false
 }
 
-// Origin type.
-type Origin string
+// KnowledgeHubNodeOrigin - Origin type.
+type KnowledgeHubNodeOrigin string
 
 const (
-	OriginCollection Origin = "COLLECTION"
-	OriginConnector  Origin = "CONNECTOR"
+	KnowledgeHubNodeOriginCollection KnowledgeHubNodeOrigin = "COLLECTION"
+	KnowledgeHubNodeOriginConnector  KnowledgeHubNodeOrigin = "CONNECTOR"
 )
 
-func (e Origin) ToPointer() *Origin {
+func (e KnowledgeHubNodeOrigin) ToPointer() *KnowledgeHubNodeOrigin {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *Origin) IsExact() bool {
+func (e *KnowledgeHubNodeOrigin) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "COLLECTION", "CONNECTOR":
@@ -50,32 +50,32 @@ func (e *Origin) IsExact() bool {
 	return false
 }
 
-// Permission - Per-item permission when `include=permissions` is requested; otherwise `null`.
-type Permission struct {
+// KnowledgeHubNodePermission - Per-item permission when `include=permissions` is requested; otherwise `null`.
+type KnowledgeHubNodePermission struct {
 	Role      string `json:"role"`
 	CanEdit   bool   `json:"canEdit"`
 	CanDelete bool   `json:"canDelete"`
 }
 
-func (p *Permission) GetRole() string {
-	if p == nil {
+func (k *KnowledgeHubNodePermission) GetRole() string {
+	if k == nil {
 		return ""
 	}
-	return p.Role
+	return k.Role
 }
 
-func (p *Permission) GetCanEdit() bool {
-	if p == nil {
+func (k *KnowledgeHubNodePermission) GetCanEdit() bool {
+	if k == nil {
 		return false
 	}
-	return p.CanEdit
+	return k.CanEdit
 }
 
-func (p *Permission) GetCanDelete() bool {
-	if p == nil {
+func (k *KnowledgeHubNodePermission) GetCanDelete() bool {
+	if k == nil {
 		return false
 	}
-	return p.CanDelete
+	return k.CanDelete
 }
 
 // KnowledgeHubNode - One element of `items`. The live API keeps keys stable and sets
@@ -90,7 +90,7 @@ type KnowledgeHubNode struct {
 	// Parent node ID, or `null` at the root browse level.
 	ParentID *string `json:"parentId"`
 	// Origin type.
-	Origin Origin `json:"origin"`
+	Origin KnowledgeHubNodeOrigin `json:"origin"`
 	// Connector display name / key when applicable; otherwise `null`.
 	Connector *string `json:"connector"`
 	// Record type when `nodeType` is `record`; otherwise `null`.
@@ -116,7 +116,7 @@ type KnowledgeHubNode struct {
 	HasChildren       bool  `json:"hasChildren"`
 	PreviewRenderable *bool `json:"previewRenderable"`
 	// Per-item permission when `include=permissions` is requested; otherwise `null`.
-	Permission *Permission `json:"permission"`
+	Permission *KnowledgeHubNodePermission `json:"permission"`
 	// Sharing status (e.g. `private`, `shared`, `team`, `workspace`) when
 	// applicable; otherwise `null`.
 	//
@@ -151,9 +151,9 @@ func (k *KnowledgeHubNode) GetParentID() *string {
 	return k.ParentID
 }
 
-func (k *KnowledgeHubNode) GetOrigin() Origin {
+func (k *KnowledgeHubNode) GetOrigin() KnowledgeHubNodeOrigin {
 	if k == nil {
-		return Origin("")
+		return KnowledgeHubNodeOrigin("")
 	}
 	return k.Origin
 }
@@ -256,7 +256,7 @@ func (k *KnowledgeHubNode) GetPreviewRenderable() *bool {
 	return k.PreviewRenderable
 }
 
-func (k *KnowledgeHubNode) GetPermission() *Permission {
+func (k *KnowledgeHubNode) GetPermission() *KnowledgeHubNodePermission {
 	if k == nil {
 		return nil
 	}
