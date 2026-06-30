@@ -1,0 +1,10 @@
+# CreateFolderRequest
+
+
+## Fields
+
+| Field                                                                                    | Type                                                                                     | Required                                                                                 | Description                                                                              |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `KbID`                                                                                   | *string*                                                                                 | :heavy_check_mark:                                                                       | Knowledge base ID                                                                        |
+| `FolderID`                                                                               | **string*                                                                                | :heavy_minus_sign:                                                                       | Parent folder ID. Omit to create at the knowledge base root.                             |
+| `Body`                                                                                   | [operations.CreateFolderRequestBody](../../models/operations/createfolderrequestbody.md) | :heavy_check_mark:                                                                       | Request payload                                                                          |

@@ -1,0 +1,10 @@
+# UploadRecordsRequest
+
+
+## Fields
+
+| Field                                                                                      | Type                                                                                       | Required                                                                                   | Description                                                                                |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `KbID`                                                                                     | *string*                                                                                   | :heavy_check_mark:                                                                         | Knowledge base ID                                                                          |
+| `FolderID`                                                                                 | **string*                                                                                  | :heavy_minus_sign:                                                                         | Target folder ID. Omit to upload to the KB root.                                           |
+| `Body`                                                                                     | [operations.UploadRecordsRequestBody](../../models/operations/uploadrecordsrequestbody.md) | :heavy_check_mark:                                                                         | Request payload                                                                            |

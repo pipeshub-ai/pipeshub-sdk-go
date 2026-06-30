@@ -1,0 +1,9 @@
+# ReindexRecordGroupRequest
+
+
+## Fields
+
+| Field                                                                                                 | Type                                                                                                  | Required                                                                                              | Description                                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `RecordGroupID`                                                                                       | *string*                                                                                              | :heavy_check_mark:                                                                                    | Folder ID or KB ID                                                                                    |
+| `Body`                                                                                                | [*components.ReindexRecordGroupRequestBody](../../models/components/reindexrecordgrouprequestbody.md) | :heavy_minus_sign:                                                                                    | Request payload                                                                                       |

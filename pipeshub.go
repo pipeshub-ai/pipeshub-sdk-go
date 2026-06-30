@@ -2,7 +2,7 @@
 
 package pipeshub
 
-// Generated from OpenAPI doc version 1.0.0 and generator version 2.846.1
+// Generated from OpenAPI doc version 1.0.0 and generator version 2.845.1
 
 import (
 	"context"
@@ -147,8 +147,8 @@ type Pipeshub struct {
 	OrganizationAuthConfig *OrganizationAuthConfig
 	// Organization management operations
 	Organizations *Organizations
-	// Unified browse API for root and child nodes (apps, record groups, folders, records) with filtering and search
-	KnowledgeHub *KnowledgeHub
+	// Knowledge base management operations
+	KnowledgeBase *KnowledgeBase
 	// AI-powered conversational chat management with citations and follow-up questions
 	Conversations *Conversations
 	// Enterprise semantic search across all indexed knowledge with relevance scoring
@@ -166,7 +166,7 @@ type Pipeshub struct {
 
 type SDKOption func(*Pipeshub)
 
-// WithServerURL allows providing an alternative server URL
+// WithServerURL allows the overriding of the default server URL
 func WithServerURL(serverURL string) SDKOption {
 	return func(sdk *Pipeshub) {
 		sdk.sdkConfiguration.ServerURL = serverURL
@@ -247,9 +247,9 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *Pipeshub {
 	sdk := &Pipeshub{
-		SDKVersion: "1.2.0",
+		SDKVersion: "1.3.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 1.2.0 2.846.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
+			UserAgent:  "speakeasy-sdk/go 1.3.0 2.845.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
 			ServerList: ServerList,
 			ServerVariables: []map[string]string{
 				{
@@ -286,7 +286,7 @@ func New(opts ...SDKOption) *Pipeshub {
 	sdk.UserAccount = newUserAccount(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.OrganizationAuthConfig = newOrganizationAuthConfig(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Organizations = newOrganizations(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.KnowledgeHub = newKnowledgeHub(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.KnowledgeBase = newKnowledgeBase(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Conversations = newConversations(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.SemanticSearch = newSemanticSearch(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Agents = newAgents(sdk, sdk.sdkConfiguration, sdk.hooks)

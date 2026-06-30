@@ -90,7 +90,7 @@ func (s *UserAccount) InitAuth(ctx context.Context, request *components.InitAuth
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "initAuth",
-		OAuth2Scopes:     nil,
+		OAuth2Scopes:     []string{},
 		SecuritySource:   nil,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "Request", "json", `request:"mediaType=application/json"`)
@@ -382,7 +382,7 @@ func (s *UserAccount) Authenticate(ctx context.Context, xSessionToken string, bo
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "authenticate",
-		OAuth2Scopes:     nil,
+		OAuth2Scopes:     []string{},
 		SecuritySource:   nil,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
