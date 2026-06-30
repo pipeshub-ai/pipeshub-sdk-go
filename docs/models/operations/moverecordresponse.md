@@ -1,0 +1,9 @@
+# MoveRecordResponse
+
+
+## Fields
+
+| Field                                                                                                     | Type                                                                                                      | Required                                                                                                  | Description                                                                                               |
+| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                        | :heavy_check_mark:                                                                                        | N/A                                                                                                       |
+| `KnowledgeBaseMoveRecordResponse`                                                                         | [*components.KnowledgeBaseMoveRecordResponse](../../models/components/knowledgebasemoverecordresponse.md) | :heavy_minus_sign:                                                                                        | Record moved successfully                                                                                 |

@@ -4,6 +4,7 @@ package components
 
 import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 	"time"
 )
 
@@ -196,8 +197,10 @@ type Message struct {
 	ContentFormat *MessageContentFormat `default:"MARKDOWN" json:"contentFormat"`
 	// References to source documents used in the response
 	Citations []CitationReference `json:"citations,omitzero"`
-	// AI's confidence level in the response
-	Confidence *string `json:"confidence,omitzero"`
+	// AI confidence in the answer. Present only on `bot_response` messages,
+	// and only when the model emitted a trailing confidence block.
+	//
+	Confidence optionalnullable.OptionalNullable[string] `json:"confidence,omitzero"`
 	// Suggested follow-up questions
 	FollowUpQuestions []FollowUpQuestion `json:"followUpQuestions,omitzero"`
 	// User feedback on this message
@@ -268,7 +271,7 @@ func (m *Message) GetCitations() []CitationReference {
 	return m.Citations
 }
 
-func (m *Message) GetConfidence() *string {
+func (m *Message) GetConfidence() optionalnullable.OptionalNullable[string] {
 	if m == nil {
 		return nil
 	}

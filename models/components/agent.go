@@ -205,355 +205,6 @@ func (u ModelUnion) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("could not marshal union type ModelUnion: all fields are null")
 }
 
-type Tool struct {
-	Name        *string `json:"name,omitzero"`
-	FullName    *string `json:"fullName,omitzero"`
-	Description *string `json:"description,omitzero"`
-	// Server-stamped: `true` when the tool's `fullName` is no
-	// longer in the runtime tool registry (its `@tool` was
-	// removed). Read-only; ignored on create/update bodies.
-	//
-	Deprecated *bool `json:"deprecated,omitzero"`
-}
-
-func (t *Tool) GetName() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Name
-}
-
-func (t *Tool) GetFullName() *string {
-	if t == nil {
-		return nil
-	}
-	return t.FullName
-}
-
-func (t *Tool) GetDescription() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Description
-}
-
-func (t *Tool) GetDeprecated() *bool {
-	if t == nil {
-		return nil
-	}
-	return t.Deprecated
-}
-
-type Toolset struct {
-	// Integration / toolset type key.
-	Name *AgentCreateToolsetName `json:"name,omitzero"`
-	// Human-readable toolset product label (for example `Jira` or `Slack`).
-	DisplayName *string `json:"displayName,omitzero"`
-	Type        *string `json:"type,omitzero"`
-	// Admin-created toolset instance id
-	InstanceID *string `json:"instanceId,omitzero"`
-	// Human-readable instance label (e.g. sidebar instance name)
-	InstanceName *string `json:"instanceName,omitzero"`
-	// Optional branded icon URL or path
-	IconPath *string `json:"iconPath,omitzero"`
-	Tools    []Tool  `json:"tools,omitzero"`
-}
-
-func (t Toolset) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(t, "", false)
-}
-
-func (t *Toolset) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *Toolset) GetName() *AgentCreateToolsetName {
-	if t == nil {
-		return nil
-	}
-	return t.Name
-}
-
-func (t *Toolset) GetDisplayName() *string {
-	if t == nil {
-		return nil
-	}
-	return t.DisplayName
-}
-
-func (t *Toolset) GetType() *string {
-	if t == nil {
-		return nil
-	}
-	return t.Type
-}
-
-func (t *Toolset) GetInstanceID() *string {
-	if t == nil {
-		return nil
-	}
-	return t.InstanceID
-}
-
-func (t *Toolset) GetInstanceName() *string {
-	if t == nil {
-		return nil
-	}
-	return t.InstanceName
-}
-
-func (t *Toolset) GetIconPath() *string {
-	if t == nil {
-		return nil
-	}
-	return t.IconPath
-}
-
-func (t *Toolset) GetTools() []Tool {
-	if t == nil {
-		return nil
-	}
-	return t.Tools
-}
-
-type AgentFiltersType string
-
-const (
-	AgentFiltersTypeAgentKnowledgeFiltersParsed AgentFiltersType = "AgentKnowledgeFiltersParsed"
-	AgentFiltersTypeStr                         AgentFiltersType = "str"
-	AgentFiltersTypeUnknown                     AgentFiltersType = "Unknown"
-)
-
-// AgentFilters - Knowledge scope filter as stored on the graph edge. The Node `getAgent`
-// handler proxies this field unchanged from the AI service (only `agent.id`
-// is stripped). May be a JSON string (typical graph storage) or an object.
-// Prefer `filtersParsed` on GET for a guaranteed parsed object with the
-// same keys as the object branch below.
-type AgentFilters struct {
-	AgentKnowledgeFiltersParsed *AgentKnowledgeFiltersParsed `queryParam:"inline" union:"member"`
-	Str                         *string                      `queryParam:"inline" union:"member"`
-	UnknownRaw                  json.RawMessage              `json:"-" union:"unknown"`
-
-	Type AgentFiltersType
-}
-
-func CreateAgentFiltersAgentKnowledgeFiltersParsed(agentKnowledgeFiltersParsed AgentKnowledgeFiltersParsed) AgentFilters {
-	typ := AgentFiltersTypeAgentKnowledgeFiltersParsed
-
-	return AgentFilters{
-		AgentKnowledgeFiltersParsed: &agentKnowledgeFiltersParsed,
-		Type:                        typ,
-	}
-}
-
-func CreateAgentFiltersStr(str string) AgentFilters {
-	typ := AgentFiltersTypeStr
-
-	return AgentFilters{
-		Str:  &str,
-		Type: typ,
-	}
-}
-
-func CreateAgentFiltersUnknown(raw json.RawMessage) AgentFilters {
-	return AgentFilters{
-		UnknownRaw: raw,
-		Type:       AgentFiltersTypeUnknown,
-	}
-}
-
-func (u AgentFilters) GetUnknownRaw() json.RawMessage {
-	return u.UnknownRaw
-}
-
-func (u AgentFilters) IsUnknown() bool {
-	return u.Type == AgentFiltersTypeUnknown
-}
-
-func (u *AgentFilters) UnmarshalJSON(data []byte) error {
-
-	var candidates []utils.UnionCandidate
-
-	// Collect all valid candidates
-	var agentKnowledgeFiltersParsed AgentKnowledgeFiltersParsed = AgentKnowledgeFiltersParsed{}
-	if err := utils.UnmarshalJSON(data, &agentKnowledgeFiltersParsed, "", true, nil); err == nil {
-		candidates = append(candidates, utils.UnionCandidate{
-			Type:  AgentFiltersTypeAgentKnowledgeFiltersParsed,
-			Value: &agentKnowledgeFiltersParsed,
-		})
-	}
-
-	var str string = ""
-	if err := utils.UnmarshalJSON(data, &str, "", true, nil); err == nil {
-		candidates = append(candidates, utils.UnionCandidate{
-			Type:  AgentFiltersTypeStr,
-			Value: &str,
-		})
-	}
-
-	if len(candidates) == 0 {
-		u.UnknownRaw = json.RawMessage(data)
-		u.Type = AgentFiltersTypeUnknown
-		return nil
-	}
-
-	// Pick the best candidate using multi-stage filtering
-	best := utils.PickBestUnionCandidate(candidates, data)
-	if best == nil {
-		u.UnknownRaw = json.RawMessage(data)
-		u.Type = AgentFiltersTypeUnknown
-		return nil
-	}
-
-	// Set the union type and value based on the best candidate
-	u.Type = best.Type.(AgentFiltersType)
-	switch best.Type {
-	case AgentFiltersTypeAgentKnowledgeFiltersParsed:
-		u.AgentKnowledgeFiltersParsed = best.Value.(*AgentKnowledgeFiltersParsed)
-		return nil
-	case AgentFiltersTypeStr:
-		u.Str = best.Value.(*string)
-		return nil
-	}
-
-	u.UnknownRaw = json.RawMessage(data)
-	u.Type = AgentFiltersTypeUnknown
-	return nil
-}
-
-func (u AgentFilters) MarshalJSON() ([]byte, error) {
-	if u.AgentKnowledgeFiltersParsed != nil {
-		return utils.MarshalJSON(u.AgentKnowledgeFiltersParsed, "", true)
-	}
-
-	if u.Str != nil {
-		return utils.MarshalJSON(u.Str, "", true)
-	}
-
-	if u.UnknownRaw != nil {
-		return json.RawMessage(u.UnknownRaw), nil
-	}
-	return nil, errors.New("could not marshal union type AgentFilters: all fields are null")
-}
-
-// FiltersParsed - Server-derived read-only object parsed from the stored
-// `filters` JSON by the graph provider on GET (Neo4j / Arango).
-// Empty object when `filters` is missing or invalid JSON.
-type FiltersParsed struct {
-	// Record-group ids (e.g. knowledge-base roots) in scope.
-	RecordGroups []string `json:"recordGroups,omitzero"`
-	// Individual record ids in scope.
-	Records []string `json:"records,omitzero"`
-}
-
-func (f FiltersParsed) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(f, "", false)
-}
-
-func (f *FiltersParsed) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &f, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (f *FiltersParsed) GetRecordGroups() []string {
-	if f == nil {
-		return nil
-	}
-	return f.RecordGroups
-}
-
-func (f *FiltersParsed) GetRecords() []string {
-	if f == nil {
-		return nil
-	}
-	return f.Records
-}
-
-type Knowledge struct {
-	Key         *string `json:"_key,omitzero"`
-	ConnectorID *string `json:"connectorId,omitzero"`
-	Name        *string `json:"name,omitzero"`
-	Type        *string `json:"type,omitzero"`
-	DisplayName *string `json:"displayName,omitzero"`
-	// Knowledge scope filter as stored on the graph edge. The Node `getAgent`
-	// handler proxies this field unchanged from the AI service (only `agent.id`
-	// is stripped). May be a JSON string (typical graph storage) or an object.
-	// Prefer `filtersParsed` on GET for a guaranteed parsed object with the
-	// same keys as the object branch below.
-	//
-	Filters *AgentFilters `json:"filters,omitzero"`
-	// Server-derived read-only object parsed from the stored
-	// `filters` JSON by the graph provider on GET (Neo4j / Arango).
-	// Empty object when `filters` is missing or invalid JSON.
-	//
-	FiltersParsed *FiltersParsed `json:"filtersParsed,omitzero"`
-}
-
-func (k Knowledge) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(k, "", false)
-}
-
-func (k *Knowledge) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &k, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (k *Knowledge) GetKey() *string {
-	if k == nil {
-		return nil
-	}
-	return k.Key
-}
-
-func (k *Knowledge) GetConnectorID() *string {
-	if k == nil {
-		return nil
-	}
-	return k.ConnectorID
-}
-
-func (k *Knowledge) GetName() *string {
-	if k == nil {
-		return nil
-	}
-	return k.Name
-}
-
-func (k *Knowledge) GetType() *string {
-	if k == nil {
-		return nil
-	}
-	return k.Type
-}
-
-func (k *Knowledge) GetDisplayName() *string {
-	if k == nil {
-		return nil
-	}
-	return k.DisplayName
-}
-
-func (k *Knowledge) GetFilters() *AgentFilters {
-	if k == nil {
-		return nil
-	}
-	return k.Filters
-}
-
-func (k *Knowledge) GetFiltersParsed() *FiltersParsed {
-	if k == nil {
-		return nil
-	}
-	return k.FiltersParsed
-}
-
 // AgentWebSearch - Web search provider attached to this agent. Null when none is configured.
 type AgentWebSearch struct {
 	// Provider identifier (e.g. "tavily", "serper", "exa", "duckduckgo")
@@ -598,7 +249,8 @@ type Agent struct {
 	Description *string `json:"description,omitzero"`
 	// System instructions that define agent behavior
 	SystemPrompt *string `json:"systemPrompt,omitzero"`
-	CreatedBy    string  `json:"createdBy"`
+	// MongoDB user ID of the agent creator
+	CreatedBy string `json:"createdBy"`
 	// Initial greeting shown when a conversation with this agent starts
 	StartMessage *string `json:"startMessage,omitzero"`
 	// Additional agent execution instructions
@@ -610,9 +262,9 @@ type Agent struct {
 	// Multiple instances of the same integration type are distinguished by `instanceId`
 	// and optional `instanceName`.
 	//
-	Toolsets []Toolset `json:"toolsets"`
+	Toolsets []AgentToolset `json:"toolsets"`
 	// Knowledge connectors and indexed scopes linked to the agent
-	Knowledge []Knowledge `json:"knowledge"`
+	Knowledge []AgentKnowledge `json:"knowledge"`
 	// Whether the agent is shared with the whole organization
 	ShareWithOrg bool `json:"shareWithOrg"`
 	// Web search provider attached to this agent. Null when none is configured.
@@ -726,16 +378,16 @@ func (a *Agent) GetModels() []ModelUnion {
 	return a.Models
 }
 
-func (a *Agent) GetToolsets() []Toolset {
+func (a *Agent) GetToolsets() []AgentToolset {
 	if a == nil {
-		return []Toolset{}
+		return []AgentToolset{}
 	}
 	return a.Toolsets
 }
 
-func (a *Agent) GetKnowledge() []Knowledge {
+func (a *Agent) GetKnowledge() []AgentKnowledge {
 	if a == nil {
-		return []Knowledge{}
+		return []AgentKnowledge{}
 	}
 	return a.Knowledge
 }

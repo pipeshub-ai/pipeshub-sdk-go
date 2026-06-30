@@ -1,0 +1,9 @@
+# ReindexRecordGroupResponse
+
+
+## Fields
+
+| Field                                                                                                       | Type                                                                                                        | Required                                                                                                    | Description                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                          | :heavy_check_mark:                                                                                          | N/A                                                                                                         |
+| `ReIndexRecordGroupResponseSchema`                                                                          | [*components.ReIndexRecordGroupResponseSchema](../../models/components/reindexrecordgroupresponseschema.md) | :heavy_minus_sign:                                                                                          | Reindexing triggered for all records in group                                                               |

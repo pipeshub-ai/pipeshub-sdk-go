@@ -1,0 +1,9 @@
+# GetUploadLimitsResponse
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                              | :heavy_check_mark:                                                                              | N/A                                                                                             |
+| `UploadLimitsResponseSchema`                                                                    | [*components.UploadLimitsResponseSchema](../../models/components/uploadlimitsresponseschema.md) | :heavy_minus_sign:                                                                              | Upload limits retrieved                                                                         |

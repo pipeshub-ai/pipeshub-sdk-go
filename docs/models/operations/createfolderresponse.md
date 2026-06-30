@@ -1,0 +1,9 @@
+# CreateFolderResponse
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                              | :heavy_check_mark:                                                                              | N/A                                                                                             |
+| `FolderCreateResponseSchema`                                                                    | [*components.FolderCreateResponseSchema](../../models/components/foldercreateresponseschema.md) | :heavy_minus_sign:                                                                              | Folder created successfully                                                                     |

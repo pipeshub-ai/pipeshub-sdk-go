@@ -1,0 +1,9 @@
+# DeleteRecordResponse
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                              | :heavy_check_mark:                                                                              | N/A                                                                                             |
+| `DeleteRecordResponseSchema`                                                                    | [*components.DeleteRecordResponseSchema](../../models/components/deleterecordresponseschema.md) | :heavy_minus_sign:                                                                              | Record deleted successfully                                                                     |

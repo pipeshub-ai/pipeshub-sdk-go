@@ -7,24 +7,24 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
-type File struct {
+type UploadAgentConversationChatAttachmentsFile struct {
 	FileName string `multipartForm:"name=fileName"`
 	// This field accepts []byte data or io.Reader implementations, such as *os.File.
 	Content any `multipartForm:"content"`
 }
 
-func (f *File) GetFileName() string {
-	if f == nil {
+func (u *UploadAgentConversationChatAttachmentsFile) GetFileName() string {
+	if u == nil {
 		return ""
 	}
-	return f.FileName
+	return u.FileName
 }
 
-func (f *File) GetContent() any {
-	if f == nil {
+func (u *UploadAgentConversationChatAttachmentsFile) GetContent() any {
+	if u == nil {
 		return nil
 	}
-	return f.Content
+	return u.Content
 }
 
 // UploadAgentConversationChatAttachmentsRequestBody - Multipart form with attachment files and optional `conversationId`.
@@ -34,7 +34,7 @@ type UploadAgentConversationChatAttachmentsRequestBody struct {
 	ConversationID *string `multipartForm:"name=conversationId"`
 	// One or more files; field name must be `files`. Accepted MIME types: `application/pdf`, `image/jpeg`, `image/jpg`, `image/png`. Max 5 MiB each.
 	//
-	Files []File `multipartForm:"file,name=files"`
+	Files []UploadAgentConversationChatAttachmentsFile `multipartForm:"file,name=files"`
 }
 
 func (u *UploadAgentConversationChatAttachmentsRequestBody) GetConversationID() *string {
@@ -44,9 +44,9 @@ func (u *UploadAgentConversationChatAttachmentsRequestBody) GetConversationID() 
 	return u.ConversationID
 }
 
-func (u *UploadAgentConversationChatAttachmentsRequestBody) GetFiles() []File {
+func (u *UploadAgentConversationChatAttachmentsRequestBody) GetFiles() []UploadAgentConversationChatAttachmentsFile {
 	if u == nil {
-		return []File{}
+		return []UploadAgentConversationChatAttachmentsFile{}
 	}
 	return u.Files
 }

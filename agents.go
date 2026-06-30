@@ -521,11 +521,10 @@ func (s *Agents) CreateAgent(ctx context.Context, request components.AgentCreate
 // GetAgent - Get agent
 // Retrieve agent details by its unique key.
 //
-// **Observed gateway behavior (localhost integration tests):**
+// **Gateway not-found behavior:**
 // Unknown `agentKey`, lookup after soft-delete, and other AI-backend failures
-// currently return **HTTP 500** with an `ErrorResponse` body (message often
-// mentions the agent or "not found"), not 404. The Python query service may
-// return 404 when called directly; the Node proxy surfaces 500 instead.
+// that return 404 from the Python query service are surfaced by the Node
+// gateway as **HTTP 404** with an `ErrorResponse` body.
 func (s *Agents) GetAgent(ctx context.Context, agentKey string, opts ...operations.Option) (*operations.GetAgentResponse, error) {
 	request := operations.GetAgentRequest{
 		AgentKey: agentKey,
@@ -666,7 +665,7 @@ func (s *Agents) GetAgent(ctx context.Context, agentKey string, opts ...operatio
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -715,6 +714,8 @@ func (s *Agents) GetAgent(ctx context.Context, agentKey string, opts ...operatio
 	case httpRes.StatusCode == 401:
 		fallthrough
 	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode == 404:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -964,7 +965,7 @@ func (s *Agents) UpdateAgent(ctx context.Context, agentKey string, body componen
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1013,6 +1014,8 @@ func (s *Agents) UpdateAgent(ctx context.Context, agentKey string, body componen
 	case httpRes.StatusCode == 401:
 		fallthrough
 	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode == 404:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -1100,11 +1103,9 @@ func (s *Agents) UpdateAgent(ctx context.Context, agentKey string, body componen
 // **Warning:**
 // All conversations with this agent will become inaccessible.
 //
-// **Observed gateway behavior (localhost integration tests):**
+// **Gateway not-found behavior:**
 // Unknown `agentKey`, deleting an already-deleted agent, and `GET /agents/{agentKey}`
-// after delete currently return **HTTP 500** with an `ErrorResponse` body (message
-// often mentions the agent or "not found"), not 404. The Python backend raises 404
-// for not-found when called directly; the Node proxy may surface 500 instead.
+// after delete return **HTTP 404** with an `ErrorResponse` body.
 func (s *Agents) DeleteAgent(ctx context.Context, agentKey string, opts ...operations.Option) (*operations.DeleteAgentResponse, error) {
 	request := operations.DeleteAgentRequest{
 		AgentKey: agentKey,
@@ -1245,7 +1246,7 @@ func (s *Agents) DeleteAgent(ctx context.Context, agentKey string, opts ...opera
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1290,6 +1291,8 @@ func (s *Agents) DeleteAgent(ctx context.Context, agentKey string, opts ...opera
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 404:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)

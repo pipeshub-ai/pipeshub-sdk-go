@@ -54,7 +54,7 @@ type AgentListItem struct {
 	Rev *string `json:"_rev,omitzero"`
 	// Unix epoch timestamp in milliseconds when the agent was created.
 	CreatedAtTimestamp int64 `json:"createdAtTimestamp"`
-	// User id of the creator.
+	// MongoDB user ID of the agent creator
 	CreatedBy string `json:"createdBy"`
 	// Short human-readable description of the agent.
 	Description optionalnullable.OptionalNullable[string] `json:"description,omitzero"`
@@ -94,6 +94,16 @@ type AgentListItem struct {
 	WebSearch optionalnullable.OptionalNullable[AgentListItemWebSearch] `json:"webSearch,omitzero"`
 	// Whether the agent is shared with the organization.
 	ShareWithOrg bool `json:"shareWithOrg"`
+	// Toolset instances linked to the agent. Same projection as
+	// `GET /agents/{agentKey}`; the backend builds it from the graph edges
+	// for each agent on the returned page.
+	//
+	Toolsets []AgentToolset `json:"toolsets"`
+	// Knowledge connectors and indexed scopes linked to the agent. Same
+	// projection as `GET /agents/{agentKey}`; the backend builds it from
+	// the graph edges for each agent on the returned page.
+	//
+	Knowledge []AgentKnowledge `json:"knowledge"`
 	// Effective permission to view the agent.
 	CanView bool `json:"can_view"`
 	// Effective permission to share the agent.
@@ -250,6 +260,20 @@ func (a *AgentListItem) GetShareWithOrg() bool {
 		return false
 	}
 	return a.ShareWithOrg
+}
+
+func (a *AgentListItem) GetToolsets() []AgentToolset {
+	if a == nil {
+		return []AgentToolset{}
+	}
+	return a.Toolsets
+}
+
+func (a *AgentListItem) GetKnowledge() []AgentKnowledge {
+	if a == nil {
+		return []AgentKnowledge{}
+	}
+	return a.Knowledge
 }
 
 func (a *AgentListItem) GetCanView() bool {

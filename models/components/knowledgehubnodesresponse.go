@@ -200,8 +200,8 @@ func (s *Size) GetLte() optionalnullable.OptionalNullable[int64] {
 	return s.Lte
 }
 
-// Applied - Echo of applied filters; unused slots are JSON `null`.
-type Applied struct {
+// KnowledgeHubNodesResponseApplied - Echo of applied filters; unused slots are JSON `null`.
+type KnowledgeHubNodesResponseApplied struct {
 	Q              *string    `json:"q"`
 	NodeTypes      []string   `json:"nodeTypes"`
 	RecordTypes    []string   `json:"recordTypes"`
@@ -217,85 +217,85 @@ type Applied struct {
 	SortOrder string `json:"sortOrder"`
 }
 
-func (a *Applied) GetQ() *string {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetQ() *string {
+	if k == nil {
 		return nil
 	}
-	return a.Q
+	return k.Q
 }
 
-func (a *Applied) GetNodeTypes() []string {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetNodeTypes() []string {
+	if k == nil {
 		return nil
 	}
-	return a.NodeTypes
+	return k.NodeTypes
 }
 
-func (a *Applied) GetRecordTypes() []string {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetRecordTypes() []string {
+	if k == nil {
 		return nil
 	}
-	return a.RecordTypes
+	return k.RecordTypes
 }
 
-func (a *Applied) GetOrigins() []string {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetOrigins() []string {
+	if k == nil {
 		return nil
 	}
-	return a.Origins
+	return k.Origins
 }
 
-func (a *Applied) GetConnectorIds() []string {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetConnectorIds() []string {
+	if k == nil {
 		return nil
 	}
-	return a.ConnectorIds
+	return k.ConnectorIds
 }
 
-func (a *Applied) GetIndexingStatus() []string {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetIndexingStatus() []string {
+	if k == nil {
 		return nil
 	}
-	return a.IndexingStatus
+	return k.IndexingStatus
 }
 
-func (a *Applied) GetCreatedAt() *CreatedAt {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetCreatedAt() *CreatedAt {
+	if k == nil {
 		return nil
 	}
-	return a.CreatedAt
+	return k.CreatedAt
 }
 
-func (a *Applied) GetUpdatedAt() *UpdatedAt {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetUpdatedAt() *UpdatedAt {
+	if k == nil {
 		return nil
 	}
-	return a.UpdatedAt
+	return k.UpdatedAt
 }
 
-func (a *Applied) GetSize() *Size {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetSize() *Size {
+	if k == nil {
 		return nil
 	}
-	return a.Size
+	return k.Size
 }
 
-func (a *Applied) GetSortBy() string {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetSortBy() string {
+	if k == nil {
 		return ""
 	}
-	return a.SortBy
+	return k.SortBy
 }
 
-func (a *Applied) GetSortOrder() string {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseApplied) GetSortOrder() string {
+	if k == nil {
 		return ""
 	}
-	return a.SortOrder
+	return k.SortOrder
 }
 
-// Available - Populated when `include=availableFilters`; otherwise `null`.
-type Available struct {
+// KnowledgeHubNodesResponseAvailable - Populated when `include=availableFilters`; otherwise `null`.
+type KnowledgeHubNodesResponseAvailable struct {
 	NodeTypes      []FilterOption `json:"nodeTypes"`
 	RecordTypes    []FilterOption `json:"recordTypes"`
 	Origins        []FilterOption `json:"origins"`
@@ -305,70 +305,70 @@ type Available struct {
 	SortOrder      []FilterOption `json:"sortOrder"`
 }
 
-func (a *Available) GetNodeTypes() []FilterOption {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseAvailable) GetNodeTypes() []FilterOption {
+	if k == nil {
 		return []FilterOption{}
 	}
-	return a.NodeTypes
+	return k.NodeTypes
 }
 
-func (a *Available) GetRecordTypes() []FilterOption {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseAvailable) GetRecordTypes() []FilterOption {
+	if k == nil {
 		return []FilterOption{}
 	}
-	return a.RecordTypes
+	return k.RecordTypes
 }
 
-func (a *Available) GetOrigins() []FilterOption {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseAvailable) GetOrigins() []FilterOption {
+	if k == nil {
 		return []FilterOption{}
 	}
-	return a.Origins
+	return k.Origins
 }
 
-func (a *Available) GetConnectors() []FilterOption {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseAvailable) GetConnectors() []FilterOption {
+	if k == nil {
 		return []FilterOption{}
 	}
-	return a.Connectors
+	return k.Connectors
 }
 
-func (a *Available) GetIndexingStatus() []FilterOption {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseAvailable) GetIndexingStatus() []FilterOption {
+	if k == nil {
 		return []FilterOption{}
 	}
-	return a.IndexingStatus
+	return k.IndexingStatus
 }
 
-func (a *Available) GetSortBy() []FilterOption {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseAvailable) GetSortBy() []FilterOption {
+	if k == nil {
 		return []FilterOption{}
 	}
-	return a.SortBy
+	return k.SortBy
 }
 
-func (a *Available) GetSortOrder() []FilterOption {
-	if a == nil {
+func (k *KnowledgeHubNodesResponseAvailable) GetSortOrder() []FilterOption {
+	if k == nil {
 		return []FilterOption{}
 	}
-	return a.SortOrder
+	return k.SortOrder
 }
 
 type KnowledgeHubNodesResponseFilters struct {
 	// Echo of applied filters; unused slots are JSON `null`.
-	Applied Applied `json:"applied"`
+	Applied KnowledgeHubNodesResponseApplied `json:"applied"`
 	// Populated when `include=availableFilters`; otherwise `null`.
-	Available *Available `json:"available"`
+	Available *KnowledgeHubNodesResponseAvailable `json:"available"`
 }
 
-func (k *KnowledgeHubNodesResponseFilters) GetApplied() Applied {
+func (k *KnowledgeHubNodesResponseFilters) GetApplied() KnowledgeHubNodesResponseApplied {
 	if k == nil {
-		return Applied{}
+		return KnowledgeHubNodesResponseApplied{}
 	}
 	return k.Applied
 }
 
-func (k *KnowledgeHubNodesResponseFilters) GetAvailable() *Available {
+func (k *KnowledgeHubNodesResponseFilters) GetAvailable() *KnowledgeHubNodesResponseAvailable {
 	if k == nil {
 		return nil
 	}

@@ -1,0 +1,10 @@
+# UpdateFolderRequest
+
+
+## Fields
+
+| Field                                                                                    | Type                                                                                     | Required                                                                                 | Description                                                                              |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `KbID`                                                                                   | *string*                                                                                 | :heavy_check_mark:                                                                       | N/A                                                                                      |
+| `FolderID`                                                                               | *string*                                                                                 | :heavy_check_mark:                                                                       | N/A                                                                                      |
+| `Body`                                                                                   | [operations.UpdateFolderRequestBody](../../models/operations/updatefolderrequestbody.md) | :heavy_check_mark:                                                                       | Request payload                                                                          |

@@ -212,10 +212,27 @@ func main() {
 * [RegenerateAnswer](docs/sdks/conversations/README.md#regenerateanswer) - Regenerate AI response
 * [UpdateMessageFeedback](docs/sdks/conversations/README.md#updatemessagefeedback) - Submit feedback on AI response
 
-### [KnowledgeHub](docs/sdks/knowledgehub/README.md)
+### [KnowledgeBase](docs/sdks/knowledgebase/README.md)
 
-* [GetKnowledgeHubRootNodes](docs/sdks/knowledgehub/README.md#getknowledgehubrootnodes) - Get knowledge hub root nodes
-* [GetKnowledgeHubChildNodes](docs/sdks/knowledgehub/README.md#getknowledgehubchildnodes) - Get knowledge hub child nodes
+* [CreateKnowledgeBase](docs/sdks/knowledgebase/README.md#createknowledgebase) - Create a new knowledge base
+* [ListKnowledgeBases](docs/sdks/knowledgebase/README.md#listknowledgebases) - List all knowledge bases
+* [GetKnowledgeBase](docs/sdks/knowledgebase/README.md#getknowledgebase) - Get knowledge base by ID
+* [UpdateKnowledgeBase](docs/sdks/knowledgebase/README.md#updateknowledgebase) - Update knowledge base
+* [DeleteKnowledgeBase](docs/sdks/knowledgebase/README.md#deleteknowledgebase) - Delete knowledge base
+* [GetRecordByID](docs/sdks/knowledgebase/README.md#getrecordbyid) - Get record by ID
+* [UpdateRecord](docs/sdks/knowledgebase/README.md#updaterecord) - Update record
+* [DeleteRecord](docs/sdks/knowledgebase/README.md#deleterecord) - Delete record
+* [StreamRecordBuffer](docs/sdks/knowledgebase/README.md#streamrecordbuffer) - Stream record content
+* [CreateFolder](docs/sdks/knowledgebase/README.md#createfolder) - Create folder
+* [UpdateFolder](docs/sdks/knowledgebase/README.md#updatefolder) - Update folder
+* [DeleteFolder](docs/sdks/knowledgebase/README.md#deletefolder) - Delete folder
+* [UploadRecords](docs/sdks/knowledgebase/README.md#uploadrecords) - Upload files to knowledge base or folder
+* [GetUploadLimits](docs/sdks/knowledgebase/README.md#getuploadlimits) - Get knowledge base upload limits
+* [ReindexRecord](docs/sdks/knowledgebase/README.md#reindexrecord) - Reindex single record
+* [ReindexRecordGroup](docs/sdks/knowledgebase/README.md#reindexrecordgroup) - Reindex record group
+* [MoveRecord](docs/sdks/knowledgebase/README.md#moverecord) - Move record to another location
+* [GetKnowledgeHubRootNodes](docs/sdks/knowledgebase/README.md#getknowledgehubrootnodes) - Get knowledge hub root nodes
+* [GetKnowledgeHubChildNodes](docs/sdks/knowledgebase/README.md#getknowledgehubchildnodes) - Get knowledge hub child nodes
 
 ### [OAuthApps](docs/sdks/oauthapps/README.md)
 
@@ -291,7 +308,7 @@ import (
 	"context"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 	"log"
 	"os"
 )
@@ -305,31 +322,18 @@ func main() {
 		}),
 	)
 
-	res, err := s.Conversations.StreamChat(ctx, components.CreateConversationRequest{
-		Query: "What are the key findings from our Q4 financial report?",
-		RecordIds: []string{
-			"507f1f77bcf86cd799439011",
-			"507f1f77bcf86cd799439012",
-		},
-		ModelKey:          pipeshub.Pointer("gpt-4-turbo"),
-		ModelName:         pipeshub.Pointer("GPT-4 Turbo"),
-		ModelFriendlyName: pipeshub.Pointer("GPT-4 Turbo"),
-		ChatMode:          components.CreateConversationRequestChatModeWebSearch.ToPointer(),
-		Timezone:          pipeshub.Pointer("America/New_York"),
-		CurrentTime:       types.MustNewTimeFromString("2026-04-12T16:00:00+05:30"),
-		Tools: []string{
-			"jira.create_issue",
-			"confluence.search_content",
-		},
-	})
+	res, err := s.KnowledgeBase.UploadRecords(ctx, "<id>", operations.UploadRecordsRequestBody{
+		Files:         []operations.UploadRecordsFile{},
+		FilesMetadata: pipeshub.Pointer("[{\"file_path\":\"/docs/report.pdf\",\"last_modified\":\"2024-01-15T10:30:00Z\"}]"),
+	}, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if res.AssistantStreamSSEEvent != nil {
-		defer res.AssistantStreamSSEEvent.Close()
+	if res.UploadStreamSSEEvent != nil {
+		defer res.UploadStreamSSEEvent.Close()
 
-		for res.AssistantStreamSSEEvent.Next() {
-			event := res.AssistantStreamSSEEvent.Value()
+		for res.UploadStreamSSEEvent.Next() {
+			event := res.UploadStreamSSEEvent.Value()
 			log.Print(event)
 			// Handle the event
 		}
