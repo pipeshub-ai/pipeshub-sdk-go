@@ -466,7 +466,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
 | apierrors.ErrorResponse | 500, 503                | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
@@ -541,9 +541,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500, 503                | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## DeleteRecord
 
@@ -769,6 +771,7 @@ func main() {
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
 | apierrors.ErrorResponse | 400, 401, 403, 404, 409 | application/json        |
+| apierrors.ErrorResponse | 500, 503                | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## UpdateFolder
@@ -833,6 +836,7 @@ func main() {
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
 | apierrors.ErrorResponse | 400, 401, 403, 404, 409 | application/json        |
+| apierrors.ErrorResponse | 500, 503                | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## DeleteFolder
@@ -898,7 +902,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 401, 403, 404           | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## UploadRecords
@@ -997,9 +1001,10 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type                   | Status Code                  | Content Type                 |
+| ---------------------------- | ---------------------------- | ---------------------------- |
+| apierrors.ErrorResponse      | 400, 401, 403, 404, 413, 429 | application/json             |
+| apierrors.APIError           | 4XX, 5XX                     | \*/\*                        |
 
 ## GetUploadLimits
 
@@ -1262,6 +1267,7 @@ func main() {
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
 | apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500, 503                | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## GetKnowledgeHubRootNodes
