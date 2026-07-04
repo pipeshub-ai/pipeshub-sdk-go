@@ -98,12 +98,12 @@ type AgentListItem struct {
 	// `GET /agents/{agentKey}`; the backend builds it from the graph edges
 	// for each agent on the returned page.
 	//
-	Toolsets []AgentToolset `json:"toolsets"`
+	Toolsets []Toolset `json:"toolsets"`
 	// Knowledge connectors and indexed scopes linked to the agent. Same
 	// projection as `GET /agents/{agentKey}`; the backend builds it from
 	// the graph edges for each agent on the returned page.
 	//
-	Knowledge []AgentKnowledge `json:"knowledge"`
+	Knowledge []Knowledge `json:"knowledge"`
 	// Effective permission to view the agent.
 	CanView bool `json:"can_view"`
 	// Effective permission to share the agent.
@@ -262,16 +262,16 @@ func (a *AgentListItem) GetShareWithOrg() bool {
 	return a.ShareWithOrg
 }
 
-func (a *AgentListItem) GetToolsets() []AgentToolset {
+func (a *AgentListItem) GetToolsets() []Toolset {
 	if a == nil {
-		return []AgentToolset{}
+		return []Toolset{}
 	}
 	return a.Toolsets
 }
 
-func (a *AgentListItem) GetKnowledge() []AgentKnowledge {
+func (a *AgentListItem) GetKnowledge() []Knowledge {
 	if a == nil {
-		return []AgentKnowledge{}
+		return []Knowledge{}
 	}
 	return a.Knowledge
 }

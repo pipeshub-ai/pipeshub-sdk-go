@@ -234,6 +234,11 @@ func main() {
 * [GetKnowledgeHubRootNodes](docs/sdks/knowledgebase/README.md#getknowledgehubrootnodes) - Get knowledge hub root nodes
 * [GetKnowledgeHubChildNodes](docs/sdks/knowledgebase/README.md#getknowledgehubchildnodes) - Get knowledge hub child nodes
 
+### [KnowledgeHub](docs/sdks/knowledgehub/README.md)
+
+* [GetKnowledgeHubRootNodes](docs/sdks/knowledgehub/README.md#getknowledgehubrootnodes) - Get knowledge hub root nodes
+* [GetKnowledgeHubChildNodes](docs/sdks/knowledgehub/README.md#getknowledgehubchildnodes) - Get knowledge hub child nodes
+
 ### [OAuthApps](docs/sdks/oauthapps/README.md)
 
 * [ListOAuthApps](docs/sdks/oauthapps/README.md#listoauthapps) - List OAuth apps

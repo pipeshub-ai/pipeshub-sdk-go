@@ -7,7 +7,7 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
-type Tool struct {
+type ToolsetTool struct {
 	// Tool node key in the backing graph store.
 	Key      *string `json:"_key,omitzero"`
 	Name     *string `json:"name,omitzero"`
@@ -23,53 +23,53 @@ type Tool struct {
 	Deprecated *bool `json:"deprecated,omitzero"`
 }
 
-func (t *Tool) GetKey() *string {
+func (t *ToolsetTool) GetKey() *string {
 	if t == nil {
 		return nil
 	}
 	return t.Key
 }
 
-func (t *Tool) GetName() *string {
+func (t *ToolsetTool) GetName() *string {
 	if t == nil {
 		return nil
 	}
 	return t.Name
 }
 
-func (t *Tool) GetFullName() *string {
+func (t *ToolsetTool) GetFullName() *string {
 	if t == nil {
 		return nil
 	}
 	return t.FullName
 }
 
-func (t *Tool) GetToolsetName() *string {
+func (t *ToolsetTool) GetToolsetName() *string {
 	if t == nil {
 		return nil
 	}
 	return t.ToolsetName
 }
 
-func (t *Tool) GetDescription() *string {
+func (t *ToolsetTool) GetDescription() *string {
 	if t == nil {
 		return nil
 	}
 	return t.Description
 }
 
-func (t *Tool) GetDeprecated() *bool {
+func (t *ToolsetTool) GetDeprecated() *bool {
 	if t == nil {
 		return nil
 	}
 	return t.Deprecated
 }
 
-// AgentToolset - Toolset instance linked to an agent, as projected by the graph store on
+// Toolset instance linked to an agent, as projected by the graph store on
 // `GET /agents/{agentKey}` and `GET /agents`. Multiple instances of the
 // same integration type are distinguished by `instanceId` and optional
 // `instanceName`.
-type AgentToolset struct {
+type Toolset struct {
 	// Toolset instance node key in the backing graph store.
 	Key *string `json:"_key,omitzero"`
 	// Integration / toolset type key.
@@ -86,72 +86,72 @@ type AgentToolset struct {
 	// instance exposes all of the toolset's tools.
 	//
 	SelectedTools optionalnullable.OptionalNullable[[]string] `json:"selectedTools,omitzero"`
-	Tools         []Tool                                      `json:"tools,omitzero"`
+	Tools         []ToolsetTool                               `json:"tools,omitzero"`
 }
 
-func (a AgentToolset) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(a, "", false)
+func (t Toolset) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(t, "", false)
 }
 
-func (a *AgentToolset) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+func (t *Toolset) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &t, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *AgentToolset) GetKey() *string {
-	if a == nil {
+func (t *Toolset) GetKey() *string {
+	if t == nil {
 		return nil
 	}
-	return a.Key
+	return t.Key
 }
 
-func (a *AgentToolset) GetName() *AgentCreateToolsetName {
-	if a == nil {
+func (t *Toolset) GetName() *AgentCreateToolsetName {
+	if t == nil {
 		return nil
 	}
-	return a.Name
+	return t.Name
 }
 
-func (a *AgentToolset) GetDisplayName() *string {
-	if a == nil {
+func (t *Toolset) GetDisplayName() *string {
+	if t == nil {
 		return nil
 	}
-	return a.DisplayName
+	return t.DisplayName
 }
 
-func (a *AgentToolset) GetType() *string {
-	if a == nil {
+func (t *Toolset) GetType() *string {
+	if t == nil {
 		return nil
 	}
-	return a.Type
+	return t.Type
 }
 
-func (a *AgentToolset) GetInstanceID() *string {
-	if a == nil {
+func (t *Toolset) GetInstanceID() *string {
+	if t == nil {
 		return nil
 	}
-	return a.InstanceID
+	return t.InstanceID
 }
 
-func (a *AgentToolset) GetInstanceName() *string {
-	if a == nil {
+func (t *Toolset) GetInstanceName() *string {
+	if t == nil {
 		return nil
 	}
-	return a.InstanceName
+	return t.InstanceName
 }
 
-func (a *AgentToolset) GetSelectedTools() optionalnullable.OptionalNullable[[]string] {
-	if a == nil {
+func (t *Toolset) GetSelectedTools() optionalnullable.OptionalNullable[[]string] {
+	if t == nil {
 		return nil
 	}
-	return a.SelectedTools
+	return t.SelectedTools
 }
 
-func (a *AgentToolset) GetTools() []Tool {
-	if a == nil {
+func (t *Toolset) GetTools() []ToolsetTool {
+	if t == nil {
 		return nil
 	}
-	return a.Tools
+	return t.Tools
 }
