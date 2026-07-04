@@ -262,9 +262,9 @@ type Agent struct {
 	// Multiple instances of the same integration type are distinguished by `instanceId`
 	// and optional `instanceName`.
 	//
-	Toolsets []AgentToolset `json:"toolsets"`
+	Toolsets []Toolset `json:"toolsets"`
 	// Knowledge connectors and indexed scopes linked to the agent
-	Knowledge []AgentKnowledge `json:"knowledge"`
+	Knowledge []Knowledge `json:"knowledge"`
 	// Whether the agent is shared with the whole organization
 	ShareWithOrg bool `json:"shareWithOrg"`
 	// Web search provider attached to this agent. Null when none is configured.
@@ -378,16 +378,16 @@ func (a *Agent) GetModels() []ModelUnion {
 	return a.Models
 }
 
-func (a *Agent) GetToolsets() []AgentToolset {
+func (a *Agent) GetToolsets() []Toolset {
 	if a == nil {
-		return []AgentToolset{}
+		return []Toolset{}
 	}
 	return a.Toolsets
 }
 
-func (a *Agent) GetKnowledge() []AgentKnowledge {
+func (a *Agent) GetKnowledge() []Knowledge {
 	if a == nil {
-		return []AgentKnowledge{}
+		return []Knowledge{}
 	}
 	return a.Knowledge
 }

@@ -155,6 +155,25 @@ func (a *AgentConversationDetailMessageReferenceDatum) GetMetadata() map[string]
 	return a.Metadata
 }
 
+type AgentConversationDetailMessageTool struct {
+	ToolName   *string `json:"toolName,omitzero"`
+	ToolResult any     `json:"toolResult,omitzero"`
+}
+
+func (a *AgentConversationDetailMessageTool) GetToolName() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ToolName
+}
+
+func (a *AgentConversationDetailMessageTool) GetToolResult() any {
+	if a == nil {
+		return nil
+	}
+	return a.ToolResult
+}
+
 type AgentConversationDetailMessageMetadata struct {
 	ProcessingTimeMs *float64 `json:"processingTimeMs,omitzero"`
 	ModelVersion     *string  `json:"modelVersion,omitzero"`
@@ -205,6 +224,8 @@ type AgentConversationDetailMessage struct {
 	// `POST /agents/{agentKey}/conversations/attachments/upload`).
 	//
 	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
+	// Tool call results invoked during this message turn.
+	Tools []AgentConversationDetailMessageTool `json:"tools,omitzero"`
 	// AI model configuration recorded against a conversation or message.
 	ModelInfo *ConversationModelInfo `json:"modelInfo,omitzero"`
 	// Rich filter state selected by the user, used for display and persistence only.
@@ -296,6 +317,13 @@ func (a *AgentConversationDetailMessage) GetAttachments() []ChatAttachmentRef {
 		return nil
 	}
 	return a.Attachments
+}
+
+func (a *AgentConversationDetailMessage) GetTools() []AgentConversationDetailMessageTool {
+	if a == nil {
+		return nil
+	}
+	return a.Tools
 }
 
 func (a *AgentConversationDetailMessage) GetModelInfo() *ConversationModelInfo {

@@ -149,6 +149,8 @@ type Pipeshub struct {
 	Organizations *Organizations
 	// Knowledge base management operations
 	KnowledgeBase *KnowledgeBase
+	// Unified browse API for root and child nodes (apps, record groups, folders, records) with filtering and search
+	KnowledgeHub *KnowledgeHub
 	// AI-powered conversational chat management with citations and follow-up questions
 	Conversations *Conversations
 	// Enterprise semantic search across all indexed knowledge with relevance scoring
@@ -247,9 +249,9 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *Pipeshub {
 	sdk := &Pipeshub{
-		SDKVersion: "1.3.0",
+		SDKVersion: "1.4.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 1.3.0 2.845.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
+			UserAgent:  "speakeasy-sdk/go 1.4.0 2.845.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
 			ServerList: ServerList,
 			ServerVariables: []map[string]string{
 				{
@@ -287,6 +289,7 @@ func New(opts ...SDKOption) *Pipeshub {
 	sdk.OrganizationAuthConfig = newOrganizationAuthConfig(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Organizations = newOrganizations(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.KnowledgeBase = newKnowledgeBase(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.KnowledgeHub = newKnowledgeHub(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Conversations = newConversations(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.SemanticSearch = newSemanticSearch(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Agents = newAgents(sdk, sdk.sdkConfiguration, sdk.hooks)
