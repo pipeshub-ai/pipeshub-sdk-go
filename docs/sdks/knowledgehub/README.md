@@ -1,4 +1,7 @@
-# KnowledgeHub
+# ~~KnowledgeHub~~
+
+> [!WARNING]
+> This SDK is **DEPRECATED**
 
 ## Overview
 
@@ -6,10 +9,10 @@ Unified browse API for root and child nodes (apps, record groups, folders, recor
 
 ### Available Operations
 
-* [GetKnowledgeHubRootNodes](#getknowledgehubrootnodes) - Get knowledge hub root nodes
-* [GetKnowledgeHubChildNodes](#getknowledgehubchildnodes) - Get knowledge hub child nodes
+* [~~GetKnowledgeHubRootNodes~~](#getknowledgehubrootnodes) - Get knowledge hub root nodes :warning: **Deprecated**
+* [~~GetKnowledgeHubChildNodes~~](#getknowledgehubchildnodes) - Get knowledge hub child nodes :warning: **Deprecated**
 
-## GetKnowledgeHubRootNodes
+## ~~GetKnowledgeHubRootNodes~~
 
 Returns root-level nodes (connector apps and Collection apps) or, when
 filters or search are applied, a flat list of matching nodes across the
@@ -53,6 +56,8 @@ Requires a valid bearer token. For OAuth tokens the `kb:read` scope
 must be present; regular JWT bearer tokens pass through without scope
 enforcement.
 
+
+> :warning: **DEPRECATED**: Use the Knowledge Base API instead. This grouping will be removed in a future release.
 
 ### Example Usage
 
@@ -121,7 +126,7 @@ func main() {
 | apierrors.GetKnowledgeHubRootNodesInternalServerError | 500                                                   | application/json                                      |
 | apierrors.APIError                                    | 4XX, 5XX                                              | \*/\*                                                 |
 
-## GetKnowledgeHubChildNodes
+## ~~GetKnowledgeHubChildNodes~~
 
 Returns the children of a specific node in the knowledge hub tree.
 Use this endpoint to drill down into Collections, connector app
@@ -160,6 +165,8 @@ Requires a valid bearer token. For OAuth tokens the `kb:read` scope
 must be present; regular JWT bearer tokens pass through without scope
 enforcement.
 
+
+> :warning: **DEPRECATED**: Use the Knowledge Base API instead. This grouping will be removed in a future release.
 
 ### Example Usage
 

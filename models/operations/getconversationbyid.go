@@ -322,6 +322,8 @@ func (e *GetConversationByIDContentFormat) IsExact() bool {
 }
 
 // Confidence - AI confidence in the answer. Present only on `bot_response` messages, and only when the model emitted a trailing confidence block.
+//
+// This field is now optional and nullable; it was previously always present and non-nullable. Treat a missing or `null` value as "no confidence reported" and guard before using it. Change effective in SDK v1.2.0 (v1.1.0 and earlier always populated it).
 type Confidence string
 
 const (
@@ -516,6 +518,9 @@ type GetConversationByIDMessage struct {
 	Content       *string                                `json:"content,omitzero"`
 	ContentFormat *GetConversationByIDContentFormat      `json:"contentFormat,omitzero"`
 	// AI confidence in the answer. Present only on `bot_response` messages, and only when the model emitted a trailing confidence block.
+	//
+	// This field is now optional and nullable; it was previously always present and non-nullable. Treat a missing or `null` value as "no confidence reported" and guard before using it. Change effective in SDK v1.2.0 (v1.1.0 and earlier always populated it).
+	//
 	Confidence optionalnullable.OptionalNullable[Confidence] `json:"confidence,omitzero"`
 	// Citations attached to this message. `citationData` is the populated citation document.
 	Citations         []Citation                    `json:"citations,omitzero"`

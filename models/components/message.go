@@ -9,13 +9,11 @@ import (
 )
 
 // MessageMessageType - Type of message:
-// <ul>
-// <li><code>user_query</code> - User's question or input</li>
-// <li><code>bot_response</code> - AI-generated response</li>
-// <li><code>error</code> - Error message from the system</li>
-// <li><code>feedback</code> - User feedback on a response</li>
-// <li><code>system</code> - System notification or status</li>
-// </ul>
+// - `user_query` - User's question or input
+// - `bot_response` - AI-generated response
+// - `error` - Error message from the system
+// - `feedback` - User feedback on a response
+// - `system` - System notification or status
 type MessageMessageType string
 
 const (
@@ -201,13 +199,11 @@ type Message struct {
 	// Unique message identifier
 	ID *string `json:"_id,omitzero"`
 	// Type of message:
-	// <ul>
-	// <li><code>user_query</code> - User's question or input</li>
-	// <li><code>bot_response</code> - AI-generated response</li>
-	// <li><code>error</code> - Error message from the system</li>
-	// <li><code>feedback</code> - User feedback on a response</li>
-	// <li><code>system</code> - System notification or status</li>
-	// </ul>
+	// - `user_query` - User's question or input
+	// - `bot_response` - AI-generated response
+	// - `error` - Error message from the system
+	// - `feedback` - User feedback on a response
+	// - `system` - System notification or status
 	//
 	MessageType *MessageMessageType `json:"messageType,omitzero"`
 	// The message text content
@@ -218,6 +214,8 @@ type Message struct {
 	Citations []CitationReference `json:"citations,omitzero"`
 	// AI confidence in the answer. Present only on `bot_response` messages,
 	// and only when the model emitted a trailing confidence block.
+	//
+	// This field is now optional and nullable; it was previously always present and non-nullable. Treat a missing or `null` value as "no confidence reported" and guard before using it. Change effective in SDK v1.3.0 (v1.2.0 and earlier always populated it).
 	//
 	Confidence optionalnullable.OptionalNullable[string] `json:"confidence,omitzero"`
 	// Suggested follow-up questions
