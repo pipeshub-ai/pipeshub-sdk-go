@@ -74,6 +74,8 @@ func newKnowledgeHub(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks
 // Requires a valid bearer token. For OAuth tokens the `kb:read` scope
 // must be present; regular JWT bearer tokens pass through without scope
 // enforcement.
+//
+// Deprecated: Use the Knowledge Base API instead. This grouping will be removed in a future release.
 func (s *KnowledgeHub) GetKnowledgeHubRootNodes(ctx context.Context, request operations.GetKnowledgeHubRootNodesRequest, opts ...operations.Option) (*operations.GetKnowledgeHubRootNodesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -419,6 +421,8 @@ func (s *KnowledgeHub) GetKnowledgeHubRootNodes(ctx context.Context, request ope
 // Requires a valid bearer token. For OAuth tokens the `kb:read` scope
 // must be present; regular JWT bearer tokens pass through without scope
 // enforcement.
+//
+// Deprecated: Use the Knowledge Base API instead. This grouping will be removed in a future release.
 func (s *KnowledgeHub) GetKnowledgeHubChildNodes(ctx context.Context, request operations.GetKnowledgeHubChildNodesRequest, opts ...operations.Option) (*operations.GetKnowledgeHubChildNodesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
