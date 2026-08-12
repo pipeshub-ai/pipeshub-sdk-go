@@ -2,24 +2,30 @@
 
 package components
 
-// AgentStreamSSEEventEvent - SSE event name.
-// See the enum for possible values.
 type AgentStreamSSEEventEvent string
 
 const (
-	AgentStreamSSEEventEventConnected             AgentStreamSSEEventEvent = "connected"
-	AgentStreamSSEEventEventStatus                AgentStreamSSEEventEvent = "status"
-	AgentStreamSSEEventEventToolCalls             AgentStreamSSEEventEvent = "tool_calls"
-	AgentStreamSSEEventEventToolCall              AgentStreamSSEEventEvent = "tool_call"
-	AgentStreamSSEEventEventToolSuccess           AgentStreamSSEEventEvent = "tool_success"
-	AgentStreamSSEEventEventToolError             AgentStreamSSEEventEvent = "tool_error"
-	AgentStreamSSEEventEventToolResult            AgentStreamSSEEventEvent = "tool_result"
-	AgentStreamSSEEventEventToolExecutionComplete AgentStreamSSEEventEvent = "tool_execution_complete"
-	AgentStreamSSEEventEventAnswerChunk           AgentStreamSSEEventEvent = "answer_chunk"
-	AgentStreamSSEEventEventRestreaming           AgentStreamSSEEventEvent = "restreaming"
-	AgentStreamSSEEventEventMetadata              AgentStreamSSEEventEvent = "metadata"
-	AgentStreamSSEEventEventComplete              AgentStreamSSEEventEvent = "complete"
-	AgentStreamSSEEventEventError                 AgentStreamSSEEventEvent = "error"
+	AgentStreamSSEEventEventRunStarted              AgentStreamSSEEventEvent = "RUN_STARTED"
+	AgentStreamSSEEventEventRunFinished             AgentStreamSSEEventEvent = "RUN_FINISHED"
+	AgentStreamSSEEventEventRunError                AgentStreamSSEEventEvent = "RUN_ERROR"
+	AgentStreamSSEEventEventStepStarted             AgentStreamSSEEventEvent = "STEP_STARTED"
+	AgentStreamSSEEventEventStepFinished            AgentStreamSSEEventEvent = "STEP_FINISHED"
+	AgentStreamSSEEventEventTextMessageStart        AgentStreamSSEEventEvent = "TEXT_MESSAGE_START"
+	AgentStreamSSEEventEventTextMessageContent      AgentStreamSSEEventEvent = "TEXT_MESSAGE_CONTENT"
+	AgentStreamSSEEventEventTextMessageEnd          AgentStreamSSEEventEvent = "TEXT_MESSAGE_END"
+	AgentStreamSSEEventEventReasoningStart          AgentStreamSSEEventEvent = "REASONING_START"
+	AgentStreamSSEEventEventReasoningMessageStart   AgentStreamSSEEventEvent = "REASONING_MESSAGE_START"
+	AgentStreamSSEEventEventReasoningMessageContent AgentStreamSSEEventEvent = "REASONING_MESSAGE_CONTENT"
+	AgentStreamSSEEventEventReasoningMessageEnd     AgentStreamSSEEventEvent = "REASONING_MESSAGE_END"
+	AgentStreamSSEEventEventReasoningEnd            AgentStreamSSEEventEvent = "REASONING_END"
+	AgentStreamSSEEventEventToolCallStart           AgentStreamSSEEventEvent = "TOOL_CALL_START"
+	AgentStreamSSEEventEventToolCallArgs            AgentStreamSSEEventEvent = "TOOL_CALL_ARGS"
+	AgentStreamSSEEventEventToolCallEnd             AgentStreamSSEEventEvent = "TOOL_CALL_END"
+	AgentStreamSSEEventEventToolCallResult          AgentStreamSSEEventEvent = "TOOL_CALL_RESULT"
+	AgentStreamSSEEventEventStateDelta              AgentStreamSSEEventEvent = "STATE_DELTA"
+	AgentStreamSSEEventEventStateSnapshot           AgentStreamSSEEventEvent = "STATE_SNAPSHOT"
+	AgentStreamSSEEventEventCustom                  AgentStreamSSEEventEvent = "CUSTOM"
+	AgentStreamSSEEventEventHeartbeat               AgentStreamSSEEventEvent = "HEARTBEAT"
 )
 
 func (e AgentStreamSSEEventEvent) ToPointer() *AgentStreamSSEEventEvent {
@@ -30,7 +36,7 @@ func (e AgentStreamSSEEventEvent) ToPointer() *AgentStreamSSEEventEvent {
 func (e *AgentStreamSSEEventEvent) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "connected", "status", "tool_calls", "tool_call", "tool_success", "tool_error", "tool_result", "tool_execution_complete", "answer_chunk", "restreaming", "metadata", "complete", "error":
+		case "RUN_STARTED", "RUN_FINISHED", "RUN_ERROR", "STEP_STARTED", "STEP_FINISHED", "TEXT_MESSAGE_START", "TEXT_MESSAGE_CONTENT", "TEXT_MESSAGE_END", "REASONING_START", "REASONING_MESSAGE_START", "REASONING_MESSAGE_CONTENT", "REASONING_MESSAGE_END", "REASONING_END", "TOOL_CALL_START", "TOOL_CALL_ARGS", "TOOL_CALL_END", "TOOL_CALL_RESULT", "STATE_DELTA", "STATE_SNAPSHOT", "CUSTOM", "HEARTBEAT":
 			return true
 		}
 	}
@@ -38,14 +44,23 @@ func (e *AgentStreamSSEEventEvent) IsExact() bool {
 }
 
 // AgentStreamSSEEvent - SSE event envelope for `POST /agents/{agentKey}/conversations/stream`.
-// Event names are listed in `event`; payload JSON is carried in `data`.
+// AG-UI is the sole wire protocol.
+//
+// `event` carries the AG-UI type name and `data` is a JSON-encoded
+// object that includes a `"type"` field matching `event`, plus
+// type-specific fields. The public route requires `chatMode: quick`.
+// Forwarded lifecycle events may carry `runId`, `threadId`, and
+// `parentRunId`; gateway-generated root terminal events do not.
+//
+// Stable gateway-generated top-level outcomes are `RUN_FINISHED` as
+// `{ type, result }` and `RUN_ERROR` as `{ type, message, code? }`.
+// Clients should ignore unknown event names rather than treating them
+// as errors.
 type AgentStreamSSEEvent struct {
-	// SSE event name.
-	// See the enum for possible values.
-	//
 	Event *AgentStreamSSEEventEvent `json:"event,omitzero"`
-	// JSON-encoded event payload.
-	// Shape depends on `event`.
+	// JSON-encoded event payload. The decoded JSON includes a `"type"`
+	// field matching `event`, plus type-specific fields. Shape depends
+	// on `event`.
 	//
 	Data *string `json:"data,omitzero"`
 }

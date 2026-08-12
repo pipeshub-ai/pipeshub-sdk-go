@@ -141,6 +141,38 @@ type Pipeshub struct {
 	// - Revoke all tokens for emergency access removal
 	//
 	OAuthApps *OAuthApps
+	// Self-service, long-lived, scoped, revocable credentials that act as their
+	// creator — unlike an OAuth app's `client_credentials` flow, which acts as
+	// the app.
+	//
+	// **Who can create one**
+	// - **Any authenticated org member** — unlike OAuth apps, this is
+	//   deliberately not admin-gated.
+	//
+	// **How it's issued**
+	// - Minted through the same OAuth access-token machinery as `/oauth2/token`,
+	//   against one lazily-created, per-org synthetic OAuth app
+	//   (`clientId: pat-system:<orgId>`) that every PAT in that org shares.
+	//   That app is hidden from `/oauth-clients/*` — it never appears in your
+	//   own OAuth app list and can't be managed through those routes.
+	// - The raw token is prefixed `phpat_` ahead of the underlying JWT (see the
+	//   `bearerAuth` security scheme) so it's recognizable to secret scanners.
+	//   It's shown exactly once, at creation.
+	//
+	// **Expiry and scopes**
+	// - `expiryDays`: `30` (default), `90`, `365`, or `never`.
+	// - Scopes default to the org's full configured `MCP_SCOPES` set if none
+	//   are requested; `GET /personal-access-tokens/scopes` lists what's
+	//   available.
+	//
+	// **Admin visibility**
+	// - Regular members only ever see and revoke their own tokens.
+	// - Org admins can list and revoke *any* member's token via
+	//   `/personal-access-tokens/admin*` — for incident response (a departed
+	//   employee, a compromised laptop) — without needing the OAuth app CRUD
+	//   access described above.
+	//
+	PersonalAccessTokens *PersonalAccessTokens
 	// User authentication including multi-step MFA, password reset, OTP login, and token management
 	UserAccount *UserAccount
 	// Admin configuration of authentication methods including MFA steps and allowed providers
@@ -157,6 +189,8 @@ type Pipeshub struct {
 	SemanticSearch *SemanticSearch
 	// Custom AI agents with specialized capabilities and tool integrations
 	Agents *Agents
+	// Connector-related operations
+	Connector *Connector
 	// Manage individual AI model providers - add, update, delete, and set defaults.
 	AIModelsProviders *AIModelsProviders
 	// Manage web search providers (DuckDuckGo, Serper, Tavily, Exa) and settings for internet search.
@@ -249,9 +283,9 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *Pipeshub {
 	sdk := &Pipeshub{
-		SDKVersion: "1.5.0",
+		SDKVersion: "1.5.1",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 1.5.0 2.845.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
+			UserAgent:  "speakeasy-sdk/go 1.5.1 2.845.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
 			ServerList: ServerList,
 			ServerVariables: []map[string]string{
 				{
@@ -285,6 +319,7 @@ func New(opts ...SDKOption) *Pipeshub {
 	sdk.OAuthProvider = newOAuthProvider(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.OpenIDConnect = newOpenIDConnect(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.OAuthApps = newOAuthApps(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.PersonalAccessTokens = newPersonalAccessTokens(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.UserAccount = newUserAccount(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.OrganizationAuthConfig = newOrganizationAuthConfig(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Organizations = newOrganizations(sdk, sdk.sdkConfiguration, sdk.hooks)
@@ -293,6 +328,7 @@ func New(opts ...SDKOption) *Pipeshub {
 	sdk.Conversations = newConversations(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.SemanticSearch = newSemanticSearch(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Agents = newAgents(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.Connector = newConnector(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.AIModelsProviders = newAIModelsProviders(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.WebSearch = newWebSearch(sdk, sdk.sdkConfiguration, sdk.hooks)
 

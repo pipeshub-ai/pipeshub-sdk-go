@@ -15,7 +15,11 @@ type ChatAttachmentUploadRef struct {
 	Extension string `json:"extension"`
 	// Synthetic record id used by the graph layer.
 	VirtualRecordID string `json:"virtualRecordId"`
-	// Optional backend-reported processing mode for the attachment.
+	// Backend-reported parsing mode used for the attachment (e.g. `pdfplumber`, `docling`, `csv_lightweight`).
+	ParseMode *string `json:"parseMode,omitzero"`
+	// Deprecated alias for `parseMode`, kept for backward compatibility. Use `parseMode` instead.
+	//
+	// Deprecated: This will be removed in a future release, please migrate away from it as soon as possible.
 	OcrMode *string `json:"ocrMode,omitzero"`
 }
 
@@ -52,6 +56,13 @@ func (c *ChatAttachmentUploadRef) GetVirtualRecordID() string {
 		return ""
 	}
 	return c.VirtualRecordID
+}
+
+func (c *ChatAttachmentUploadRef) GetParseMode() *string {
+	if c == nil {
+		return nil
+	}
+	return c.ParseMode
 }
 
 func (c *ChatAttachmentUploadRef) GetOcrMode() *string {

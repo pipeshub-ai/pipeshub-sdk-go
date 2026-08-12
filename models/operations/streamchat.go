@@ -13,7 +13,7 @@ type StreamChatResponse struct {
 	// `text/event-stream` frames using the event vocabulary described
 	// above.
 	//
-	AssistantStreamSSEEvent *stream.EventStream[components.AssistantStreamSSEEvent]
+	ConversationStreamSSEEvent *stream.EventStream[components.ConversationStreamSSEEvent]
 }
 
 func (s *StreamChatResponse) GetHTTPMeta() components.HTTPMetadata {
@@ -23,9 +23,9 @@ func (s *StreamChatResponse) GetHTTPMeta() components.HTTPMetadata {
 	return s.HTTPMeta
 }
 
-func (s *StreamChatResponse) GetAssistantStreamSSEEvent() *stream.EventStream[components.AssistantStreamSSEEvent] {
+func (s *StreamChatResponse) GetConversationStreamSSEEvent() *stream.EventStream[components.ConversationStreamSSEEvent] {
 	if s == nil {
 		return nil
 	}
-	return s.AssistantStreamSSEEvent
+	return s.ConversationStreamSSEEvent
 }

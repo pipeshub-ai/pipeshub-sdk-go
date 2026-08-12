@@ -11,10 +11,17 @@ type GetRecordByIDResponseSchemaFileRecord struct {
 	OrgID               string                                    `json:"orgId"`
 	Name                string                                    `json:"name"`
 	Extension           string                                    `json:"extension"`
-	MimeType            string                                    `json:"mimeType"`
-	SizeInBytes         int64                                     `json:"sizeInBytes"`
+	Etag                optionalnullable.OptionalNullable[string] `json:"etag,omitzero"`
+	Ctag                optionalnullable.OptionalNullable[string] `json:"ctag,omitzero"`
+	Md5Checksum         optionalnullable.OptionalNullable[string] `json:"md5Checksum,omitzero"`
+	QuickXorHash        optionalnullable.OptionalNullable[string] `json:"quickXorHash,omitzero"`
+	Crc32Hash           optionalnullable.OptionalNullable[string] `json:"crc32Hash,omitzero"`
+	Sha1Hash            optionalnullable.OptionalNullable[string] `json:"sha1Hash,omitzero"`
+	Sha256Hash          optionalnullable.OptionalNullable[string] `json:"sha256Hash,omitzero"`
+	MimeType            optionalnullable.OptionalNullable[string] `json:"mimeType,omitzero"`
+	SizeInBytes         optionalnullable.OptionalNullable[int64]  `json:"sizeInBytes,omitzero"`
 	IsFile              bool                                      `json:"isFile"`
-	WebURL              string                                    `json:"webUrl"`
+	WebURL              optionalnullable.OptionalNullable[string] `json:"webUrl,omitzero"`
 	Path                optionalnullable.OptionalNullable[string] `json:"path,omitzero"`
 	LocalFsRelativePath optionalnullable.OptionalNullable[string] `json:"localFsRelativePath,omitzero"`
 }
@@ -47,16 +54,65 @@ func (g *GetRecordByIDResponseSchemaFileRecord) GetExtension() string {
 	return g.Extension
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetMimeType() string {
+func (g *GetRecordByIDResponseSchemaFileRecord) GetEtag() optionalnullable.OptionalNullable[string] {
 	if g == nil {
-		return ""
+		return nil
+	}
+	return g.Etag
+}
+
+func (g *GetRecordByIDResponseSchemaFileRecord) GetCtag() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Ctag
+}
+
+func (g *GetRecordByIDResponseSchemaFileRecord) GetMd5Checksum() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Md5Checksum
+}
+
+func (g *GetRecordByIDResponseSchemaFileRecord) GetQuickXorHash() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.QuickXorHash
+}
+
+func (g *GetRecordByIDResponseSchemaFileRecord) GetCrc32Hash() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Crc32Hash
+}
+
+func (g *GetRecordByIDResponseSchemaFileRecord) GetSha1Hash() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Sha1Hash
+}
+
+func (g *GetRecordByIDResponseSchemaFileRecord) GetSha256Hash() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Sha256Hash
+}
+
+func (g *GetRecordByIDResponseSchemaFileRecord) GetMimeType() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
 	}
 	return g.MimeType
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetSizeInBytes() int64 {
+func (g *GetRecordByIDResponseSchemaFileRecord) GetSizeInBytes() optionalnullable.OptionalNullable[int64] {
 	if g == nil {
-		return 0
+		return nil
 	}
 	return g.SizeInBytes
 }
@@ -68,9 +124,9 @@ func (g *GetRecordByIDResponseSchemaFileRecord) GetIsFile() bool {
 	return g.IsFile
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetWebURL() string {
+func (g *GetRecordByIDResponseSchemaFileRecord) GetWebURL() optionalnullable.OptionalNullable[string] {
 	if g == nil {
-		return ""
+		return nil
 	}
 	return g.WebURL
 }
@@ -102,6 +158,9 @@ type GetRecordByIDResponseSchemaRecord struct {
 	ExternalRecordID    string                                    `json:"externalRecordId"`
 	ExternalRootGroupID optionalnullable.OptionalNullable[string] `json:"externalRootGroupId,omitzero"`
 	ExternalGroupID     optionalnullable.OptionalNullable[string] `json:"externalGroupId,omitzero"`
+	ExternalParentID    optionalnullable.OptionalNullable[string] `json:"externalParentId,omitzero"`
+	ExternalRevisionID  optionalnullable.OptionalNullable[string] `json:"externalRevisionId,omitzero"`
+	RecordGroupID       optionalnullable.OptionalNullable[string] `json:"recordGroupId,omitzero"`
 	ConnectorID         string                                    `json:"connectorId"`
 	// Name of the source connector. Mirrors the values of the backend
 	// `Connectors` enum (`backend/python/app/config/constants/arangodb.py`);
@@ -143,31 +202,45 @@ type GetRecordByIDResponseSchemaRecord struct {
 	// - SQL_VIEW: SQL view object
 	// - OTHERS: Miscellaneous content types
 	//
-	RecordType                  RecordTypeEnum                         `json:"recordType"`
-	Origin                      string                                 `json:"origin"`
-	Version                     int64                                  `json:"version"`
-	IsLatestVersion             bool                                   `json:"isLatestVersion"`
-	CreatedAtTimestamp          int64                                  `json:"createdAtTimestamp"`
-	UpdatedAtTimestamp          int64                                  `json:"updatedAtTimestamp"`
-	SourceCreatedAtTimestamp    int64                                  `json:"sourceCreatedAtTimestamp"`
-	SourceLastModifiedTimestamp int64                                  `json:"sourceLastModifiedTimestamp"`
-	LastSyncTimestamp           int64                                  `json:"lastSyncTimestamp"`
-	LastIndexTimestamp          *int64                                 `json:"lastIndexTimestamp,omitzero"`
-	LastExtractionTimestamp     *int64                                 `json:"lastExtractionTimestamp,omitzero"`
-	IndexingStatus              string                                 `json:"indexingStatus"`
-	ExtractionStatus            string                                 `json:"extractionStatus"`
-	IsDeleted                   bool                                   `json:"isDeleted"`
-	IsArchived                  bool                                   `json:"isArchived"`
-	IsDirty                     bool                                   `json:"isDirty"`
-	IsVLMOcrProcessed           bool                                   `json:"isVLMOcrProcessed"`
-	MimeType                    string                                 `json:"mimeType"`
-	SizeInBytes                 int64                                  `json:"sizeInBytes"`
-	Md5Checksum                 *string                                `json:"md5Checksum,omitzero"`
-	VirtualRecordID             *string                                `json:"virtualRecordId,omitzero"`
-	WebURL                      string                                 `json:"webUrl"`
-	FileRecord                  *GetRecordByIDResponseSchemaFileRecord `json:"fileRecord"`
-	MailRecord                  *GetRecordByIDResponseSchemaMailRecord `json:"mailRecord"`
-	TicketRecord                *TicketRecord                          `json:"ticketRecord"`
+	RecordType                  RecordTypeEnum                            `json:"recordType"`
+	Origin                      string                                    `json:"origin"`
+	Version                     int64                                     `json:"version"`
+	IsLatestVersion             optionalnullable.OptionalNullable[bool]   `json:"isLatestVersion,omitzero"`
+	CreatedAtTimestamp          int64                                     `json:"createdAtTimestamp"`
+	UpdatedAtTimestamp          int64                                     `json:"updatedAtTimestamp"`
+	SourceCreatedAtTimestamp    int64                                     `json:"sourceCreatedAtTimestamp"`
+	SourceLastModifiedTimestamp int64                                     `json:"sourceLastModifiedTimestamp"`
+	LastSyncTimestamp           optionalnullable.OptionalNullable[int64]  `json:"lastSyncTimestamp,omitzero"`
+	LastIndexTimestamp          *int64                                    `json:"lastIndexTimestamp,omitzero"`
+	LastExtractionTimestamp     *int64                                    `json:"lastExtractionTimestamp,omitzero"`
+	ProcessingStartedAt         optionalnullable.OptionalNullable[int64]  `json:"processingStartedAt,omitzero"`
+	ParsingStatus               optionalnullable.OptionalNullable[string] `json:"parsingStatus,omitzero"`
+	IndexingStatus              string                                    `json:"indexingStatus"`
+	ExtractionStatus            string                                    `json:"extractionStatus"`
+	Reason                      optionalnullable.OptionalNullable[string] `json:"reason,omitzero"`
+	IsDeleted                   bool                                      `json:"isDeleted"`
+	IsArchived                  bool                                      `json:"isArchived"`
+	DeletedByUserID             optionalnullable.OptionalNullable[string] `json:"deletedByUserId,omitzero"`
+	IsDirty                     optionalnullable.OptionalNullable[bool]   `json:"isDirty,omitzero"`
+	IsVLMOcrProcessed           *bool                                     `json:"isVLMOcrProcessed"`
+	MimeType                    *string                                   `json:"mimeType"`
+	SizeInBytes                 *int64                                    `json:"sizeInBytes"`
+	Md5Checksum                 optionalnullable.OptionalNullable[string] `json:"md5Checksum,omitzero"`
+	VirtualRecordID             optionalnullable.OptionalNullable[string] `json:"virtualRecordId,omitzero"`
+	SummaryDocumentID           optionalnullable.OptionalNullable[string] `json:"summaryDocumentId,omitzero"`
+	StorageDocumentID           optionalnullable.OptionalNullable[string] `json:"storageDocumentId,omitzero"`
+	WebURL                      *string                                   `json:"webUrl"`
+	PreviewRenderable           optionalnullable.OptionalNullable[bool]   `json:"previewRenderable,omitzero"`
+	IsShared                    optionalnullable.OptionalNullable[bool]   `json:"isShared,omitzero"`
+	IsDependentNode             optionalnullable.OptionalNullable[bool]   `json:"isDependentNode,omitzero"`
+	ParentNodeID                optionalnullable.OptionalNullable[string] `json:"parentNodeId,omitzero"`
+	HideWeburl                  optionalnullable.OptionalNullable[bool]   `json:"hideWeburl,omitzero"`
+	IsInternal                  optionalnullable.OptionalNullable[bool]   `json:"isInternal,omitzero"`
+	// True for placeholder/stub records standing in for an out-of-scope ancestor (rendered read-only, no content actions; excluded from search and indexing).
+	IsPlaceholder optionalnullable.OptionalNullable[bool] `json:"isPlaceholder,omitzero"`
+	FileRecord    *GetRecordByIDResponseSchemaFileRecord  `json:"fileRecord"`
+	MailRecord    *GetRecordByIDResponseSchemaMailRecord  `json:"mailRecord"`
+	TicketRecord  *TicketRecord                           `json:"ticketRecord"`
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetID() string {
@@ -212,6 +285,27 @@ func (g *GetRecordByIDResponseSchemaRecord) GetExternalGroupID() optionalnullabl
 	return g.ExternalGroupID
 }
 
+func (g *GetRecordByIDResponseSchemaRecord) GetExternalParentID() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.ExternalParentID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetExternalRevisionID() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.ExternalRevisionID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetRecordGroupID() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.RecordGroupID
+}
+
 func (g *GetRecordByIDResponseSchemaRecord) GetConnectorID() string {
 	if g == nil {
 		return ""
@@ -247,9 +341,9 @@ func (g *GetRecordByIDResponseSchemaRecord) GetVersion() int64 {
 	return g.Version
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetIsLatestVersion() bool {
+func (g *GetRecordByIDResponseSchemaRecord) GetIsLatestVersion() optionalnullable.OptionalNullable[bool] {
 	if g == nil {
-		return false
+		return nil
 	}
 	return g.IsLatestVersion
 }
@@ -282,9 +376,9 @@ func (g *GetRecordByIDResponseSchemaRecord) GetSourceLastModifiedTimestamp() int
 	return g.SourceLastModifiedTimestamp
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetLastSyncTimestamp() int64 {
+func (g *GetRecordByIDResponseSchemaRecord) GetLastSyncTimestamp() optionalnullable.OptionalNullable[int64] {
 	if g == nil {
-		return 0
+		return nil
 	}
 	return g.LastSyncTimestamp
 }
@@ -303,6 +397,20 @@ func (g *GetRecordByIDResponseSchemaRecord) GetLastExtractionTimestamp() *int64 
 	return g.LastExtractionTimestamp
 }
 
+func (g *GetRecordByIDResponseSchemaRecord) GetProcessingStartedAt() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.ProcessingStartedAt
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetParsingStatus() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.ParsingStatus
+}
+
 func (g *GetRecordByIDResponseSchemaRecord) GetIndexingStatus() string {
 	if g == nil {
 		return ""
@@ -315,6 +423,13 @@ func (g *GetRecordByIDResponseSchemaRecord) GetExtractionStatus() string {
 		return ""
 	}
 	return g.ExtractionStatus
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetReason() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.Reason
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetIsDeleted() bool {
@@ -331,53 +446,123 @@ func (g *GetRecordByIDResponseSchemaRecord) GetIsArchived() bool {
 	return g.IsArchived
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetIsDirty() bool {
+func (g *GetRecordByIDResponseSchemaRecord) GetDeletedByUserID() optionalnullable.OptionalNullable[string] {
 	if g == nil {
-		return false
+		return nil
+	}
+	return g.DeletedByUserID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetIsDirty() optionalnullable.OptionalNullable[bool] {
+	if g == nil {
+		return nil
 	}
 	return g.IsDirty
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetIsVLMOcrProcessed() bool {
+func (g *GetRecordByIDResponseSchemaRecord) GetIsVLMOcrProcessed() *bool {
 	if g == nil {
-		return false
+		return nil
 	}
 	return g.IsVLMOcrProcessed
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetMimeType() string {
+func (g *GetRecordByIDResponseSchemaRecord) GetMimeType() *string {
 	if g == nil {
-		return ""
+		return nil
 	}
 	return g.MimeType
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetSizeInBytes() int64 {
+func (g *GetRecordByIDResponseSchemaRecord) GetSizeInBytes() *int64 {
 	if g == nil {
-		return 0
+		return nil
 	}
 	return g.SizeInBytes
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetMd5Checksum() *string {
+func (g *GetRecordByIDResponseSchemaRecord) GetMd5Checksum() optionalnullable.OptionalNullable[string] {
 	if g == nil {
 		return nil
 	}
 	return g.Md5Checksum
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetVirtualRecordID() *string {
+func (g *GetRecordByIDResponseSchemaRecord) GetVirtualRecordID() optionalnullable.OptionalNullable[string] {
 	if g == nil {
 		return nil
 	}
 	return g.VirtualRecordID
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetWebURL() string {
+func (g *GetRecordByIDResponseSchemaRecord) GetSummaryDocumentID() optionalnullable.OptionalNullable[string] {
 	if g == nil {
-		return ""
+		return nil
+	}
+	return g.SummaryDocumentID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetStorageDocumentID() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.StorageDocumentID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetWebURL() *string {
+	if g == nil {
+		return nil
 	}
 	return g.WebURL
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetPreviewRenderable() optionalnullable.OptionalNullable[bool] {
+	if g == nil {
+		return nil
+	}
+	return g.PreviewRenderable
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetIsShared() optionalnullable.OptionalNullable[bool] {
+	if g == nil {
+		return nil
+	}
+	return g.IsShared
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetIsDependentNode() optionalnullable.OptionalNullable[bool] {
+	if g == nil {
+		return nil
+	}
+	return g.IsDependentNode
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetParentNodeID() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.ParentNodeID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetHideWeburl() optionalnullable.OptionalNullable[bool] {
+	if g == nil {
+		return nil
+	}
+	return g.HideWeburl
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetIsInternal() optionalnullable.OptionalNullable[bool] {
+	if g == nil {
+		return nil
+	}
+	return g.IsInternal
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetIsPlaceholder() optionalnullable.OptionalNullable[bool] {
+	if g == nil {
+		return nil
+	}
+	return g.IsPlaceholder
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetFileRecord() *GetRecordByIDResponseSchemaFileRecord {

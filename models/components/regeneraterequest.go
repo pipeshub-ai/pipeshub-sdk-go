@@ -3,9 +3,38 @@
 package components
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"time"
 )
+
+// RegenerateRequestProtocol - AG-UI is the only supported wire protocol. When present must be
+// `"agui"`. Omitting the field is equivalent — the server always
+// uses the AG-UI vocabulary. Kept in the schema for backward
+// compatibility with callers that already send it.
+type RegenerateRequestProtocol string
+
+const (
+	RegenerateRequestProtocolAgui RegenerateRequestProtocol = "agui"
+)
+
+func (e RegenerateRequestProtocol) ToPointer() *RegenerateRequestProtocol {
+	return &e
+}
+func (e *RegenerateRequestProtocol) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "agui":
+		*e = RegenerateRequestProtocol(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for RegenerateRequestProtocol: %v", v)
+	}
+}
 
 // RegenerateRequest - Request body for regenerating an AI response. All fields are optional;
 // when omitted the model selection and execution context from the
@@ -20,6 +49,9 @@ import (
 //   - `currentTime` — optional ISO 8601 / RFC 3339 datetime string with
 //     UTC `Z` or a numeric offset
 //   - `tools` — optional array of non-empty tool identifiers
+//   - `protocol` — optional inert compatibility field; when present it must
+//     be `agui`, which is also the protocol used when the field is omitted
+//   - `agentCapabilities` — optional per-request agent capability toggles
 type RegenerateRequest struct {
 	// App connector instance ids and knowledge-base / record-group ids that narrow retrieval
 	// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
@@ -39,7 +71,7 @@ type RegenerateRequest struct {
 	// Friendly display name of the selected model.
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	// Chat mode used for regeneration (for example `internal_search`,
-	// `web_search`, or an agent mode such as `agent:auto`).
+	// `web_search`, or the universal `agent` mode).
 	//
 	ChatMode *string `json:"chatMode,omitzero"`
 	// IANA timezone identifier from the client. Used to provide
@@ -55,6 +87,18 @@ type RegenerateRequest struct {
 	// regenerating. Applicable only in agent chat modes.
 	//
 	Tools []string `json:"tools,omitzero"`
+	// AG-UI is the only supported wire protocol. When present must be
+	// `"agui"`. Omitting the field is equivalent — the server always
+	// uses the AG-UI vocabulary. Kept in the schema for backward
+	// compatibility with callers that already send it.
+	//
+	Protocol *RegenerateRequestProtocol `json:"protocol,omitzero"`
+	// Per-request agent capability toggles. Only meaningful when `chatMode`
+	// selects an agent mode; ignored otherwise. Each field falls back to its
+	// own `default` below when omitted — a missing flag is not uniformly
+	// `true`. Omitting the whole object applies every default.
+	//
+	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
 }
 
 func (r RegenerateRequest) MarshalJSON() ([]byte, error) {
@@ -122,4 +166,18 @@ func (r *RegenerateRequest) GetTools() []string {
 		return nil
 	}
 	return r.Tools
+}
+
+func (r *RegenerateRequest) GetProtocol() *RegenerateRequestProtocol {
+	if r == nil {
+		return nil
+	}
+	return r.Protocol
+}
+
+func (r *RegenerateRequest) GetAgentCapabilities() *AgentCapabilities {
+	if r == nil {
+		return nil
+	}
+	return r.AgentCapabilities
 }

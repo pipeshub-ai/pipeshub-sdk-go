@@ -6,23 +6,25 @@ package components
 type AgentCreateToolsetName string
 
 const (
-	AgentCreateToolsetNameCalendar   AgentCreateToolsetName = "calendar"
-	AgentCreateToolsetNameClickup    AgentCreateToolsetName = "clickup"
-	AgentCreateToolsetNameConfluence AgentCreateToolsetName = "confluence"
-	AgentCreateToolsetNameDrive      AgentCreateToolsetName = "drive"
-	AgentCreateToolsetNameGithub     AgentCreateToolsetName = "github"
-	AgentCreateToolsetNameGmail      AgentCreateToolsetName = "gmail"
-	AgentCreateToolsetNameJira       AgentCreateToolsetName = "jira"
-	AgentCreateToolsetNameLumos      AgentCreateToolsetName = "lumos"
-	AgentCreateToolsetNameMariadb    AgentCreateToolsetName = "mariadb"
-	AgentCreateToolsetNameOnedrive   AgentCreateToolsetName = "onedrive"
-	AgentCreateToolsetNameOutlook    AgentCreateToolsetName = "outlook"
-	AgentCreateToolsetNameRedshift   AgentCreateToolsetName = "redshift"
-	AgentCreateToolsetNameSalesforce AgentCreateToolsetName = "salesforce"
-	AgentCreateToolsetNameSharepoint AgentCreateToolsetName = "sharepoint"
-	AgentCreateToolsetNameSlack      AgentCreateToolsetName = "slack"
-	AgentCreateToolsetNameTeams      AgentCreateToolsetName = "teams"
-	AgentCreateToolsetNameZoom       AgentCreateToolsetName = "zoom"
+	AgentCreateToolsetNameCalendar             AgentCreateToolsetName = "calendar"
+	AgentCreateToolsetNameClickup              AgentCreateToolsetName = "clickup"
+	AgentCreateToolsetNameConfluence           AgentCreateToolsetName = "confluence"
+	AgentCreateToolsetNameConfluencedatacenter AgentCreateToolsetName = "confluencedatacenter"
+	AgentCreateToolsetNameDrive                AgentCreateToolsetName = "drive"
+	AgentCreateToolsetNameGithub               AgentCreateToolsetName = "github"
+	AgentCreateToolsetNameGmail                AgentCreateToolsetName = "gmail"
+	AgentCreateToolsetNameJira                 AgentCreateToolsetName = "jira"
+	AgentCreateToolsetNameJiradatacenter       AgentCreateToolsetName = "jiradatacenter"
+	AgentCreateToolsetNameLumos                AgentCreateToolsetName = "lumos"
+	AgentCreateToolsetNameMariadb              AgentCreateToolsetName = "mariadb"
+	AgentCreateToolsetNameOnedrive             AgentCreateToolsetName = "onedrive"
+	AgentCreateToolsetNameOutlook              AgentCreateToolsetName = "outlook"
+	AgentCreateToolsetNameRedshift             AgentCreateToolsetName = "redshift"
+	AgentCreateToolsetNameSalesforce           AgentCreateToolsetName = "salesforce"
+	AgentCreateToolsetNameSharepoint           AgentCreateToolsetName = "sharepoint"
+	AgentCreateToolsetNameSlack                AgentCreateToolsetName = "slack"
+	AgentCreateToolsetNameTeams                AgentCreateToolsetName = "teams"
+	AgentCreateToolsetNameZoom                 AgentCreateToolsetName = "zoom"
 )
 
 func (e AgentCreateToolsetName) ToPointer() *AgentCreateToolsetName {
@@ -33,7 +35,7 @@ func (e AgentCreateToolsetName) ToPointer() *AgentCreateToolsetName {
 func (e *AgentCreateToolsetName) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "calendar", "clickup", "confluence", "drive", "github", "gmail", "jira", "lumos", "mariadb", "onedrive", "outlook", "redshift", "salesforce", "sharepoint", "slack", "teams", "zoom":
+		case "calendar", "clickup", "confluence", "confluencedatacenter", "drive", "github", "gmail", "jira", "jiradatacenter", "lumos", "mariadb", "onedrive", "outlook", "redshift", "salesforce", "sharepoint", "slack", "teams", "zoom":
 			return true
 		}
 	}

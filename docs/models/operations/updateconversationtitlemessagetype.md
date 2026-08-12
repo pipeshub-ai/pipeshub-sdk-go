@@ -10,3 +10,4 @@
 | `UpdateConversationTitleMessageTypeError`       | error                                           |
 | `UpdateConversationTitleMessageTypeFeedback`    | feedback                                        |
 | `UpdateConversationTitleMessageTypeSystem`      | system                                          |
+| `UpdateConversationTitleMessageTypeToolCall`    | tool_call                                       |

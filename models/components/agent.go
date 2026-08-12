@@ -234,6 +234,32 @@ func (a *AgentWebSearch) GetProviderLabel() *string {
 	return a.ProviderLabel
 }
 
+// AgentDefaultReasoningEffort - Agent-level reasoning effort used when a chat request omits its own. Null when unset.
+type AgentDefaultReasoningEffort string
+
+const (
+	AgentDefaultReasoningEffortNone   AgentDefaultReasoningEffort = "none"
+	AgentDefaultReasoningEffortLow    AgentDefaultReasoningEffort = "low"
+	AgentDefaultReasoningEffortMedium AgentDefaultReasoningEffort = "medium"
+	AgentDefaultReasoningEffortHigh   AgentDefaultReasoningEffort = "high"
+	AgentDefaultReasoningEffortMax    AgentDefaultReasoningEffort = "max"
+)
+
+func (e AgentDefaultReasoningEffort) ToPointer() *AgentDefaultReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *AgentDefaultReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
+
 // Agent - Detailed agent projection returned by agent detail-style endpoints such
 // as `GET /agents/{agentKey}`.
 type Agent struct {
@@ -263,12 +289,20 @@ type Agent struct {
 	// and optional `instanceName`.
 	//
 	Toolsets []Toolset `json:"toolsets"`
+	// MCP server instances linked to the agent (GET /agents/{agentKey} graph
+	// projection). Same shape/semantics as `toolsets`, keyed by `instanceId`.
+	//
+	McpServers []McpServer `json:"mcpServers"`
 	// Knowledge connectors and indexed scopes linked to the agent
 	Knowledge []Knowledge `json:"knowledge"`
+	// Skills linked to the agent via `agentHasSkill` edges
+	Skills []AgentSkill `json:"skills"`
 	// Whether the agent is shared with the whole organization
 	ShareWithOrg bool `json:"shareWithOrg"`
 	// Web search provider attached to this agent. Null when none is configured.
 	WebSearch optionalnullable.OptionalNullable[AgentWebSearch] `json:"webSearch,omitzero"`
+	// Agent-level reasoning effort used when a chat request omits its own. Null when unset.
+	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
 	// Free-form agent tags.
 	Tags []string `json:"tags"`
 	// Unix epoch timestamp in milliseconds when the agent was created.
@@ -385,11 +419,25 @@ func (a *Agent) GetToolsets() []Toolset {
 	return a.Toolsets
 }
 
+func (a *Agent) GetMcpServers() []McpServer {
+	if a == nil {
+		return []McpServer{}
+	}
+	return a.McpServers
+}
+
 func (a *Agent) GetKnowledge() []Knowledge {
 	if a == nil {
 		return []Knowledge{}
 	}
 	return a.Knowledge
+}
+
+func (a *Agent) GetSkills() []AgentSkill {
+	if a == nil {
+		return []AgentSkill{}
+	}
+	return a.Skills
 }
 
 func (a *Agent) GetShareWithOrg() bool {
@@ -404,6 +452,13 @@ func (a *Agent) GetWebSearch() optionalnullable.OptionalNullable[AgentWebSearch]
 		return nil
 	}
 	return a.WebSearch
+}
+
+func (a *Agent) GetDefaultReasoningEffort() optionalnullable.OptionalNullable[AgentDefaultReasoningEffort] {
+	if a == nil {
+		return nil
+	}
+	return a.DefaultReasoningEffort
 }
 
 func (a *Agent) GetTags() []string {

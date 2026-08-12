@@ -9,19 +9,12 @@ import (
 	"time"
 )
 
-// AgentAddMessageStreamRequestChatMode - Chat mode hint forwarded to the agent backend. Defaults to `auto`
-// in the upstream AI payload when omitted.
-// - `auto` lets the agent pick its default strategy.
-// - `quick` favors low-latency answers over depth.
-// - `verification` runs additional grounding/verification passes.
-// - `deep` performs deeper retrieval and reasoning.
+// AgentAddMessageStreamRequestChatMode - Required execution mode. Scoped agent conversations currently
+// support only `quick`.
 type AgentAddMessageStreamRequestChatMode string
 
 const (
-	AgentAddMessageStreamRequestChatModeAuto         AgentAddMessageStreamRequestChatMode = "auto"
-	AgentAddMessageStreamRequestChatModeQuick        AgentAddMessageStreamRequestChatMode = "quick"
-	AgentAddMessageStreamRequestChatModeVerification AgentAddMessageStreamRequestChatMode = "verification"
-	AgentAddMessageStreamRequestChatModeDeep         AgentAddMessageStreamRequestChatMode = "deep"
+	AgentAddMessageStreamRequestChatModeQuick AgentAddMessageStreamRequestChatMode = "quick"
 )
 
 func (e AgentAddMessageStreamRequestChatMode) ToPointer() *AgentAddMessageStreamRequestChatMode {
@@ -33,13 +26,7 @@ func (e *AgentAddMessageStreamRequestChatMode) UnmarshalJSON(data []byte) error 
 		return err
 	}
 	switch v {
-	case "auto":
-		fallthrough
 	case "quick":
-		fallthrough
-	case "verification":
-		fallthrough
-	case "deep":
 		*e = AgentAddMessageStreamRequestChatMode(v)
 		return nil
 	default:
@@ -47,9 +34,37 @@ func (e *AgentAddMessageStreamRequestChatMode) UnmarshalJSON(data []byte) error 
 	}
 }
 
+// AgentAddMessageStreamRequestProtocol - AG-UI is the only supported wire protocol. When present must be
+// `"agui"`. Omitting the field is equivalent — the server always
+// uses the AG-UI vocabulary (see `AgentMessageStreamSSEEvent`).
+// Kept in the schema for backward compatibility with callers that
+// already send it.
+type AgentAddMessageStreamRequestProtocol string
+
+const (
+	AgentAddMessageStreamRequestProtocolAgui AgentAddMessageStreamRequestProtocol = "agui"
+)
+
+func (e AgentAddMessageStreamRequestProtocol) ToPointer() *AgentAddMessageStreamRequestProtocol {
+	return &e
+}
+func (e *AgentAddMessageStreamRequestProtocol) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "agui":
+		*e = AgentAddMessageStreamRequestProtocol(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AgentAddMessageStreamRequestProtocol: %v", v)
+	}
+}
+
 // AgentAddMessageStreamRequest - Request body for `POST /agents/{agentKey}/conversations/{conversationId}/messages/stream`.
-// Only `query` is required; all other fields are optional overrides or
-// routing hints. Unknown fields are stripped during validation.
+// `query` and `chatMode: quick` are required; all other fields are
+// optional overrides. Unknown fields are stripped during validation.
 type AgentAddMessageStreamRequest struct {
 	// User follow-up prompt to append to the existing agent conversation.
 	// Saved as a new `user_query` message before the upstream AI stream
@@ -57,9 +72,8 @@ type AgentAddMessageStreamRequest struct {
 	//
 	Query string `json:"query"`
 	// Optional retrieval scope (`apps` / `kb`) for this turn. Each id must
-	// be a UUID or a `knowledgeBase_<orgId>` collection id. Omit to let
-	// the agent use its stored defaults; send `{ "apps": [], "kb": [] }`
-	// to force no knowledge sources for this turn.
+	// be a valid UUID. Omit to let the agent use its stored defaults;
+	// send `{ "apps": [], "kb": [] }` to force no knowledge sources for this turn.
 	//
 	Filters *Filters `json:"filters,omitzero"`
 	// UI filter state persisted on the saved user message. Not used for
@@ -70,14 +84,10 @@ type AgentAddMessageStreamRequest struct {
 	// record id returned from the agent attachment upload endpoint.
 	//
 	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
-	// Chat mode hint forwarded to the agent backend. Defaults to `auto`
-	// in the upstream AI payload when omitted.
-	// - `auto` lets the agent pick its default strategy.
-	// - `quick` favors low-latency answers over depth.
-	// - `verification` runs additional grounding/verification passes.
-	// - `deep` performs deeper retrieval and reasoning.
+	// Required execution mode. Scoped agent conversations currently
+	// support only `quick`.
 	//
-	ChatMode *AgentAddMessageStreamRequestChatMode `json:"chatMode,omitzero"`
+	ChatMode AgentAddMessageStreamRequestChatMode `json:"chatMode"`
 	// AI model configuration id override for this turn. Omit to use the
 	// agent's default model.
 	//
@@ -99,6 +109,19 @@ type AgentAddMessageStreamRequest struct {
 	// tools for this turn.
 	//
 	Tools []string `json:"tools,omitzero"`
+	// AG-UI is the only supported wire protocol. When present must be
+	// `"agui"`. Omitting the field is equivalent — the server always
+	// uses the AG-UI vocabulary (see `AgentMessageStreamSSEEvent`).
+	// Kept in the schema for backward compatibility with callers that
+	// already send it.
+	//
+	Protocol *AgentAddMessageStreamRequestProtocol `json:"protocol,omitzero"`
+	// Per-request agent capability toggles. Only meaningful when `chatMode`
+	// selects an agent mode; ignored otherwise. Each field falls back to its
+	// own `default` below when omitted — a missing flag is not uniformly
+	// `true`. Omitting the whole object applies every default.
+	//
+	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
 }
 
 func (a AgentAddMessageStreamRequest) MarshalJSON() ([]byte, error) {
@@ -140,9 +163,9 @@ func (a *AgentAddMessageStreamRequest) GetAttachments() []ChatAttachmentRef {
 	return a.Attachments
 }
 
-func (a *AgentAddMessageStreamRequest) GetChatMode() *AgentAddMessageStreamRequestChatMode {
+func (a *AgentAddMessageStreamRequest) GetChatMode() AgentAddMessageStreamRequestChatMode {
 	if a == nil {
-		return nil
+		return AgentAddMessageStreamRequestChatMode("")
 	}
 	return a.ChatMode
 }
@@ -187,4 +210,18 @@ func (a *AgentAddMessageStreamRequest) GetTools() []string {
 		return nil
 	}
 	return a.Tools
+}
+
+func (a *AgentAddMessageStreamRequest) GetProtocol() *AgentAddMessageStreamRequestProtocol {
+	if a == nil {
+		return nil
+	}
+	return a.Protocol
+}
+
+func (a *AgentAddMessageStreamRequest) GetAgentCapabilities() *AgentCapabilities {
+	if a == nil {
+		return nil
+	}
+	return a.AgentCapabilities
 }

@@ -9,18 +9,12 @@ import (
 	"time"
 )
 
-// AgentStreamCreateConversationRequestChatMode - Chat mode hint forwarded to the agent backend.
-// - `auto` lets the agent pick its default strategy.
-// - `quick` favors low-latency answers over depth.
-// - `verification` runs additional grounding/verification passes.
-// - `deep` performs deeper retrieval and reasoning.
+// AgentStreamCreateConversationRequestChatMode - Required execution mode. Scoped agent conversations currently
+// support only `quick`.
 type AgentStreamCreateConversationRequestChatMode string
 
 const (
-	AgentStreamCreateConversationRequestChatModeAuto         AgentStreamCreateConversationRequestChatMode = "auto"
-	AgentStreamCreateConversationRequestChatModeQuick        AgentStreamCreateConversationRequestChatMode = "quick"
-	AgentStreamCreateConversationRequestChatModeVerification AgentStreamCreateConversationRequestChatMode = "verification"
-	AgentStreamCreateConversationRequestChatModeDeep         AgentStreamCreateConversationRequestChatMode = "deep"
+	AgentStreamCreateConversationRequestChatModeQuick AgentStreamCreateConversationRequestChatMode = "quick"
 )
 
 func (e AgentStreamCreateConversationRequestChatMode) ToPointer() *AgentStreamCreateConversationRequestChatMode {
@@ -32,13 +26,7 @@ func (e *AgentStreamCreateConversationRequestChatMode) UnmarshalJSON(data []byte
 		return err
 	}
 	switch v {
-	case "auto":
-		fallthrough
 	case "quick":
-		fallthrough
-	case "verification":
-		fallthrough
-	case "deep":
 		*e = AgentStreamCreateConversationRequestChatMode(v)
 		return nil
 	default:
@@ -46,9 +34,37 @@ func (e *AgentStreamCreateConversationRequestChatMode) UnmarshalJSON(data []byte
 	}
 }
 
-// AgentStreamCreateConversationRequest - Request body for `POST /agents/{agentKey}/conversations/stream`. Only
-// `query` is required; all other fields are optional overrides or routing
-// hints. Unknown fields are stripped during validation.
+// AgentStreamCreateConversationRequestProtocol - AG-UI is the only supported wire protocol. When present must be
+// `"agui"`. Omitting the field is equivalent — the server always
+// uses the AG-UI vocabulary (see `AgentStreamSSEEvent`). Kept in
+// the schema for backward compatibility with callers that already
+// send it.
+type AgentStreamCreateConversationRequestProtocol string
+
+const (
+	AgentStreamCreateConversationRequestProtocolAgui AgentStreamCreateConversationRequestProtocol = "agui"
+)
+
+func (e AgentStreamCreateConversationRequestProtocol) ToPointer() *AgentStreamCreateConversationRequestProtocol {
+	return &e
+}
+func (e *AgentStreamCreateConversationRequestProtocol) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "agui":
+		*e = AgentStreamCreateConversationRequestProtocol(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AgentStreamCreateConversationRequestProtocol: %v", v)
+	}
+}
+
+// AgentStreamCreateConversationRequest - Request body for `POST /agents/{agentKey}/conversations/stream`.
+// `query` and `chatMode: quick` are required; all other fields are
+// optional overrides. Unknown fields are stripped during validation.
 type AgentStreamCreateConversationRequest struct {
 	// User prompt for the first turn. Saved as the initial `user_query`
 	// message and sent to the agent backend.
@@ -59,9 +75,8 @@ type AgentStreamCreateConversationRequest struct {
 	//
 	RecordIds []string `json:"recordIds,omitzero"`
 	// Optional retrieval scope (`apps` / `kb`) for this turn. Each id must
-	// be a UUID or a `knowledgeBase_<orgId>` collection id. Omit for
-	// agent defaults; send `{ "apps": [], "kb": [] }` to force no
-	// knowledge sources for this turn.
+	// be a valid UUID. Omit for agent defaults; send `{ "apps": [], "kb": [] }`
+	// to force no knowledge sources for this turn.
 	//
 	Filters *Filters `json:"filters,omitzero"`
 	// UI filter state persisted on the saved user message. Not used for
@@ -72,13 +87,10 @@ type AgentStreamCreateConversationRequest struct {
 	// record id returned from the agent attachment upload endpoint.
 	//
 	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
-	// Chat mode hint forwarded to the agent backend.
-	// - `auto` lets the agent pick its default strategy.
-	// - `quick` favors low-latency answers over depth.
-	// - `verification` runs additional grounding/verification passes.
-	// - `deep` performs deeper retrieval and reasoning.
+	// Required execution mode. Scoped agent conversations currently
+	// support only `quick`.
 	//
-	ChatMode *AgentStreamCreateConversationRequestChatMode `json:"chatMode,omitzero"`
+	ChatMode AgentStreamCreateConversationRequestChatMode `json:"chatMode"`
 	// AI model configuration id for this turn. Omit to use the agent's
 	// default model.
 	//
@@ -100,6 +112,19 @@ type AgentStreamCreateConversationRequest struct {
 	// tools for this turn.
 	//
 	Tools []string `json:"tools,omitzero"`
+	// AG-UI is the only supported wire protocol. When present must be
+	// `"agui"`. Omitting the field is equivalent — the server always
+	// uses the AG-UI vocabulary (see `AgentStreamSSEEvent`). Kept in
+	// the schema for backward compatibility with callers that already
+	// send it.
+	//
+	Protocol *AgentStreamCreateConversationRequestProtocol `json:"protocol,omitzero"`
+	// Per-request agent capability toggles. Only meaningful when `chatMode`
+	// selects an agent mode; ignored otherwise. Each field falls back to its
+	// own `default` below when omitted — a missing flag is not uniformly
+	// `true`. Omitting the whole object applies every default.
+	//
+	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
 }
 
 func (a AgentStreamCreateConversationRequest) MarshalJSON() ([]byte, error) {
@@ -148,9 +173,9 @@ func (a *AgentStreamCreateConversationRequest) GetAttachments() []ChatAttachment
 	return a.Attachments
 }
 
-func (a *AgentStreamCreateConversationRequest) GetChatMode() *AgentStreamCreateConversationRequestChatMode {
+func (a *AgentStreamCreateConversationRequest) GetChatMode() AgentStreamCreateConversationRequestChatMode {
 	if a == nil {
-		return nil
+		return AgentStreamCreateConversationRequestChatMode("")
 	}
 	return a.ChatMode
 }
@@ -195,4 +220,18 @@ func (a *AgentStreamCreateConversationRequest) GetTools() []string {
 		return nil
 	}
 	return a.Tools
+}
+
+func (a *AgentStreamCreateConversationRequest) GetProtocol() *AgentStreamCreateConversationRequestProtocol {
+	if a == nil {
+		return nil
+	}
+	return a.Protocol
+}
+
+func (a *AgentStreamCreateConversationRequest) GetAgentCapabilities() *AgentCapabilities {
+	if a == nil {
+		return nil
+	}
+	return a.AgentCapabilities
 }

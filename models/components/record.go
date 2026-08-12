@@ -32,6 +32,43 @@ func (e *RecordOrigin) IsExact() bool {
 	return false
 }
 
+// ParsingStatus - Parse-phase status (ahead of indexing/extraction):
+// - NOT_STARTED: Awaiting parsing
+// - QUEUED: In parsing queue
+// - IN_PROGRESS: Currently being parsed
+// - COMPLETED: Successfully parsed
+// - FAILED: Parsing failed
+// - FILE_TYPE_NOT_SUPPORTED: Unsupported file format
+// - AUTO_INDEX_OFF: Auto-indexing disabled for this record
+// - EMPTY: File has no extractable content
+type ParsingStatus string
+
+const (
+	ParsingStatusNotStarted           ParsingStatus = "NOT_STARTED"
+	ParsingStatusInProgress           ParsingStatus = "IN_PROGRESS"
+	ParsingStatusFailed               ParsingStatus = "FAILED"
+	ParsingStatusCompleted            ParsingStatus = "COMPLETED"
+	ParsingStatusFileTypeNotSupported ParsingStatus = "FILE_TYPE_NOT_SUPPORTED"
+	ParsingStatusAutoIndexOff         ParsingStatus = "AUTO_INDEX_OFF"
+	ParsingStatusEmpty                ParsingStatus = "EMPTY"
+	ParsingStatusQueued               ParsingStatus = "QUEUED"
+)
+
+func (e ParsingStatus) ToPointer() *ParsingStatus {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ParsingStatus) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "NOT_STARTED", "IN_PROGRESS", "FAILED", "COMPLETED", "FILE_TYPE_NOT_SUPPORTED", "AUTO_INDEX_OFF", "EMPTY", "QUEUED":
+			return true
+		}
+	}
+	return false
+}
+
 // IndexingStatus - Current indexing/processing status:
 // - NOT_STARTED: Awaiting indexing
 // - QUEUED: In indexing queue
@@ -222,6 +259,19 @@ type Record struct {
 	SourceCreatedAtTimestamp *int64 `json:"sourceCreatedAtTimestamp,omitzero"`
 	// Source last modified timestamp (from connector)
 	SourceLastModifiedTimestamp *int64 `json:"sourceLastModifiedTimestamp,omitzero"`
+	// Epoch ms when parse/index processing began for the current attempt; null when idle
+	ProcessingStartedAt optionalnullable.OptionalNullable[int64] `json:"processingStartedAt,omitzero"`
+	// Parse-phase status (ahead of indexing/extraction):
+	// - NOT_STARTED: Awaiting parsing
+	// - QUEUED: In parsing queue
+	// - IN_PROGRESS: Currently being parsed
+	// - COMPLETED: Successfully parsed
+	// - FAILED: Parsing failed
+	// - FILE_TYPE_NOT_SUPPORTED: Unsupported file format
+	// - AUTO_INDEX_OFF: Auto-indexing disabled for this record
+	// - EMPTY: File has no extractable content
+	//
+	ParsingStatus *ParsingStatus `json:"parsingStatus,omitzero"`
 	// Current indexing/processing status:
 	// - NOT_STARTED: Awaiting indexing
 	// - QUEUED: In indexing queue
@@ -387,6 +437,20 @@ func (r *Record) GetSourceLastModifiedTimestamp() *int64 {
 		return nil
 	}
 	return r.SourceLastModifiedTimestamp
+}
+
+func (r *Record) GetProcessingStartedAt() optionalnullable.OptionalNullable[int64] {
+	if r == nil {
+		return nil
+	}
+	return r.ProcessingStartedAt
+}
+
+func (r *Record) GetParsingStatus() *ParsingStatus {
+	if r == nil {
+		return nil
+	}
+	return r.ParsingStatus
 }
 
 func (r *Record) GetIndexingStatus() *IndexingStatus {

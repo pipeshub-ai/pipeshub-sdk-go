@@ -14,15 +14,12 @@ import (
 // turn (it is not “full org default”).
 type Filters struct {
 	// Connector instance ids to scope retrieval for this turn. Each element
-	// must be a UUID (connector instance id, record-group id, etc.) or the
-	// org knowledge-base collection sentinel `knowledgeBase_<orgId>`
-	// (pattern `knowledgeBase_[a-zA-Z0-9_-]+`). Gateway validation matches
-	// Zod `appOrKbIdSchema`.
+	// must be a valid UUID (connector app id, KB app id, record-group id, etc.).
+	// Gateway validation matches Zod `appOrKbIdSchema`.
 	//
 	Apps []string `json:"apps,omitzero"`
-	// Knowledge-base / record-group ids to scope retrieval for this turn.
-	// Each element uses the same accepted formats as `apps`: a UUID or
-	// `knowledgeBase_<orgId>` (pattern `knowledgeBase_[a-zA-Z0-9_-]+`).
+	// Knowledge-base app ids to scope retrieval for this turn.
+	// Each element must be a valid UUID.
 	//
 	Kb []string `json:"kb,omitzero"`
 }

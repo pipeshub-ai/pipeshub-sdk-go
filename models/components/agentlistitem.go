@@ -40,6 +40,32 @@ func (a *AgentListItemWebSearch) GetProviderLabel() *string {
 	return a.ProviderLabel
 }
 
+// AgentListItemDefaultReasoningEffort - Agent-level reasoning effort used when a chat request omits its own. Null when unset.
+type AgentListItemDefaultReasoningEffort string
+
+const (
+	AgentListItemDefaultReasoningEffortNone   AgentListItemDefaultReasoningEffort = "none"
+	AgentListItemDefaultReasoningEffortLow    AgentListItemDefaultReasoningEffort = "low"
+	AgentListItemDefaultReasoningEffortMedium AgentListItemDefaultReasoningEffort = "medium"
+	AgentListItemDefaultReasoningEffortHigh   AgentListItemDefaultReasoningEffort = "high"
+	AgentListItemDefaultReasoningEffortMax    AgentListItemDefaultReasoningEffort = "max"
+)
+
+func (e AgentListItemDefaultReasoningEffort) ToPointer() *AgentListItemDefaultReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *AgentListItemDefaultReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
+
 // AgentListItem - Agent projection returned by `GET /agents`.
 //
 // This is the list-view envelope item emitted by the Python backend and
@@ -92,6 +118,8 @@ type AgentListItem struct {
 	// on this response path.
 	//
 	WebSearch optionalnullable.OptionalNullable[AgentListItemWebSearch] `json:"webSearch,omitzero"`
+	// Agent-level reasoning effort used when a chat request omits its own. Null when unset.
+	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentListItemDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
 	// Whether the agent is shared with the organization.
 	ShareWithOrg bool `json:"shareWithOrg"`
 	// Toolset instances linked to the agent. Same projection as
@@ -99,6 +127,11 @@ type AgentListItem struct {
 	// for each agent on the returned page.
 	//
 	Toolsets []Toolset `json:"toolsets"`
+	// MCP server instances linked to the agent. Same projection as
+	// `GET /agents/{agentKey}`; the backend builds it from the graph
+	// edges for each agent on the returned page.
+	//
+	McpServers []McpServer `json:"mcpServers"`
 	// Knowledge connectors and indexed scopes linked to the agent. Same
 	// projection as `GET /agents/{agentKey}`; the backend builds it from
 	// the graph edges for each agent on the returned page.
@@ -255,6 +288,13 @@ func (a *AgentListItem) GetWebSearch() optionalnullable.OptionalNullable[AgentLi
 	return a.WebSearch
 }
 
+func (a *AgentListItem) GetDefaultReasoningEffort() optionalnullable.OptionalNullable[AgentListItemDefaultReasoningEffort] {
+	if a == nil {
+		return nil
+	}
+	return a.DefaultReasoningEffort
+}
+
 func (a *AgentListItem) GetShareWithOrg() bool {
 	if a == nil {
 		return false
@@ -267,6 +307,13 @@ func (a *AgentListItem) GetToolsets() []Toolset {
 		return []Toolset{}
 	}
 	return a.Toolsets
+}
+
+func (a *AgentListItem) GetMcpServers() []McpServer {
+	if a == nil {
+		return []McpServer{}
+	}
+	return a.McpServers
 }
 
 func (a *AgentListItem) GetKnowledge() []Knowledge {

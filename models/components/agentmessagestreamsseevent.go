@@ -5,19 +5,27 @@ package components
 type AgentMessageStreamSSEEventEvent string
 
 const (
-	AgentMessageStreamSSEEventEventConnected             AgentMessageStreamSSEEventEvent = "connected"
-	AgentMessageStreamSSEEventEventStatus                AgentMessageStreamSSEEventEvent = "status"
-	AgentMessageStreamSSEEventEventToolCalls             AgentMessageStreamSSEEventEvent = "tool_calls"
-	AgentMessageStreamSSEEventEventToolCall              AgentMessageStreamSSEEventEvent = "tool_call"
-	AgentMessageStreamSSEEventEventToolSuccess           AgentMessageStreamSSEEventEvent = "tool_success"
-	AgentMessageStreamSSEEventEventToolError             AgentMessageStreamSSEEventEvent = "tool_error"
-	AgentMessageStreamSSEEventEventToolResult            AgentMessageStreamSSEEventEvent = "tool_result"
-	AgentMessageStreamSSEEventEventToolExecutionComplete AgentMessageStreamSSEEventEvent = "tool_execution_complete"
-	AgentMessageStreamSSEEventEventAnswerChunk           AgentMessageStreamSSEEventEvent = "answer_chunk"
-	AgentMessageStreamSSEEventEventRestreaming           AgentMessageStreamSSEEventEvent = "restreaming"
-	AgentMessageStreamSSEEventEventMetadata              AgentMessageStreamSSEEventEvent = "metadata"
-	AgentMessageStreamSSEEventEventComplete              AgentMessageStreamSSEEventEvent = "complete"
-	AgentMessageStreamSSEEventEventError                 AgentMessageStreamSSEEventEvent = "error"
+	AgentMessageStreamSSEEventEventRunStarted              AgentMessageStreamSSEEventEvent = "RUN_STARTED"
+	AgentMessageStreamSSEEventEventRunFinished             AgentMessageStreamSSEEventEvent = "RUN_FINISHED"
+	AgentMessageStreamSSEEventEventRunError                AgentMessageStreamSSEEventEvent = "RUN_ERROR"
+	AgentMessageStreamSSEEventEventStepStarted             AgentMessageStreamSSEEventEvent = "STEP_STARTED"
+	AgentMessageStreamSSEEventEventStepFinished            AgentMessageStreamSSEEventEvent = "STEP_FINISHED"
+	AgentMessageStreamSSEEventEventTextMessageStart        AgentMessageStreamSSEEventEvent = "TEXT_MESSAGE_START"
+	AgentMessageStreamSSEEventEventTextMessageContent      AgentMessageStreamSSEEventEvent = "TEXT_MESSAGE_CONTENT"
+	AgentMessageStreamSSEEventEventTextMessageEnd          AgentMessageStreamSSEEventEvent = "TEXT_MESSAGE_END"
+	AgentMessageStreamSSEEventEventReasoningStart          AgentMessageStreamSSEEventEvent = "REASONING_START"
+	AgentMessageStreamSSEEventEventReasoningMessageStart   AgentMessageStreamSSEEventEvent = "REASONING_MESSAGE_START"
+	AgentMessageStreamSSEEventEventReasoningMessageContent AgentMessageStreamSSEEventEvent = "REASONING_MESSAGE_CONTENT"
+	AgentMessageStreamSSEEventEventReasoningMessageEnd     AgentMessageStreamSSEEventEvent = "REASONING_MESSAGE_END"
+	AgentMessageStreamSSEEventEventReasoningEnd            AgentMessageStreamSSEEventEvent = "REASONING_END"
+	AgentMessageStreamSSEEventEventToolCallStart           AgentMessageStreamSSEEventEvent = "TOOL_CALL_START"
+	AgentMessageStreamSSEEventEventToolCallArgs            AgentMessageStreamSSEEventEvent = "TOOL_CALL_ARGS"
+	AgentMessageStreamSSEEventEventToolCallEnd             AgentMessageStreamSSEEventEvent = "TOOL_CALL_END"
+	AgentMessageStreamSSEEventEventToolCallResult          AgentMessageStreamSSEEventEvent = "TOOL_CALL_RESULT"
+	AgentMessageStreamSSEEventEventStateDelta              AgentMessageStreamSSEEventEvent = "STATE_DELTA"
+	AgentMessageStreamSSEEventEventStateSnapshot           AgentMessageStreamSSEEventEvent = "STATE_SNAPSHOT"
+	AgentMessageStreamSSEEventEventCustom                  AgentMessageStreamSSEEventEvent = "CUSTOM"
+	AgentMessageStreamSSEEventEventHeartbeat               AgentMessageStreamSSEEventEvent = "HEARTBEAT"
 )
 
 func (e AgentMessageStreamSSEEventEvent) ToPointer() *AgentMessageStreamSSEEventEvent {
@@ -28,7 +36,7 @@ func (e AgentMessageStreamSSEEventEvent) ToPointer() *AgentMessageStreamSSEEvent
 func (e *AgentMessageStreamSSEEventEvent) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "connected", "status", "tool_calls", "tool_call", "tool_success", "tool_error", "tool_result", "tool_execution_complete", "answer_chunk", "restreaming", "metadata", "complete", "error":
+		case "RUN_STARTED", "RUN_FINISHED", "RUN_ERROR", "STEP_STARTED", "STEP_FINISHED", "TEXT_MESSAGE_START", "TEXT_MESSAGE_CONTENT", "TEXT_MESSAGE_END", "REASONING_START", "REASONING_MESSAGE_START", "REASONING_MESSAGE_CONTENT", "REASONING_MESSAGE_END", "REASONING_END", "TOOL_CALL_START", "TOOL_CALL_ARGS", "TOOL_CALL_END", "TOOL_CALL_RESULT", "STATE_DELTA", "STATE_SNAPSHOT", "CUSTOM", "HEARTBEAT":
 			return true
 		}
 	}
@@ -36,40 +44,34 @@ func (e *AgentMessageStreamSSEEventEvent) IsExact() bool {
 }
 
 // AgentMessageStreamSSEEvent - Server-Sent Event envelope for `POST /agents/{agentKey}/conversations/{conversationId}/messages/stream`.
-// `data` is a JSON-encoded string whose shape depends on `event`.
+// AG-UI is the sole wire protocol.
 //
-// Three events have stable API-defined payloads:
+// `event` carries the AG-UI type name and `data` is a JSON-encoded
+// object that includes a `"type"` field matching `event`, plus
+// type-specific fields. The public route requires `chatMode: quick`.
+// Forwarded lifecycle events may carry `runId`, `threadId`, and
+// `parentRunId`. Stable gateway-generated top-level outcomes:
 //
-//   - `connected` — `{ "message": "SSE connection established" }`. Fired once
-//     after the SSE stream opens. No `conversationId` is included because it is already
-//     present in the request path.
-//   - `complete` — `{ "conversation": AgentConversation, "recordsUsed": number,
-//     "meta": { "requestId": string, "timestamp": string, "duration": number,
-//     "recordsUsed": number } }`. Fired once after the upstream AI `complete` payload
-//     is parsed, citations are saved, and the updated conversation is persisted.
-//   - `error` — `{ "error": string, "details"?: string }`. Fired for runtime failures
-//     after the stream has already started, including conversation lookup failures,
-//     upstream AI startup failures, save failures, and stream transport errors.
+//   - `CUSTOM` (`name: "conversation_created"`) — fired once after the
+//     SSE stream opens.
+//   - `RUN_FINISHED` — fired once after the upstream AI's result is
+//     parsed, citations are saved, and the updated conversation is
+//     persisted. The gateway emits `{ type, result }`; `result` carries
+//     `{ conversation, recordsUsed, meta }`.
+//   - `RUN_ERROR` — fired for runtime failures after the stream has
+//     already started, including conversation lookup failures, upstream
+//     AI startup failures, save failures, and stream transport errors.
 //
-// All other events are forwarded from the upstream agent backend. Common event names:
-//
-//   - `status` — progress update for the current agent phase.
-//   - `answer_chunk` — incremental token batch with running accumulated text.
-//   - `tool_calls` / `tool_call` / `tool_success` / `tool_error` / `tool_result` /
-//     `tool_execution_complete` — tool lifecycle events emitted by the upstream agent.
-//   - `restreaming` — the upstream agent restarted generation with refreshed context.
-//   - `metadata` — auxiliary metadata or keep-alive payload from the upstream agent.
-//
-// Important wire behavior:
-//
-//   - The upstream agent's `complete` event is consumed server-side and replaced with the
-//     API-defined `complete` event above.
-//   - If the upstream `complete` payload cannot be parsed as JSON, the raw upstream
-//     `complete` frame is forwarded unchanged instead.
-//   - Unknown future event names may appear and should be ignored by clients.
+// Gateway-generated root terminal events do not contain `runId`,
+// `threadId`, or `parentRunId`.
+// Clients should ignore unknown event names rather than treating them
+// as errors.
 type AgentMessageStreamSSEEvent struct {
 	Event *AgentMessageStreamSSEEventEvent `json:"event,omitzero"`
-	// JSON-encoded event payload. Shape depends on `event`.
+	// JSON-encoded event payload. The decoded JSON includes a `"type"`
+	// field matching `event`, plus type-specific fields. Shape depends
+	// on `event`.
+	//
 	Data *string `json:"data,omitzero"`
 }
 

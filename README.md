@@ -197,6 +197,12 @@ func main() {
 
 * [GetAvailableModelsByType](docs/sdks/aimodelsproviders/README.md#getavailablemodelsbytype) - Get available models by type
 
+### [Connector](docs/sdks/connector/README.md)
+
+* [GetRecordContent](docs/sdks/connector/README.md#getrecordcontent) - Get a record's full parsed content and metadata
+* [NavigateKnowledgeGraph](docs/sdks/connector/README.md#navigateknowledgegraph) - Browse the knowledge graph from a node
+* [LookupRecordByIdentifier](docs/sdks/connector/README.md#lookuprecordbyidentifier) - Resolve a URL, issue key or external ID to a Record ID
+
 ### [Conversations](docs/sdks/conversations/README.md)
 
 * [StreamChat](docs/sdks/conversations/README.md#streamchat) - Create conversation with streaming response
@@ -272,6 +278,15 @@ func main() {
 ### [Organizations](docs/sdks/organizations/README.md)
 
 * [GetCurrentOrganization](docs/sdks/organizations/README.md#getcurrentorganization) - Get current organization
+
+### [PersonalAccessTokens](docs/sdks/personalaccesstokens/README.md)
+
+* [ListPersonalAccessTokens](docs/sdks/personalaccesstokens/README.md#listpersonalaccesstokens) - List your own personal access tokens
+* [CreatePersonalAccessToken](docs/sdks/personalaccesstokens/README.md#createpersonalaccesstoken) - Create a personal access token
+* [ListPersonalAccessTokenScopes](docs/sdks/personalaccesstokens/README.md#listpersonalaccesstokenscopes) - List scopes available for a new personal access token
+* [RevokePersonalAccessToken](docs/sdks/personalaccesstokens/README.md#revokepersonalaccesstoken) - Revoke one of your own personal access tokens
+* [AdminListPersonalAccessTokens](docs/sdks/personalaccesstokens/README.md#adminlistpersonalaccesstokens) - Admin: list every active personal access token in the org
+* [AdminRevokePersonalAccessToken](docs/sdks/personalaccesstokens/README.md#adminrevokepersonalaccesstoken) - Admin: revoke any user's personal access token by id
 
 ### [SemanticSearch](docs/sdks/semanticsearch/README.md)
 

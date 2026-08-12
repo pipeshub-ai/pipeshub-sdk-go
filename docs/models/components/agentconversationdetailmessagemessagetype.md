@@ -10,3 +10,4 @@
 | `AgentConversationDetailMessageMessageTypeError`       | error                                                  |
 | `AgentConversationDetailMessageMessageTypeFeedback`    | feedback                                               |
 | `AgentConversationDetailMessageMessageTypeSystem`      | system                                                 |
+| `AgentConversationDetailMessageMessageTypeToolCall`    | tool_call                                              |

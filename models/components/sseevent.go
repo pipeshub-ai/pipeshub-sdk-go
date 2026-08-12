@@ -5,19 +5,27 @@ package components
 type SSEEventEvent string
 
 const (
-	SSEEventEventConnected             SSEEventEvent = "connected"
-	SSEEventEventStatus                SSEEventEvent = "status"
-	SSEEventEventAnswerChunk           SSEEventEvent = "answer_chunk"
-	SSEEventEventToolCall              SSEEventEvent = "tool_call"
-	SSEEventEventToolCalls             SSEEventEvent = "tool_calls"
-	SSEEventEventToolResult            SSEEventEvent = "tool_result"
-	SSEEventEventToolSuccess           SSEEventEvent = "tool_success"
-	SSEEventEventToolError             SSEEventEvent = "tool_error"
-	SSEEventEventToolExecutionComplete SSEEventEvent = "tool_execution_complete"
-	SSEEventEventRestreaming           SSEEventEvent = "restreaming"
-	SSEEventEventMetadata              SSEEventEvent = "metadata"
-	SSEEventEventComplete              SSEEventEvent = "complete"
-	SSEEventEventError                 SSEEventEvent = "error"
+	SSEEventEventRunStarted              SSEEventEvent = "RUN_STARTED"
+	SSEEventEventRunFinished             SSEEventEvent = "RUN_FINISHED"
+	SSEEventEventRunError                SSEEventEvent = "RUN_ERROR"
+	SSEEventEventStepStarted             SSEEventEvent = "STEP_STARTED"
+	SSEEventEventStepFinished            SSEEventEvent = "STEP_FINISHED"
+	SSEEventEventTextMessageStart        SSEEventEvent = "TEXT_MESSAGE_START"
+	SSEEventEventTextMessageContent      SSEEventEvent = "TEXT_MESSAGE_CONTENT"
+	SSEEventEventTextMessageEnd          SSEEventEvent = "TEXT_MESSAGE_END"
+	SSEEventEventReasoningStart          SSEEventEvent = "REASONING_START"
+	SSEEventEventReasoningMessageStart   SSEEventEvent = "REASONING_MESSAGE_START"
+	SSEEventEventReasoningMessageContent SSEEventEvent = "REASONING_MESSAGE_CONTENT"
+	SSEEventEventReasoningMessageEnd     SSEEventEvent = "REASONING_MESSAGE_END"
+	SSEEventEventReasoningEnd            SSEEventEvent = "REASONING_END"
+	SSEEventEventToolCallStart           SSEEventEvent = "TOOL_CALL_START"
+	SSEEventEventToolCallArgs            SSEEventEvent = "TOOL_CALL_ARGS"
+	SSEEventEventToolCallEnd             SSEEventEvent = "TOOL_CALL_END"
+	SSEEventEventToolCallResult          SSEEventEvent = "TOOL_CALL_RESULT"
+	SSEEventEventStateDelta              SSEEventEvent = "STATE_DELTA"
+	SSEEventEventStateSnapshot           SSEEventEvent = "STATE_SNAPSHOT"
+	SSEEventEventCustom                  SSEEventEvent = "CUSTOM"
+	SSEEventEventHeartbeat               SSEEventEvent = "HEARTBEAT"
 )
 
 func (e SSEEventEvent) ToPointer() *SSEEventEvent {
@@ -28,37 +36,35 @@ func (e SSEEventEvent) ToPointer() *SSEEventEvent {
 func (e *SSEEventEvent) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "connected", "status", "answer_chunk", "tool_call", "tool_calls", "tool_result", "tool_success", "tool_error", "tool_execution_complete", "restreaming", "metadata", "complete", "error":
+		case "RUN_STARTED", "RUN_FINISHED", "RUN_ERROR", "STEP_STARTED", "STEP_FINISHED", "TEXT_MESSAGE_START", "TEXT_MESSAGE_CONTENT", "TEXT_MESSAGE_END", "REASONING_START", "REASONING_MESSAGE_START", "REASONING_MESSAGE_CONTENT", "REASONING_MESSAGE_END", "REASONING_END", "TOOL_CALL_START", "TOOL_CALL_ARGS", "TOOL_CALL_END", "TOOL_CALL_RESULT", "STATE_DELTA", "STATE_SNAPSHOT", "CUSTOM", "HEARTBEAT":
 			return true
 		}
 	}
 	return false
 }
 
-// SSEEvent - Server-Sent Event envelope for streaming chat responses.
+// SSEEvent - Server-Sent Event envelope for streaming chat responses. AG-UI is
+// the sole wire protocol.
 //
-// `data` is a JSON-encoded string whose shape depends on `event`.
-// Three events are emitted by the API layer and have stable shapes
-// documented on the streaming routes:
+// `event` carries the AG-UI type name and `data` is a JSON-encoded
+// object that includes a `"type"` field matching `event`, plus
+// type-specific fields. Stable gateway-generated top-level outcomes:
 //
-//   - `connected` — fired once on connection. Carries the newly created
-//     `conversationId` and `title` so the client can link the stream to
-//     a row before any tokens arrive.
-//   - `complete` — fired once after the AI backend finishes. Carries the
-//     full persisted `conversation` and a `meta` block with `requestId`,
+//   - `RUN_FINISHED` — `{ type, result }`; `result` carries the full
+//     persisted `conversation` and a `meta` block with `requestId`,
 //     `timestamp` and `duration`.
-//   - `error` — fired when the stream fails. Carries an `error` message
-//     and optional `details`. The conversation row is marked FAILED
-//     before the stream closes.
+//   - `RUN_ERROR` — `{ type, message, code? }`. The conversation row is
+//     marked FAILED before the stream closes.
 //
-// All other events are forwarded verbatim from the AI backend; their
-// payloads are AI-backend defined and may evolve. Currently observed
-// names include `status`, `answer_chunk`, `tool_call`, `tool_calls`,
-// `tool_result`, `tool_success`, `tool_error`,
-// `tool_execution_complete`, `restreaming`, and `metadata`.
+// Forwarded upstream lifecycle or child-run events may contain `runId`,
+// `threadId`, and `parentRunId`. Gateway-generated root terminal events
+// do not. Clients should ignore unknown event names.
 type SSEEvent struct {
 	Event *SSEEventEvent `json:"event,omitzero"`
-	// JSON-encoded event payload. Shape depends on `event`.
+	// JSON-encoded event payload. The decoded JSON includes a `"type"`
+	// field matching `event`, plus type-specific fields. Shape depends
+	// on `event`.
+	//
 	Data *string `json:"data,omitzero"`
 }
 

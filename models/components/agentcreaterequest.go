@@ -3,9 +3,47 @@
 package components
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
+
+// AgentCreateRequestDefaultReasoningEffort - Agent-level reasoning effort used when a chat request omits its own.
+type AgentCreateRequestDefaultReasoningEffort string
+
+const (
+	AgentCreateRequestDefaultReasoningEffortNone   AgentCreateRequestDefaultReasoningEffort = "none"
+	AgentCreateRequestDefaultReasoningEffortLow    AgentCreateRequestDefaultReasoningEffort = "low"
+	AgentCreateRequestDefaultReasoningEffortMedium AgentCreateRequestDefaultReasoningEffort = "medium"
+	AgentCreateRequestDefaultReasoningEffortHigh   AgentCreateRequestDefaultReasoningEffort = "high"
+	AgentCreateRequestDefaultReasoningEffortMax    AgentCreateRequestDefaultReasoningEffort = "max"
+)
+
+func (e AgentCreateRequestDefaultReasoningEffort) ToPointer() *AgentCreateRequestDefaultReasoningEffort {
+	return &e
+}
+func (e *AgentCreateRequestDefaultReasoningEffort) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "none":
+		fallthrough
+	case "low":
+		fallthrough
+	case "medium":
+		fallthrough
+	case "high":
+		fallthrough
+	case "max":
+		*e = AgentCreateRequestDefaultReasoningEffort(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AgentCreateRequestDefaultReasoningEffort: %v", v)
+	}
+}
 
 type AgentCreateRequest struct {
 	// Agent display name
@@ -32,11 +70,15 @@ type AgentCreateRequest struct {
 	Toolsets []AgentCreateToolset `json:"toolsets,omitzero"`
 	// Knowledge sources connected to the agent
 	Knowledge []AgentCreateKnowledge `json:"knowledge,omitzero"`
+	// Existing skills to assign to the agent
+	Skills []AgentSkillAssignment `json:"skills,omitzero"`
 	// Accepted web-search attachment for `POST /agents/create`.
 	// The gateway accepts either a provider string or an object with at least
 	// a `provider` field.
 	//
 	WebSearch optionalnullable.OptionalNullable[AgentCreateWebSearchUnion] `json:"webSearch,omitzero"`
+	// Agent-level reasoning effort used when a chat request omits its own.
+	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentCreateRequestDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
 }
 
 func (a AgentCreateRequest) MarshalJSON() ([]byte, error) {
@@ -127,9 +169,23 @@ func (a *AgentCreateRequest) GetKnowledge() []AgentCreateKnowledge {
 	return a.Knowledge
 }
 
+func (a *AgentCreateRequest) GetSkills() []AgentSkillAssignment {
+	if a == nil {
+		return nil
+	}
+	return a.Skills
+}
+
 func (a *AgentCreateRequest) GetWebSearch() optionalnullable.OptionalNullable[AgentCreateWebSearchUnion] {
 	if a == nil {
 		return nil
 	}
 	return a.WebSearch
+}
+
+func (a *AgentCreateRequest) GetDefaultReasoningEffort() optionalnullable.OptionalNullable[AgentCreateRequestDefaultReasoningEffort] {
+	if a == nil {
+		return nil
+	}
+	return a.DefaultReasoningEffort
 }

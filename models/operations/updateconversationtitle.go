@@ -51,6 +51,7 @@ const (
 	UpdateConversationTitleMessageTypeError       UpdateConversationTitleMessageType = "error"
 	UpdateConversationTitleMessageTypeFeedback    UpdateConversationTitleMessageType = "feedback"
 	UpdateConversationTitleMessageTypeSystem      UpdateConversationTitleMessageType = "system"
+	UpdateConversationTitleMessageTypeToolCall    UpdateConversationTitleMessageType = "tool_call"
 )
 
 func (e UpdateConversationTitleMessageType) ToPointer() *UpdateConversationTitleMessageType {
@@ -61,7 +62,7 @@ func (e UpdateConversationTitleMessageType) ToPointer() *UpdateConversationTitle
 func (e *UpdateConversationTitleMessageType) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "user_query", "bot_response", "error", "feedback", "system":
+		case "user_query", "bot_response", "error", "feedback", "system", "tool_call":
 			return true
 		}
 	}
@@ -257,10 +258,16 @@ type UpdateConversationTitleMessage struct {
 	// Files uploaded for this message turn (see
 	// `POST /conversations/attachments/upload`).
 	//
-	Attachments []components.ChatAttachmentRef   `json:"attachments,omitzero"`
-	Metadata    *UpdateConversationTitleMetadata `json:"metadata,omitzero"`
-	CreatedAt   time.Time                        `json:"createdAt"`
-	UpdatedAt   time.Time                        `json:"updatedAt"`
+	Attachments []components.ChatAttachmentRef `json:"attachments,omitzero"`
+	// Tool call results invoked during this message turn.
+	Tools []components.MessageToolCall `json:"tools,omitzero"`
+	// Persisted chain-of-thought for this turn.
+	Reasoning []components.MessageReasoningTurn `json:"reasoning,omitzero"`
+	// Ordered agent-activity transcript for this turn.
+	Parts     []components.MessagePart         `json:"parts,omitzero"`
+	Metadata  *UpdateConversationTitleMetadata `json:"metadata,omitzero"`
+	CreatedAt time.Time                        `json:"createdAt"`
+	UpdatedAt time.Time                        `json:"updatedAt"`
 }
 
 func (u UpdateConversationTitleMessage) MarshalJSON() ([]byte, error) {
@@ -356,6 +363,27 @@ func (u *UpdateConversationTitleMessage) GetAttachments() []components.ChatAttac
 		return nil
 	}
 	return u.Attachments
+}
+
+func (u *UpdateConversationTitleMessage) GetTools() []components.MessageToolCall {
+	if u == nil {
+		return nil
+	}
+	return u.Tools
+}
+
+func (u *UpdateConversationTitleMessage) GetReasoning() []components.MessageReasoningTurn {
+	if u == nil {
+		return nil
+	}
+	return u.Reasoning
+}
+
+func (u *UpdateConversationTitleMessage) GetParts() []components.MessagePart {
+	if u == nil {
+		return nil
+	}
+	return u.Parts
 }
 
 func (u *UpdateConversationTitleMessage) GetMetadata() *UpdateConversationTitleMetadata {

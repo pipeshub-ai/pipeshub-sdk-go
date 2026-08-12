@@ -2279,6 +2279,9 @@ func (s *Agents) DeleteAgentConversationChatAttachment(ctx context.Context, agen
 // response as Server-Sent Events (SSE). The first user message is saved
 // and forwarded to the upstream agent backend; subsequent tokens, tool
 // calls, and lifecycle events are emitted on the open SSE connection.
+//
+// AG-UI is the sole wire protocol. The request must include
+// `chatMode: quick`; see `AgentStreamSSEEvent` for the event vocabulary.
 func (s *Agents) StreamAgentConversation(ctx context.Context, agentKey string, body components.AgentStreamCreateConversationRequest, opts ...operations.Option) (*operations.StreamAgentConversationResponse, error) {
 	request := operations.StreamAgentConversationRequest{
 		AgentKey: agentKey,
@@ -2499,6 +2502,10 @@ func (s *Agents) StreamAgentConversation(ctx context.Context, agentKey string, b
 // StreamAgentConversationMessage - Add message to agent conversation with streaming response
 // Append a user message to an existing agent conversation and stream the
 // assistant reply over SSE.
+//
+// AG-UI is the sole wire protocol. The request must include
+// `chatMode: quick`; see `AgentMessageStreamSSEEvent` for the event
+// vocabulary.
 func (s *Agents) StreamAgentConversationMessage(ctx context.Context, agentKey string, conversationID string, body components.AgentAddMessageStreamRequest, opts ...operations.Option) (*operations.StreamAgentConversationMessageResponse, error) {
 	request := operations.StreamAgentConversationMessageRequest{
 		AgentKey:       agentKey,
@@ -2730,8 +2737,8 @@ func (s *Agents) StreamAgentConversationMessage(ctx context.Context, agentKey st
 //
 // **Request body:**
 //
-// All request-body fields are optional. When omitted, the server reuses
-// the original model/context. The body supports:
+// `chatMode: quick` is required. Other fields are optional and reuse
+// the original model/context when omitted. The body supports:
 // - `filters`
 // - `chatMode`
 // - `modelKey`
@@ -2740,19 +2747,23 @@ func (s *Agents) StreamAgentConversationMessage(ctx context.Context, agentKey st
 // - `timezone`
 // - `currentTime`
 // - `tools`
+// - `protocol`
+// - `agentCapabilities`
 //
 // **Streaming behavior:**
 //
-// The response is delivered as `text/event-stream`. Stable events are
-// `connected`, `complete`, and `error`. Additional agent/tool lifecycle
-// events may be forwarded by the backend and should be treated as
-// informational updates.
+// The response is delivered as an AG-UI `text/event-stream`. Stable
+// outcomes are `RUN_FINISHED` and `RUN_ERROR`; see
+// `AgentRegenerateSSEEvent`.
+//
+// Additional agent/tool lifecycle events may be forwarded by the
+// backend and should be treated as informational updates.
 //
 // Validation failures on params/body are returned as normal HTTP `400`
 // responses before the stream starts. Valid-shape requests that fail
-// conversation lookup or regenerate rules are reported as SSE `error`
-// events after stream initialization.
-func (s *Agents) RegenerateAgentConversationMessage(ctx context.Context, agentKey string, conversationID string, messageID string, body *components.RegenerateRequest, opts ...operations.Option) (*operations.RegenerateAgentConversationMessageResponse, error) {
+// conversation lookup or regenerate rules are reported as
+// `RUN_ERROR` events after stream initialization.
+func (s *Agents) RegenerateAgentConversationMessage(ctx context.Context, agentKey string, conversationID string, messageID string, body components.AgentRegenerateRequest, opts ...operations.Option) (*operations.RegenerateAgentConversationMessageResponse, error) {
 	request := operations.RegenerateAgentConversationMessageRequest{
 		AgentKey:       agentKey,
 		ConversationID: conversationID,
@@ -2792,7 +2803,7 @@ func (s *Agents) RegenerateAgentConversationMessage(ctx context.Context, agentKe
 		OAuth2Scopes:     []string{"agent:execute"},
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
-	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "Body", "json", `request:"mediaType=application/json"`)
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
 	if err != nil {
 		return nil, err
 	}

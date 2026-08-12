@@ -16,6 +16,7 @@ const (
 	AgentConversationDetailMessageMessageTypeError       AgentConversationDetailMessageMessageType = "error"
 	AgentConversationDetailMessageMessageTypeFeedback    AgentConversationDetailMessageMessageType = "feedback"
 	AgentConversationDetailMessageMessageTypeSystem      AgentConversationDetailMessageMessageType = "system"
+	AgentConversationDetailMessageMessageTypeToolCall    AgentConversationDetailMessageMessageType = "tool_call"
 )
 
 func (e AgentConversationDetailMessageMessageType) ToPointer() *AgentConversationDetailMessageMessageType {
@@ -26,7 +27,7 @@ func (e AgentConversationDetailMessageMessageType) ToPointer() *AgentConversatio
 func (e *AgentConversationDetailMessageMessageType) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "user_query", "bot_response", "error", "feedback", "system":
+		case "user_query", "bot_response", "error", "feedback", "system", "tool_call":
 			return true
 		}
 	}
@@ -157,25 +158,6 @@ func (a *AgentConversationDetailMessageReferenceDatum) GetMetadata() map[string]
 	return a.Metadata
 }
 
-type AgentConversationDetailMessageTool struct {
-	ToolName   *string `json:"toolName,omitzero"`
-	ToolResult any     `json:"toolResult,omitzero"`
-}
-
-func (a *AgentConversationDetailMessageTool) GetToolName() *string {
-	if a == nil {
-		return nil
-	}
-	return a.ToolName
-}
-
-func (a *AgentConversationDetailMessageTool) GetToolResult() any {
-	if a == nil {
-		return nil
-	}
-	return a.ToolResult
-}
-
 type AgentConversationDetailMessageMetadata struct {
 	ProcessingTimeMs *float64 `json:"processingTimeMs,omitzero"`
 	ModelVersion     *string  `json:"modelVersion,omitzero"`
@@ -229,7 +211,11 @@ type AgentConversationDetailMessage struct {
 	//
 	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
 	// Tool call results invoked during this message turn.
-	Tools []AgentConversationDetailMessageTool `json:"tools,omitzero"`
+	Tools []MessageToolCall `json:"tools,omitzero"`
+	// Persisted chain-of-thought for this turn.
+	Reasoning []MessageReasoningTurn `json:"reasoning,omitzero"`
+	// Ordered agent-activity transcript for this turn.
+	Parts []MessagePart `json:"parts,omitzero"`
 	// AI model configuration recorded against a conversation or message.
 	ModelInfo *ConversationModelInfo `json:"modelInfo,omitzero"`
 	// Rich filter state selected by the user, used for display and persistence only.
@@ -323,11 +309,25 @@ func (a *AgentConversationDetailMessage) GetAttachments() []ChatAttachmentRef {
 	return a.Attachments
 }
 
-func (a *AgentConversationDetailMessage) GetTools() []AgentConversationDetailMessageTool {
+func (a *AgentConversationDetailMessage) GetTools() []MessageToolCall {
 	if a == nil {
 		return nil
 	}
 	return a.Tools
+}
+
+func (a *AgentConversationDetailMessage) GetReasoning() []MessageReasoningTurn {
+	if a == nil {
+		return nil
+	}
+	return a.Reasoning
+}
+
+func (a *AgentConversationDetailMessage) GetParts() []MessagePart {
+	if a == nil {
+		return nil
+	}
+	return a.Parts
 }
 
 func (a *AgentConversationDetailMessage) GetModelInfo() *ConversationModelInfo {

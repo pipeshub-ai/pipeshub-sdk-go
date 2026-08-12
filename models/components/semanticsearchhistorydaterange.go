@@ -2,31 +2,31 @@
 
 package components
 
-type Current struct {
+type SemanticSearchHistoryDateRangeCurrent struct {
 	Start *string `json:"start"`
 	End   *string `json:"end"`
 }
 
-func (c *Current) GetStart() *string {
-	if c == nil {
+func (s *SemanticSearchHistoryDateRangeCurrent) GetStart() *string {
+	if s == nil {
 		return nil
 	}
-	return c.Start
+	return s.Start
 }
 
-func (c *Current) GetEnd() *string {
-	if c == nil {
+func (s *SemanticSearchHistoryDateRangeCurrent) GetEnd() *string {
+	if s == nil {
 		return nil
 	}
-	return c.End
+	return s.End
 }
 
 type SemanticSearchHistoryDateRange struct {
-	Type        string  `json:"type"`
-	Description string  `json:"description"`
-	Format      string  `json:"format"`
-	Current     Current `json:"current"`
-	Applied     bool    `json:"applied"`
+	Type        string                                `json:"type"`
+	Description string                                `json:"description"`
+	Format      string                                `json:"format"`
+	Current     SemanticSearchHistoryDateRangeCurrent `json:"current"`
+	Applied     bool                                  `json:"applied"`
 }
 
 func (s *SemanticSearchHistoryDateRange) GetType() string {
@@ -50,9 +50,9 @@ func (s *SemanticSearchHistoryDateRange) GetFormat() string {
 	return s.Format
 }
 
-func (s *SemanticSearchHistoryDateRange) GetCurrent() Current {
+func (s *SemanticSearchHistoryDateRange) GetCurrent() SemanticSearchHistoryDateRangeCurrent {
 	if s == nil {
-		return Current{}
+		return SemanticSearchHistoryDateRangeCurrent{}
 	}
 	return s.Current
 }

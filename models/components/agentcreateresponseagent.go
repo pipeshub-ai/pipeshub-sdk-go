@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+)
+
 type AgentCreateResponseAgentWebSearch struct {
 	Provider      *string `json:"provider,omitzero"`
 	ProviderKey   *string `json:"providerKey,omitzero"`
@@ -29,25 +33,55 @@ func (a *AgentCreateResponseAgentWebSearch) GetProviderLabel() *string {
 	return a.ProviderLabel
 }
 
+// AgentCreateResponseAgentDefaultReasoningEffort - Agent-level reasoning effort used when a chat request omits its own. Null when unset.
+type AgentCreateResponseAgentDefaultReasoningEffort string
+
+const (
+	AgentCreateResponseAgentDefaultReasoningEffortNone   AgentCreateResponseAgentDefaultReasoningEffort = "none"
+	AgentCreateResponseAgentDefaultReasoningEffortLow    AgentCreateResponseAgentDefaultReasoningEffort = "low"
+	AgentCreateResponseAgentDefaultReasoningEffortMedium AgentCreateResponseAgentDefaultReasoningEffort = "medium"
+	AgentCreateResponseAgentDefaultReasoningEffortHigh   AgentCreateResponseAgentDefaultReasoningEffort = "high"
+	AgentCreateResponseAgentDefaultReasoningEffortMax    AgentCreateResponseAgentDefaultReasoningEffort = "max"
+)
+
+func (e AgentCreateResponseAgentDefaultReasoningEffort) ToPointer() *AgentCreateResponseAgentDefaultReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *AgentCreateResponseAgentDefaultReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
+
 type AgentCreateResponseAgent struct {
-	Key                string                             `json:"_key"`
-	Name               string                             `json:"name"`
-	Description        string                             `json:"description"`
-	StartMessage       string                             `json:"startMessage"`
-	SystemPrompt       string                             `json:"systemPrompt"`
-	Instructions       *string                            `json:"instructions"`
-	Models             []string                           `json:"models"`
-	Tags               []string                           `json:"tags"`
-	WebSearch          *AgentCreateResponseAgentWebSearch `json:"webSearch"`
-	IsActive           bool                               `json:"isActive"`
-	IsServiceAccount   bool                               `json:"isServiceAccount"`
-	CreatedBy          string                             `json:"createdBy"`
-	UpdatedBy          *string                            `json:"updatedBy"`
-	CreatedAtTimestamp int64                              `json:"createdAtTimestamp"`
-	UpdatedAtTimestamp int64                              `json:"updatedAtTimestamp"`
-	IsDeleted          bool                               `json:"isDeleted"`
-	Toolsets           []AgentCreateResponseToolset       `json:"toolsets"`
-	Knowledge          []AgentCreateResponseKnowledge     `json:"knowledge"`
+	Key          string                             `json:"_key"`
+	Name         string                             `json:"name"`
+	Description  string                             `json:"description"`
+	StartMessage string                             `json:"startMessage"`
+	SystemPrompt string                             `json:"systemPrompt"`
+	Instructions *string                            `json:"instructions"`
+	Models       []string                           `json:"models"`
+	Tags         []string                           `json:"tags"`
+	WebSearch    *AgentCreateResponseAgentWebSearch `json:"webSearch"`
+	// Agent-level reasoning effort used when a chat request omits its own. Null when unset.
+	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentCreateResponseAgentDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
+	IsActive               bool                                                                              `json:"isActive"`
+	IsServiceAccount       bool                                                                              `json:"isServiceAccount"`
+	CreatedBy              string                                                                            `json:"createdBy"`
+	UpdatedBy              *string                                                                           `json:"updatedBy"`
+	CreatedAtTimestamp     int64                                                                             `json:"createdAtTimestamp"`
+	UpdatedAtTimestamp     int64                                                                             `json:"updatedAtTimestamp"`
+	IsDeleted              bool                                                                              `json:"isDeleted"`
+	Toolsets               []AgentCreateResponseToolset                                                      `json:"toolsets"`
+	McpServers             []AgentCreateResponseMcpServer                                                    `json:"mcpServers"`
+	Knowledge              []AgentCreateResponseKnowledge                                                    `json:"knowledge"`
+	Skills                 []AgentCreateResponseSkill                                                        `json:"skills"`
 }
 
 func (a *AgentCreateResponseAgent) GetKey() string {
@@ -113,6 +147,13 @@ func (a *AgentCreateResponseAgent) GetWebSearch() *AgentCreateResponseAgentWebSe
 	return a.WebSearch
 }
 
+func (a *AgentCreateResponseAgent) GetDefaultReasoningEffort() optionalnullable.OptionalNullable[AgentCreateResponseAgentDefaultReasoningEffort] {
+	if a == nil {
+		return nil
+	}
+	return a.DefaultReasoningEffort
+}
+
 func (a *AgentCreateResponseAgent) GetIsActive() bool {
 	if a == nil {
 		return false
@@ -169,9 +210,23 @@ func (a *AgentCreateResponseAgent) GetToolsets() []AgentCreateResponseToolset {
 	return a.Toolsets
 }
 
+func (a *AgentCreateResponseAgent) GetMcpServers() []AgentCreateResponseMcpServer {
+	if a == nil {
+		return []AgentCreateResponseMcpServer{}
+	}
+	return a.McpServers
+}
+
 func (a *AgentCreateResponseAgent) GetKnowledge() []AgentCreateResponseKnowledge {
 	if a == nil {
 		return []AgentCreateResponseKnowledge{}
 	}
 	return a.Knowledge
+}
+
+func (a *AgentCreateResponseAgent) GetSkills() []AgentCreateResponseSkill {
+	if a == nil {
+		return []AgentCreateResponseSkill{}
+	}
+	return a.Skills
 }

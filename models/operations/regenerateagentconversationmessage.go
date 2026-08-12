@@ -3,7 +3,6 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/types/stream"
 )
@@ -15,21 +14,9 @@ type RegenerateAgentConversationMessageRequest struct {
 	ConversationID string `pathParam:"style=simple,explode=false,name=conversationId"`
 	// ID of the bot-response message to regenerate.
 	MessageID string `pathParam:"style=simple,explode=false,name=messageId"`
-	// Optional regeneration payload. All fields are optional and are
-	// validated against `RegenerateRequest`.
+	// Regeneration payload requiring `chatMode: quick`.
 	//
-	Body *components.RegenerateRequest `request:"mediaType=application/json"`
-}
-
-func (r RegenerateAgentConversationMessageRequest) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(r, "", false)
-}
-
-func (r *RegenerateAgentConversationMessageRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
-		return err
-	}
-	return nil
+	Body components.AgentRegenerateRequest `request:"mediaType=application/json"`
 }
 
 func (r *RegenerateAgentConversationMessageRequest) GetAgentKey() string {
@@ -53,9 +40,9 @@ func (r *RegenerateAgentConversationMessageRequest) GetMessageID() string {
 	return r.MessageID
 }
 
-func (r *RegenerateAgentConversationMessageRequest) GetBody() *components.RegenerateRequest {
+func (r *RegenerateAgentConversationMessageRequest) GetBody() components.AgentRegenerateRequest {
 	if r == nil {
-		return nil
+		return components.AgentRegenerateRequest{}
 	}
 	return r.Body
 }
@@ -65,13 +52,14 @@ type RegenerateAgentConversationMessageResponse struct {
 	// SSE stream established.
 	//
 	// Stable event names:
-	// - `connected` — confirms the stream is open
-	// - `complete` — returns the updated conversation plus metadata
-	// - `error` — reports lookup failures, authorization failures on
-	//   the conversation, or regenerate-rule failures after the stream
-	//   has started
+	// - `RUN_FINISHED` — `{ type, result }`, where `result` contains the
+	//   updated conversation and metadata
+	// - `RUN_ERROR` — `{ type, message, code? }`, reporting lookup,
+	//   authorization, or regenerate-rule failures
 	//
-	// Additional backend-defined agent/tool events may be emitted.
+	// Forwarded lifecycle and child-run events may include `runId`,
+	// `threadId`, and `parentRunId`. Additional backend-defined
+	// agent/tool events may be emitted.
 	// Clients should ignore unknown event names.
 	//
 	AgentRegenerateSSEEvent *stream.EventStream[components.AgentRegenerateSSEEvent]

@@ -55,45 +55,11 @@ type RegenerateAnswerResponse struct {
 	// on `SSEEvent`. The exact subset of events emitted depends on
 	// `chatMode` (see the route description for routing rules).
 	//
-	// Lifecycle (all event names are sent verbatim on the wire):
-	// - `connected` — `{ "message": "SSE connection established" }`.
-	//   Fired once on connection by the API layer.
-	// - `status` — progress messages from the AI backend. Possible
-	//   `status` sub-values include `started`, `transforming`,
-	//   `searching`, `processing`, `checking_tools`,
-	//   `generating_answer`, `generating`, `analyzing`, `evaluating`,
-	//   `planning`, `executing`, `retrying`, `continuing`, `success`,
-	//   `skipped`, `pending`, `keepalive`, `cascade_error`, and
-	//   backend-defined values that may be added over time.
-	// - `answer_chunk` — incremental token batches with running
-	//   `accumulated` text, accumulated `citations`, and the
-	//   backend-supplied `confidence` (typically null until the final
-	//   chunk).
-	// - `tool_calls` / `tool_call` / `tool_success` / `tool_error` —
-	//   emitted when the model invokes tools (agent chat modes, or the
-	//   non-agent path when SQL / record-fetch tools are configured).
-	// - `tool_result` / `tool_execution_complete` — additional tool
-	//   lifecycle events emitted only on the agent-mode path.
-	// - `restreaming` — emitted when the LLM is restarted with new
-	//   context (e.g. before a citation-verification pass or
-	//   reflection-driven retry).
-	// - `metadata` — `{}` keep-alive emitted by the JSON-streaming
-	//   branch while waiting for the next safe-to-flush chunk.
-	// - `complete` — `{ "conversation": Conversation, "recordsUsed":
-	//   number, "meta": { "requestId": string, "timestamp": string,
-	//   "duration": number, "recordsUsed": number } }`. Fired once
-	//   after the regeneration is persisted; the new bot response
-	//   replaces the previous one in `conversation.messages` at the
-	//   same index. The AI backend's own `complete` frame is consumed
-	//   server-side and is **not** forwarded — clients see only this
-	//   server-defined frame.
-	// - `error` — `{ "error": string, "details"?: string }`. Fired if
-	//   the stream fails; the previous bot response is replaced with an
-	//   error message and the conversation row is marked FAILED before
-	//   close.
-	//
-	// Clients should ignore unknown event names rather than treating
-	// them as errors.
+	// The gateway emits a root `RUN_FINISHED` as `{ type, result }`
+	// after persistence and a root `RUN_ERROR` as
+	// `{ type, message, code? }` on failure. Forwarded lifecycle and
+	// child-run events may contain `runId`, `threadId`, and
+	// `parentRunId`. Clients should ignore unknown event names.
 	//
 	SSEEvent *stream.EventStream[components.SSEEvent]
 }

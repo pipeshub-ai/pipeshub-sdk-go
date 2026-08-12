@@ -39,6 +39,8 @@ type SemanticSearchGraphRecord struct {
 	IsArchived                  optionalnullable.OptionalNullable[bool]     `json:"isArchived,omitzero"`
 	IsVLMOcrProcessed           optionalnullable.OptionalNullable[bool]     `json:"isVLMOcrProcessed,omitzero"`
 	DeletedByUserID             optionalnullable.OptionalNullable[string]   `json:"deletedByUserId,omitzero"`
+	ProcessingStartedAt         optionalnullable.OptionalNullable[float64]  `json:"processingStartedAt,omitzero"`
+	ParsingStatus               optionalnullable.OptionalNullable[string]   `json:"parsingStatus,omitzero"`
 	IndexingStatus              optionalnullable.OptionalNullable[string]   `json:"indexingStatus,omitzero"`
 	ExtractionStatus            optionalnullable.OptionalNullable[string]   `json:"extractionStatus,omitzero"`
 	IsLatestVersion             optionalnullable.OptionalNullable[bool]     `json:"isLatestVersion,omitzero"`
@@ -47,6 +49,7 @@ type SemanticSearchGraphRecord struct {
 	LastIndexTimestamp          optionalnullable.OptionalNullable[float64]  `json:"lastIndexTimestamp,omitzero"`
 	LastExtractionTimestamp     optionalnullable.OptionalNullable[float64]  `json:"lastExtractionTimestamp,omitzero"`
 	SummaryDocumentID           optionalnullable.OptionalNullable[string]   `json:"summaryDocumentId,omitzero"`
+	StorageDocumentID           optionalnullable.OptionalNullable[string]   `json:"storageDocumentId,omitzero"`
 	VirtualRecordID             optionalnullable.OptionalNullable[string]   `json:"virtualRecordId,omitzero"`
 	PreviewRenderable           optionalnullable.OptionalNullable[bool]     `json:"previewRenderable,omitzero"`
 	IsShared                    optionalnullable.OptionalNullable[bool]     `json:"isShared,omitzero"`
@@ -261,6 +264,20 @@ func (s *SemanticSearchGraphRecord) GetDeletedByUserID() optionalnullable.Option
 	return s.DeletedByUserID
 }
 
+func (s *SemanticSearchGraphRecord) GetProcessingStartedAt() optionalnullable.OptionalNullable[float64] {
+	if s == nil {
+		return nil
+	}
+	return s.ProcessingStartedAt
+}
+
+func (s *SemanticSearchGraphRecord) GetParsingStatus() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.ParsingStatus
+}
+
 func (s *SemanticSearchGraphRecord) GetIndexingStatus() optionalnullable.OptionalNullable[string] {
 	if s == nil {
 		return nil
@@ -315,6 +332,13 @@ func (s *SemanticSearchGraphRecord) GetSummaryDocumentID() optionalnullable.Opti
 		return nil
 	}
 	return s.SummaryDocumentID
+}
+
+func (s *SemanticSearchGraphRecord) GetStorageDocumentID() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.StorageDocumentID
 }
 
 func (s *SemanticSearchGraphRecord) GetVirtualRecordID() optionalnullable.OptionalNullable[string] {

@@ -14,6 +14,7 @@ import (
 // - `error` - Error message from the system
 // - `feedback` - User feedback on a response
 // - `system` - System notification or status
+// - `tool_call` - Tool invocation turn; details are on `tools`
 type MessageMessageType string
 
 const (
@@ -22,6 +23,7 @@ const (
 	MessageMessageTypeError       MessageMessageType = "error"
 	MessageMessageTypeFeedback    MessageMessageType = "feedback"
 	MessageMessageTypeSystem      MessageMessageType = "system"
+	MessageMessageTypeToolCall    MessageMessageType = "tool_call"
 )
 
 func (e MessageMessageType) ToPointer() *MessageMessageType {
@@ -32,7 +34,7 @@ func (e MessageMessageType) ToPointer() *MessageMessageType {
 func (e *MessageMessageType) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "user_query", "bot_response", "error", "feedback", "system":
+		case "user_query", "bot_response", "error", "feedback", "system", "tool_call":
 			return true
 		}
 	}
@@ -174,25 +176,6 @@ func (m *MessageReferenceDatum) GetMetadata() map[string]string {
 	return m.Metadata
 }
 
-type MessageTool struct {
-	ToolName   *string `json:"toolName,omitzero"`
-	ToolResult any     `json:"toolResult,omitzero"`
-}
-
-func (m *MessageTool) GetToolName() *string {
-	if m == nil {
-		return nil
-	}
-	return m.ToolName
-}
-
-func (m *MessageTool) GetToolResult() any {
-	if m == nil {
-		return nil
-	}
-	return m.ToolResult
-}
-
 // Message - A single message within a conversation. Messages can be user queries,
 // AI responses, system messages, or error notifications.
 type Message struct {
@@ -204,6 +187,7 @@ type Message struct {
 	// - `error` - Error message from the system
 	// - `feedback` - User feedback on a response
 	// - `system` - System notification or status
+	// - `tool_call` - Tool invocation turn; details are on `tools`
 	//
 	MessageType *MessageMessageType `json:"messageType,omitzero"`
 	// The message text content
@@ -239,7 +223,11 @@ type Message struct {
 	//
 	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
 	// Tool call results invoked during this message turn.
-	Tools     []MessageTool `json:"tools,omitzero"`
+	Tools []MessageToolCall `json:"tools,omitzero"`
+	// Persisted chain-of-thought for this turn.
+	Reasoning []MessageReasoningTurn `json:"reasoning,omitzero"`
+	// Ordered agent-activity transcript for this turn.
+	Parts     []MessagePart `json:"parts,omitzero"`
 	CreatedAt *time.Time    `json:"createdAt,omitzero"`
 	UpdatedAt *time.Time    `json:"updatedAt,omitzero"`
 }
@@ -346,11 +334,25 @@ func (m *Message) GetAttachments() []ChatAttachmentRef {
 	return m.Attachments
 }
 
-func (m *Message) GetTools() []MessageTool {
+func (m *Message) GetTools() []MessageToolCall {
 	if m == nil {
 		return nil
 	}
 	return m.Tools
+}
+
+func (m *Message) GetReasoning() []MessageReasoningTurn {
+	if m == nil {
+		return nil
+	}
+	return m.Reasoning
+}
+
+func (m *Message) GetParts() []MessagePart {
+	if m == nil {
+		return nil
+	}
+	return m.Parts
 }
 
 func (m *Message) GetCreatedAt() *time.Time {
