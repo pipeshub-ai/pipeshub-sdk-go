@@ -281,6 +281,7 @@ const (
 	GetConversationByIDMessageMessageTypeError       GetConversationByIDMessageMessageType = "error"
 	GetConversationByIDMessageMessageTypeFeedback    GetConversationByIDMessageMessageType = "feedback"
 	GetConversationByIDMessageMessageTypeSystem      GetConversationByIDMessageMessageType = "system"
+	GetConversationByIDMessageMessageTypeToolCall    GetConversationByIDMessageMessageType = "tool_call"
 )
 
 func (e GetConversationByIDMessageMessageType) ToPointer() *GetConversationByIDMessageMessageType {
@@ -291,7 +292,7 @@ func (e GetConversationByIDMessageMessageType) ToPointer() *GetConversationByIDM
 func (e *GetConversationByIDMessageMessageType) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "user_query", "bot_response", "error", "feedback", "system":
+		case "user_query", "bot_response", "error", "feedback", "system", "tool_call":
 			return true
 		}
 	}
@@ -535,9 +536,15 @@ type GetConversationByIDMessage struct {
 	// `POST /conversations/attachments/upload`).
 	//
 	Attachments []components.ChatAttachmentRef `json:"attachments,omitzero"`
-	Metadata    *GetConversationByIDMetadata   `json:"metadata,omitzero"`
-	CreatedAt   *time.Time                     `json:"createdAt,omitzero"`
-	UpdatedAt   *time.Time                     `json:"updatedAt,omitzero"`
+	// Tool call results invoked during this message turn.
+	Tools []components.MessageToolCall `json:"tools,omitzero"`
+	// Persisted chain-of-thought for this turn.
+	Reasoning []components.MessageReasoningTurn `json:"reasoning,omitzero"`
+	// Ordered agent-activity transcript for this turn.
+	Parts     []components.MessagePart     `json:"parts,omitzero"`
+	Metadata  *GetConversationByIDMetadata `json:"metadata,omitzero"`
+	CreatedAt *time.Time                   `json:"createdAt,omitzero"`
+	UpdatedAt *time.Time                   `json:"updatedAt,omitzero"`
 }
 
 func (g GetConversationByIDMessage) MarshalJSON() ([]byte, error) {
@@ -633,6 +640,27 @@ func (g *GetConversationByIDMessage) GetAttachments() []components.ChatAttachmen
 		return nil
 	}
 	return g.Attachments
+}
+
+func (g *GetConversationByIDMessage) GetTools() []components.MessageToolCall {
+	if g == nil {
+		return nil
+	}
+	return g.Tools
+}
+
+func (g *GetConversationByIDMessage) GetReasoning() []components.MessageReasoningTurn {
+	if g == nil {
+		return nil
+	}
+	return g.Reasoning
+}
+
+func (g *GetConversationByIDMessage) GetParts() []components.MessagePart {
+	if g == nil {
+		return nil
+	}
+	return g.Parts
 }
 
 func (g *GetConversationByIDMessage) GetMetadata() *GetConversationByIDMetadata {

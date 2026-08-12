@@ -103,6 +103,8 @@ type KnowledgeHubNode struct {
 	Reason *string `json:"reason"`
 	// True for internal/system nodes that do not originate from a source.
 	IsInternal bool `json:"isInternal"`
+	// True for placeholder/stub nodes standing in for an out-of-scope ancestor (rendered read-only, no content actions; excluded from search and indexing).
+	IsPlaceholder bool `json:"isPlaceholder"`
 	// Creation timestamp (epoch ms).
 	CreatedAt int64 `json:"createdAt"`
 	// Update timestamp (epoch ms).
@@ -198,6 +200,13 @@ func (k *KnowledgeHubNode) GetIsInternal() bool {
 		return false
 	}
 	return k.IsInternal
+}
+
+func (k *KnowledgeHubNode) GetIsPlaceholder() bool {
+	if k == nil {
+		return false
+	}
+	return k.IsPlaceholder
 }
 
 func (k *KnowledgeHubNode) GetCreatedAt() int64 {

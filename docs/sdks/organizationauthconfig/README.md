@@ -161,7 +161,7 @@ func main() {
                 Order: 195644,
                 AllowedMethods: []components.AuthMethod{
                     components.AuthMethod{
-                        Type: components.TypeSamlSso,
+                        Type: components.AuthMethodTypeSamlSso,
                     },
                 },
             },

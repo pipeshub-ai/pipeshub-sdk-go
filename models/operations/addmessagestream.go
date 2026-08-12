@@ -13,7 +13,7 @@ type AddMessageStreamRequest struct {
 	//
 	ConversationID string `pathParam:"style=simple,explode=false,name=conversationId"`
 	// Request payload
-	Body components.AddMessageRequest `request:"mediaType=application/json"`
+	Body components.ConversationMessageStreamRequest `request:"mediaType=application/json"`
 }
 
 func (a *AddMessageStreamRequest) GetConversationID() string {
@@ -23,9 +23,9 @@ func (a *AddMessageStreamRequest) GetConversationID() string {
 	return a.ConversationID
 }
 
-func (a *AddMessageStreamRequest) GetBody() components.AddMessageRequest {
+func (a *AddMessageStreamRequest) GetBody() components.ConversationMessageStreamRequest {
 	if a == nil {
-		return components.AddMessageRequest{}
+		return components.ConversationMessageStreamRequest{}
 	}
 	return a.Body
 }
@@ -36,7 +36,7 @@ type AddMessageStreamResponse struct {
 	// `text/event-stream` frames using the event vocabulary described
 	// on the schema below.
 	//
-	AssistantMessageStreamSSEEvent *stream.EventStream[components.AssistantMessageStreamSSEEvent]
+	ConversationMessageStreamSSEEvent *stream.EventStream[components.ConversationMessageStreamSSEEvent]
 }
 
 func (a *AddMessageStreamResponse) GetHTTPMeta() components.HTTPMetadata {
@@ -46,9 +46,9 @@ func (a *AddMessageStreamResponse) GetHTTPMeta() components.HTTPMetadata {
 	return a.HTTPMeta
 }
 
-func (a *AddMessageStreamResponse) GetAssistantMessageStreamSSEEvent() *stream.EventStream[components.AssistantMessageStreamSSEEvent] {
+func (a *AddMessageStreamResponse) GetConversationMessageStreamSSEEvent() *stream.EventStream[components.ConversationMessageStreamSSEEvent] {
 	if a == nil {
 		return nil
 	}
-	return a.AssistantMessageStreamSSEEvent
+	return a.ConversationMessageStreamSSEEvent
 }

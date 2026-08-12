@@ -43,44 +43,32 @@ func newConversations(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hook
 //
 //  1. The server validates `query`, persists an in-progress
 //     conversation, then opens the SSE stream with HTTP `200`.
-//  2. A `connected` event is emitted immediately with the new
-//     `conversationId` so the client can link the stream (sidebar,
-//     parallel tabs, deep links) without an extra request.
+//  2. A `CUSTOM` event named `conversation_created` is emitted
+//     immediately with the new `conversationId` so the client can link
+//     the stream (sidebar, parallel tabs, deep links) without an extra
+//     request.
 //  3. AI-backend events stream through (token chunks, tool calls,
 //     status, etc.).
-//  4. On success a single `complete` event is emitted carrying the
-//     full persisted conversation.
-//  5. On failure an `error` event is emitted and the conversation is
-//     marked FAILED before the stream closes.
+//  4. On success a single root `RUN_FINISHED` event is emitted carrying
+//     the full persisted conversation in `result`.
+//  5. On failure a root `RUN_ERROR` event is emitted and the
+//     conversation is marked FAILED before the stream closes.
 //
 // **Event vocabulary**
 //
-// Three events have stable, server-defined `data` shapes:
+// AG-UI is the sole wire protocol. See `ConversationStreamSSEEvent`
+// for the full event enum and payload guidance.
 //
-//   - `connected` — `{ "message": string, "conversationId": string,
-//     "title": string }`
-//   - `complete` — `{ "conversation": Conversation,
-//     "meta": { "requestId": string, "timestamp": string,
-//     "duration": number } }`
-//   - `error` — `{ "error": string, "details"?: string }`
-//
-// The forwarded events are `status`, `answer_chunk`, `tool_calls`,
-// `restreaming`, `metadata`, and `tool_execution_complete`. Their
-// payloads come from the Python query service and may evolve. Note
-// that raw `tool_call` / `tool_success` / `tool_error` / `tool_result`
-// events emitted by the LLM tool runtime are rewrapped as `status` by
-// the upstream wrapper before they reach this route, so clients on
-// `/conversations/stream` never see those names directly. Clients
-// should ignore unknown event names rather than treating them as
-// errors.
+// Clients should ignore unknown event names rather than treating them
+// as errors.
 //
 // **Agent mode**
 //
-// When `chatMode` selects an agent mode (for example `agent:auto`),
+// When `chatMode` is `agent`,
 // the optional `tools` list restricts which tools the agent may
 // invoke for this turn. Outside agent modes the `tools` field is
 // ignored.
-func (s *Conversations) StreamChat(ctx context.Context, request components.CreateConversationRequest, opts ...operations.Option) (*operations.StreamChatResponse, error) {
+func (s *Conversations) StreamChat(ctx context.Context, request components.ConversationStreamRequest, opts ...operations.Option) (*operations.StreamChatResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -249,14 +237,14 @@ func (s *Conversations) StreamChat(ctx context.Context, request components.Creat
 	case httpRes.StatusCode == 200:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `text/event-stream`):
-			out := stream.NewEventStream(ctx, httpRes.Body, func(se []byte) (components.AssistantStreamSSEEvent, error) {
-				var e components.AssistantStreamSSEEvent
+			out := stream.NewEventStream(ctx, httpRes.Body, func(se []byte) (components.ConversationStreamSSEEvent, error) {
+				var e components.ConversationStreamSSEEvent
 				if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(se), &e, ""); err != nil {
-					return components.AssistantStreamSSEEvent{}, err
+					return components.ConversationStreamSSEEvent{}, err
 				}
 				return e, nil
 			}, "")
-			res.AssistantStreamSSEEvent = out
+			res.ConversationStreamSSEEvent = out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -1472,11 +1460,11 @@ func (s *Conversations) DeleteConversationByID(ctx context.Context, conversation
 // but the response is delivered as an SSE stream so clients can render
 // the answer incrementally.
 //
-// The wire vocabulary is described by `AssistantMessageStreamSSEEvent`.
-// It is the same event set as `/conversations/stream`; only the
-// `connected` and `complete` payloads differ because the conversation
-// already exists when this route is called.
-func (s *Conversations) AddMessageStream(ctx context.Context, conversationID string, body components.AddMessageRequest, opts ...operations.Option) (*operations.AddMessageStreamResponse, error) {
+// AG-UI is the sole wire protocol. The vocabulary is described by
+// `ConversationMessageStreamSSEEvent`; it is the same event set as
+// `/conversations/stream`, while the terminal result reflects an
+// existing conversation.
+func (s *Conversations) AddMessageStream(ctx context.Context, conversationID string, body components.ConversationMessageStreamRequest, opts ...operations.Option) (*operations.AddMessageStreamResponse, error) {
 	request := operations.AddMessageStreamRequest{
 		ConversationID: conversationID,
 		Body:           body,
@@ -1650,14 +1638,14 @@ func (s *Conversations) AddMessageStream(ctx context.Context, conversationID str
 	case httpRes.StatusCode == 200:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `text/event-stream`):
-			out := stream.NewEventStream(ctx, httpRes.Body, func(se []byte) (components.AssistantMessageStreamSSEEvent, error) {
-				var e components.AssistantMessageStreamSSEEvent
+			out := stream.NewEventStream(ctx, httpRes.Body, func(se []byte) (components.ConversationMessageStreamSSEEvent, error) {
+				var e components.ConversationMessageStreamSSEEvent
 				if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(se), &e, ""); err != nil {
-					return components.AssistantMessageStreamSSEEvent{}, err
+					return components.ConversationMessageStreamSSEEvent{}, err
 				}
 				return e, nil
 			}, "")
-			res.AssistantMessageStreamSSEEvent = out
+			res.ConversationMessageStreamSSEEvent = out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2424,18 +2412,10 @@ func (s *Conversations) UnarchiveConversation(ctx context.Context, conversationI
 //
 // **Streaming:**
 //
-// The response is delivered as an SSE (`text/event-stream`) stream. The
-// exact event vocabulary depends on `chatMode`:
-//
-//   - For non-agent modes (e.g. `internal_search`, `web_search`) the
-//     request is dispatched to the assistant chat backend.
-//   - For agent modes (e.g. `agent:auto`) the request is dispatched to
-//     the agent backend with a placeholder agent built from the caller's
-//     workspace, which can additionally emit `tool_result` and
-//     `tool_execution_complete` events.
-//
-// See `SSEEvent` for the full union of event names this endpoint can
-// emit across both backends.
+// The response is delivered as an AG-UI `text/event-stream` stream.
+// Routing still depends on `chatMode`: `internal_search` and
+// `web_search` use the assistant backend, while `agent` uses the
+// universal agent loop. See `SSEEvent` for the event vocabulary.
 func (s *Conversations) RegenerateAnswer(ctx context.Context, conversationID string, messageID string, body *components.RegenerateRequest, opts ...operations.Option) (*operations.RegenerateAnswerResponse, error) {
 	request := operations.RegenerateAnswerRequest{
 		ConversationID: conversationID,

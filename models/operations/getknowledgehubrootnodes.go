@@ -150,6 +150,14 @@ type GetKnowledgeHubRootNodesRequest struct {
 	// when both are present.
 	//
 	Size *string `queryParam:"style=form,explode=true,name=size"`
+	// Force flattened/recursive search (`true`) or direct top-level
+	// listing (`false`). When omitted, it's computed from whether any
+	// of `q`, `nodeTypes`, `recordTypes`, `origins`, `connectorIds`,
+	// `indexingStatus`, `createdAt`, `updatedAt`, or `size` are present —
+	// if any are, results are flattened automatically; otherwise only
+	// top-level nodes are returned.
+	//
+	Flattened *bool `queryParam:"style=form,explode=true,name=flattened"`
 	// Comma-separated list of additional response sections to include.
 	// Invalid values are silently ignored. Maximum 100 items.
 	//
@@ -265,6 +273,13 @@ func (g *GetKnowledgeHubRootNodesRequest) GetSize() *string {
 		return nil
 	}
 	return g.Size
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetFlattened() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Flattened
 }
 
 func (g *GetKnowledgeHubRootNodesRequest) GetInclude() *string {
@@ -590,12 +605,10 @@ type GetKnowledgeHubChildNodesRequest struct {
 	// Any other value returns a 400 error.
 	//
 	ParentType ParentType `pathParam:"style=simple,explode=false,name=parentType"`
-	// Identifier of the parent node. Accepts two formats:
-	// - A standard UUID (e.g. `f3a4b5b6-5b6c-4e85-9097-3202cfe696fc`)
-	// - The Collection app sentinel `knowledgeBase_<orgId>`
-	//   (e.g. `knowledgeBase_org123`)
+	// Identifier of the parent node. Must be a valid UUID
+	// (e.g. `f3a4b5b6-5b6c-4e85-9097-3202cfe696fc`).
 	//
-	// Any value that does not match either format returns a 400 error.
+	// Any value that does not match this format returns a 400 error.
 	//
 	ParentID string `pathParam:"style=simple,explode=false,name=parentId"`
 	// When `true`, only nodes that have children are returned (useful for
@@ -673,6 +686,14 @@ type GetKnowledgeHubChildNodesRequest struct {
 	// when both are present.
 	//
 	Size *string `queryParam:"style=form,explode=true,name=size"`
+	// Force flattened/recursive search (`true`) or direct top-level
+	// listing (`false`). When omitted, it's computed from whether any
+	// of `q`, `nodeTypes`, `recordTypes`, `origins`, `connectorIds`,
+	// `indexingStatus`, `createdAt`, `updatedAt`, or `size` are present —
+	// if any are, results are flattened automatically; otherwise only
+	// top-level nodes are returned.
+	//
+	Flattened *bool `queryParam:"style=form,explode=true,name=flattened"`
 	// Comma-separated list of additional response sections to include.
 	// Invalid values are silently ignored. Maximum 100 items.
 	//
@@ -802,6 +823,13 @@ func (g *GetKnowledgeHubChildNodesRequest) GetSize() *string {
 		return nil
 	}
 	return g.Size
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetFlattened() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Flattened
 }
 
 func (g *GetKnowledgeHubChildNodesRequest) GetInclude() *string {

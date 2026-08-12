@@ -5,19 +5,27 @@ package components
 type AgentRegenerateSSEEventEvent string
 
 const (
-	AgentRegenerateSSEEventEventConnected             AgentRegenerateSSEEventEvent = "connected"
-	AgentRegenerateSSEEventEventStatus                AgentRegenerateSSEEventEvent = "status"
-	AgentRegenerateSSEEventEventToolCalls             AgentRegenerateSSEEventEvent = "tool_calls"
-	AgentRegenerateSSEEventEventToolCall              AgentRegenerateSSEEventEvent = "tool_call"
-	AgentRegenerateSSEEventEventToolSuccess           AgentRegenerateSSEEventEvent = "tool_success"
-	AgentRegenerateSSEEventEventToolError             AgentRegenerateSSEEventEvent = "tool_error"
-	AgentRegenerateSSEEventEventToolResult            AgentRegenerateSSEEventEvent = "tool_result"
-	AgentRegenerateSSEEventEventToolExecutionComplete AgentRegenerateSSEEventEvent = "tool_execution_complete"
-	AgentRegenerateSSEEventEventAnswerChunk           AgentRegenerateSSEEventEvent = "answer_chunk"
-	AgentRegenerateSSEEventEventRestreaming           AgentRegenerateSSEEventEvent = "restreaming"
-	AgentRegenerateSSEEventEventMetadata              AgentRegenerateSSEEventEvent = "metadata"
-	AgentRegenerateSSEEventEventComplete              AgentRegenerateSSEEventEvent = "complete"
-	AgentRegenerateSSEEventEventError                 AgentRegenerateSSEEventEvent = "error"
+	AgentRegenerateSSEEventEventRunStarted              AgentRegenerateSSEEventEvent = "RUN_STARTED"
+	AgentRegenerateSSEEventEventRunFinished             AgentRegenerateSSEEventEvent = "RUN_FINISHED"
+	AgentRegenerateSSEEventEventRunError                AgentRegenerateSSEEventEvent = "RUN_ERROR"
+	AgentRegenerateSSEEventEventStepStarted             AgentRegenerateSSEEventEvent = "STEP_STARTED"
+	AgentRegenerateSSEEventEventStepFinished            AgentRegenerateSSEEventEvent = "STEP_FINISHED"
+	AgentRegenerateSSEEventEventTextMessageStart        AgentRegenerateSSEEventEvent = "TEXT_MESSAGE_START"
+	AgentRegenerateSSEEventEventTextMessageContent      AgentRegenerateSSEEventEvent = "TEXT_MESSAGE_CONTENT"
+	AgentRegenerateSSEEventEventTextMessageEnd          AgentRegenerateSSEEventEvent = "TEXT_MESSAGE_END"
+	AgentRegenerateSSEEventEventReasoningStart          AgentRegenerateSSEEventEvent = "REASONING_START"
+	AgentRegenerateSSEEventEventReasoningMessageStart   AgentRegenerateSSEEventEvent = "REASONING_MESSAGE_START"
+	AgentRegenerateSSEEventEventReasoningMessageContent AgentRegenerateSSEEventEvent = "REASONING_MESSAGE_CONTENT"
+	AgentRegenerateSSEEventEventReasoningMessageEnd     AgentRegenerateSSEEventEvent = "REASONING_MESSAGE_END"
+	AgentRegenerateSSEEventEventReasoningEnd            AgentRegenerateSSEEventEvent = "REASONING_END"
+	AgentRegenerateSSEEventEventToolCallStart           AgentRegenerateSSEEventEvent = "TOOL_CALL_START"
+	AgentRegenerateSSEEventEventToolCallArgs            AgentRegenerateSSEEventEvent = "TOOL_CALL_ARGS"
+	AgentRegenerateSSEEventEventToolCallEnd             AgentRegenerateSSEEventEvent = "TOOL_CALL_END"
+	AgentRegenerateSSEEventEventToolCallResult          AgentRegenerateSSEEventEvent = "TOOL_CALL_RESULT"
+	AgentRegenerateSSEEventEventStateDelta              AgentRegenerateSSEEventEvent = "STATE_DELTA"
+	AgentRegenerateSSEEventEventStateSnapshot           AgentRegenerateSSEEventEvent = "STATE_SNAPSHOT"
+	AgentRegenerateSSEEventEventCustom                  AgentRegenerateSSEEventEvent = "CUSTOM"
+	AgentRegenerateSSEEventEventHeartbeat               AgentRegenerateSSEEventEvent = "HEARTBEAT"
 )
 
 func (e AgentRegenerateSSEEventEvent) ToPointer() *AgentRegenerateSSEEventEvent {
@@ -28,7 +36,7 @@ func (e AgentRegenerateSSEEventEvent) ToPointer() *AgentRegenerateSSEEventEvent 
 func (e *AgentRegenerateSSEEventEvent) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "connected", "status", "tool_calls", "tool_call", "tool_success", "tool_error", "tool_result", "tool_execution_complete", "answer_chunk", "restreaming", "metadata", "complete", "error":
+		case "RUN_STARTED", "RUN_FINISHED", "RUN_ERROR", "STEP_STARTED", "STEP_FINISHED", "TEXT_MESSAGE_START", "TEXT_MESSAGE_CONTENT", "TEXT_MESSAGE_END", "REASONING_START", "REASONING_MESSAGE_START", "REASONING_MESSAGE_CONTENT", "REASONING_MESSAGE_END", "REASONING_END", "TOOL_CALL_START", "TOOL_CALL_ARGS", "TOOL_CALL_END", "TOOL_CALL_RESULT", "STATE_DELTA", "STATE_SNAPSHOT", "CUSTOM", "HEARTBEAT":
 			return true
 		}
 	}
@@ -36,21 +44,30 @@ func (e *AgentRegenerateSSEEventEvent) IsExact() bool {
 }
 
 // AgentRegenerateSSEEvent - SSE event envelope for `POST /agents/{agentKey}/conversations/{conversationId}/message/{messageId}/regenerate`.
+// AG-UI is the sole wire protocol.
 //
-// Stable events:
+// `event` carries the AG-UI type name and `data` is a JSON object that
+// includes a `"type"` field matching `event`, plus type-specific
+// fields. Stable gateway-generated top-level outcomes:
 //
-//   - `connected` confirms the stream is open.
-//   - `complete` returns the updated conversation plus request metadata
-//     after the regenerated bot response is persisted.
-//   - `error` returns a failure message. Conversation lookup failures,
-//     unauthorized conversation access, and regenerate rule failures such
-//     as "not the last message" are reported here after the stream starts.
+//   - `RUN_FINISHED` returns `{ type, result }` where
+//     `result` is `{ conversation, recordsUsed, meta }` — the updated
+//     conversation plus request metadata after the regenerated response
+//     is persisted.
+//   - `RUN_ERROR` returns `{ type, message, code? }`. Conversation
+//     lookup failures, unauthorized conversation access, and regenerate
+//     rule failures such as "not the last message" are reported here.
 //
 // Other events are forwarded from the agent backend and should be
-// treated as informational updates.
+// treated as informational updates. Those forwarded lifecycle and
+// child-run events may contain `runId`, `threadId`, and `parentRunId`;
+// the gateway-generated root terminal event does not.
 type AgentRegenerateSSEEvent struct {
 	Event *AgentRegenerateSSEEventEvent `json:"event,omitzero"`
-	// JSON-encoded event payload. Shape depends on `event`.
+	// JSON-encoded event payload. The decoded JSON includes a `"type"`
+	// field matching `event`, plus type-specific fields. Shape depends
+	// on `event`.
+	//
 	Data *string `json:"data,omitzero"`
 }
 

@@ -32,7 +32,7 @@ type UploadAgentConversationChatAttachmentsRequestBody struct {
 	// Optional existing agent conversation id. Empty string is treated as unset; any non-empty value must be a 24-character ObjectId.
 	//
 	ConversationID *string `multipartForm:"name=conversationId"`
-	// One or more files; field name must be `files`. Accepted MIME types: `application/pdf`, `image/jpeg`, `image/jpg`, `image/png`. Max 5 MiB each.
+	// One or more files; field name must be `files`. Accepted MIME types: `application/pdf`, `image/jpeg`, `image/jpg`, `image/png`, `text/plain`, `text/markdown`, `text/mdx`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `text/csv`, `text/tab-separated-values`. Max 5 MiB each.
 	//
 	Files []UploadAgentConversationChatAttachmentsFile `multipartForm:"file,name=files"`
 }

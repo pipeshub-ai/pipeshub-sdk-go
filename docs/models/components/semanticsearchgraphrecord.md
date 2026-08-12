@@ -38,6 +38,8 @@ usually include `_key`, `_id`, `_rev`, `orgId`, `recordName`, `externalRecordId`
 | `IsArchived`                  | **bool*                       | :heavy_minus_sign:            | N/A                           |
 | `IsVLMOcrProcessed`           | **bool*                       | :heavy_minus_sign:            | N/A                           |
 | `DeletedByUserID`             | **string*                     | :heavy_minus_sign:            | N/A                           |
+| `ProcessingStartedAt`         | **float64*                    | :heavy_minus_sign:            | N/A                           |
+| `ParsingStatus`               | **string*                     | :heavy_minus_sign:            | N/A                           |
 | `IndexingStatus`              | **string*                     | :heavy_minus_sign:            | N/A                           |
 | `ExtractionStatus`            | **string*                     | :heavy_minus_sign:            | N/A                           |
 | `IsLatestVersion`             | **bool*                       | :heavy_minus_sign:            | N/A                           |
@@ -46,6 +48,7 @@ usually include `_key`, `_id`, `_rev`, `orgId`, `recordName`, `externalRecordId`
 | `LastIndexTimestamp`          | **float64*                    | :heavy_minus_sign:            | N/A                           |
 | `LastExtractionTimestamp`     | **float64*                    | :heavy_minus_sign:            | N/A                           |
 | `SummaryDocumentID`           | **string*                     | :heavy_minus_sign:            | N/A                           |
+| `StorageDocumentID`           | **string*                     | :heavy_minus_sign:            | N/A                           |
 | `VirtualRecordID`             | **string*                     | :heavy_minus_sign:            | N/A                           |
 | `PreviewRenderable`           | **bool*                       | :heavy_minus_sign:            | N/A                           |
 | `IsShared`                    | **bool*                       | :heavy_minus_sign:            | N/A                           |

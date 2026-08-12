@@ -10,3 +10,4 @@
 | `GetConversationByIDMessageMessageTypeError`       | error                                              |
 | `GetConversationByIDMessageMessageTypeFeedback`    | feedback                                           |
 | `GetConversationByIDMessageMessageTypeSystem`      | system                                             |
+| `GetConversationByIDMessageMessageTypeToolCall`    | tool_call                                          |
