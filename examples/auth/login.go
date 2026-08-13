@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
@@ -19,7 +20,9 @@ func streamFriendlyClient() *http.Client {
 }
 
 func NewClient(email, password string) (*pipeshub.Pipeshub, error) {
-	baseURL := os.Getenv("PIPESHUB_BASE_URL")
+	// A trailing slash in PIPESHUB_BASE_URL would leave "//api/v1" in every
+	// request URL; the SDK only trims a slash at the end of the server URL.
+	baseURL := strings.TrimRight(os.Getenv("PIPESHUB_BASE_URL"), "/")
 	if baseURL == "" {
 		baseURL = "http://localhost:3000"
 	}
