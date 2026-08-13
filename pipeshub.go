@@ -283,9 +283,9 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *Pipeshub {
 	sdk := &Pipeshub{
-		SDKVersion: "1.5.2",
+		SDKVersion: "1.6.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 1.5.2 2.845.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
+			UserAgent:  "speakeasy-sdk/go 1.6.0 2.845.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
 			ServerList: ServerList,
 			ServerVariables: []map[string]string{
 				{
