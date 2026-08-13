@@ -110,6 +110,12 @@ type AgentListItem struct {
 	UpdatedAtTimestamp int64 `json:"updatedAtTimestamp"`
 	// User id of the last updater, if present.
 	UpdatedBy optionalnullable.OptionalNullable[string] `json:"updatedBy,omitzero"`
+	// True when this agent has no models configured and will use the
+	// organization's default LLM (marked `isDefault: true` in the AI
+	// models configuration) at chat time. Derived from `models` being
+	// empty — not persisted separately.
+	//
+	UsesOrgDefault *bool `json:"usesOrgDefault,omitzero"`
 	// Web-search provider attachment for this agent, or `null` when none is attached.
 	//
 	// For `GET /agents`, the response formatter always emits `provider`.
@@ -279,6 +285,13 @@ func (a *AgentListItem) GetUpdatedBy() optionalnullable.OptionalNullable[string]
 		return nil
 	}
 	return a.UpdatedBy
+}
+
+func (a *AgentListItem) GetUsesOrgDefault() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.UsesOrgDefault
 }
 
 func (a *AgentListItem) GetWebSearch() optionalnullable.OptionalNullable[AgentListItemWebSearch] {
