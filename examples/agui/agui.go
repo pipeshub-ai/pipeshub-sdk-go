@@ -177,7 +177,7 @@ func (c *Collector) Handle(event, data string) (bool, error) {
 		}
 		c.Streamed += f.Delta
 		if c.Echo != nil && f.Delta != "" {
-			io.WriteString(c.Echo, f.Delta)
+			_, _ = io.WriteString(c.Echo, f.Delta) // echo is best-effort
 		}
 
 	case StateDelta:

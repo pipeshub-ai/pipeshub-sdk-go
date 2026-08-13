@@ -24,7 +24,8 @@ Every program takes the `.env` path as its first argument.
 | Variable | Needed by |
 | --- | --- |
 | `PIPESHUB_BASE_URL` | all — the examples append `/api/v1` themselves |
-| `PIPESHUB_TEST_USER_EMAIL`, `PIPESHUB_TEST_USER_PASSWORD` | all |
+| `PIPESHUB_BEARER_AUTH` | optional; a raw JWT access token. When set, it is used directly and the email/password login is skipped |
+| `PIPESHUB_TEST_USER_EMAIL`, `PIPESHUB_TEST_USER_PASSWORD` | all, unless `PIPESHUB_BEARER_AUTH` is set |
 | `PIPESHUB_AGENT_KEY` | all `agent_conversation/*` except `create_and_add_message` |
 | `KB_ID`, `CONNECTOR_ID` | optional knowledge filters for `agent_conversation/*` |
 | `PIPESHUB_KB_NAME`, `PIPESHUB_CONNECTOR_NAME` | optional lookup-name overrides (default `SDK-test`, `ABC News RSS` / `abc news`) |

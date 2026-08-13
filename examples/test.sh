@@ -53,17 +53,24 @@ for p in $PKGS; do
 
   ARGS=".env"
   CLEANUP=""
+  NOKEY=""
   case "$p" in
     agent/update|agent/delete)
       key=$(scratch_agent_key)
+      [ -z "$key" ] && NOKEY=1
       ARGS=".env $key"
       # agent/delete removes its own agent; agent/update leaves it behind.
       [ "$p" = "agent/update" ] && CLEANUP="$key"
       ;;
   esac
 
-  timeout "$TIMEOUT" go run "./$p" $ARGS > "$TMP/out" 2> "$TMP/err"
-  code=$?
+  if [ -n "$NOKEY" ]; then
+    echo "could not create a scratch agent (go run ./agent/create failed)" > "$TMP/err"
+    code=1
+  else
+    timeout "$TIMEOUT" go run "./$p" $ARGS > "$TMP/out" 2> "$TMP/err"
+    code=$?
+  fi
 
   if [ -n "$CLEANUP" ]; then
     timeout "$TIMEOUT" go run ./agent/delete .env "$CLEANUP" > /dev/null 2>&1
@@ -109,3 +116,6 @@ echo "**$PASS passed, $FAIL failed**" >> "$OUT"
 echo ""
 echo "$PASS passed, $FAIL failed"
 echo "report: $OUT"
+
+# Non-zero exit when anything failed, so scripted callers see the result.
+[ "$FAIL" -eq 0 ] || exit 1
