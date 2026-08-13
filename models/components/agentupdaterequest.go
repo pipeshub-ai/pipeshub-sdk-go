@@ -48,9 +48,11 @@ func (e *AgentUpdateRequestDefaultReasoningEffort) UnmarshalJSON(data []byte) er
 // AgentUpdateRequest - Partial update payload for `PUT /agents/{agentKey}`.
 //
 // Every field is optional — only the fields present in the request body
-// are updated. When `models` is included, the gateway Zod middleware
-// (mirroring the Python backend) requires at least one model entry and
-// at least one object entry with `isReasoning: true`.
+// are updated. `models` may be omitted, set to an empty array to clear
+// the agent's models (reverting it to the organization's default LLM at
+// chat time), or set to a non-empty array. When a non-empty array is
+// provided, the gateway Zod middleware (mirroring the Python backend)
+// requires at least one object entry with `isReasoning: true`.
 type AgentUpdateRequest struct {
 	// Agent display name
 	Name *string `json:"name,omitzero"`
@@ -62,9 +64,11 @@ type AgentUpdateRequest struct {
 	SystemPrompt *string `json:"systemPrompt,omitzero"`
 	// Additional agent execution instructions
 	Instructions *string `json:"instructions,omitzero"`
-	// Agent model configuration entries. When present, the Zod middleware
-	// requires at least one object entry with `isReasoning: true`.
-	// String-only arrays are schema-valid but rejected at runtime with HTTP 400.
+	// Agent model configuration entries. Optional. An empty array clears the
+	// agent's models so it falls back to the organization's default LLM.
+	// When a non-empty array is present, the Zod middleware requires at
+	// least one object entry with `isReasoning: true`. String-only arrays
+	// are schema-valid but rejected at runtime with HTTP 400 unless empty.
 	//
 	Models []AgentCreateModelEntryUnion `json:"models,omitzero"`
 	Tags   []string                     `json:"tags,omitzero"`
@@ -80,9 +84,8 @@ type AgentUpdateRequest struct {
 	// an empty array to clear all skill assignments.
 	//
 	Skills []AgentSkillAssignment `json:"skills,omitzero"`
-	// Accepted web-search attachment for `POST /agents/create`.
-	// The gateway accepts either a provider string or an object with at least
-	// a `provider` field.
+	// Web-search attachment for an agent. Accepts either a provider string
+	// or an object with at least a `provider` field.
 	//
 	WebSearch optionalnullable.OptionalNullable[AgentCreateWebSearchUnion] `json:"webSearch,omitzero"`
 	// Agent-level reasoning effort used when a chat request omits its own.

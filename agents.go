@@ -803,9 +803,12 @@ func (s *Agents) GetAgent(ctx context.Context, agentKey string, opts ...operatio
 //
 // **Update semantics**
 //
-// Only fields present in the request body are updated. When `models` is
-// included, the gateway Zod middleware requires at least one model entry
-// and at least one object entry with `isReasoning: true`.
+// Only fields present in the request body are updated. `models` may be
+// omitted (the agent's existing models are kept), set to an empty array
+// (clears the agent's models so it falls back to the organization's
+// default LLM at chat time), or set to a non-empty array. When a
+// non-empty array is provided, the gateway Zod middleware requires at
+// least one object entry with `isReasoning: true`.
 //
 // **Permissions**
 //

@@ -61,9 +61,8 @@ const (
 	AgentCreateWebSearchUnionTypeAgentCreateWebSearch AgentCreateWebSearchUnionType = "AgentCreateWebSearch"
 )
 
-// AgentCreateWebSearchUnion - Accepted web-search attachment for `POST /agents/create`.
-// The gateway accepts either a provider string or an object with at least
-// a `provider` field.
+// AgentCreateWebSearchUnion - Web-search attachment for an agent. Accepts either a provider string
+// or an object with at least a `provider` field.
 type AgentCreateWebSearchUnion struct {
 	Str                  *string               `queryParam:"inline" union:"member"`
 	AgentCreateWebSearch *AgentCreateWebSearch `queryParam:"inline" union:"member"`

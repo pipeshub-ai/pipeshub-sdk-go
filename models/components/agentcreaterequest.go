@@ -56,11 +56,14 @@ type AgentCreateRequest struct {
 	SystemPrompt *string `json:"systemPrompt,omitzero"`
 	// Additional agent execution instructions
 	Instructions *string `json:"instructions,omitzero"`
-	// Agent model configuration entries. The gateway requires at least one
-	// object entry with `isReasoning: true`. String-only arrays are schema-valid
-	// but rejected at runtime with HTTP 400.
+	// Agent model configuration entries. Optional — an agent created without
+	// any models (an empty array or an omitted field) uses the organization's
+	// default LLM at chat time. When at least one model entry IS provided, the
+	// gateway requires at least one object entry with `isReasoning: true`.
+	// String-only arrays are schema-valid but rejected at runtime with HTTP 400
+	// unless the array is empty.
 	//
-	Models []AgentCreateModelEntryUnion `json:"models"`
+	Models []AgentCreateModelEntryUnion `json:"models,omitzero"`
 	Tags   []string                     `json:"tags,omitzero"`
 	// Share agent with the organization
 	ShareWithOrg *bool `default:"false" json:"shareWithOrg"`
@@ -72,9 +75,8 @@ type AgentCreateRequest struct {
 	Knowledge []AgentCreateKnowledge `json:"knowledge,omitzero"`
 	// Existing skills to assign to the agent
 	Skills []AgentSkillAssignment `json:"skills,omitzero"`
-	// Accepted web-search attachment for `POST /agents/create`.
-	// The gateway accepts either a provider string or an object with at least
-	// a `provider` field.
+	// Web-search attachment for an agent. Accepts either a provider string
+	// or an object with at least a `provider` field.
 	//
 	WebSearch optionalnullable.OptionalNullable[AgentCreateWebSearchUnion] `json:"webSearch,omitzero"`
 	// Agent-level reasoning effort used when a chat request omits its own.
@@ -129,7 +131,7 @@ func (a *AgentCreateRequest) GetInstructions() *string {
 
 func (a *AgentCreateRequest) GetModels() []AgentCreateModelEntryUnion {
 	if a == nil {
-		return []AgentCreateModelEntryUnion{}
+		return nil
 	}
 	return a.Models
 }

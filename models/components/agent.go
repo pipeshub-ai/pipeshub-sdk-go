@@ -284,6 +284,12 @@ type Agent struct {
 	// Configured model entries for this agent.
 	//
 	Models []ModelUnion `json:"models"`
+	// True when this agent has no models configured and will use the
+	// organization's default LLM (marked `isDefault: true` in the AI
+	// models configuration) at chat time. Derived from `models` being
+	// empty — not persisted separately.
+	//
+	UsesOrgDefault *bool `json:"usesOrgDefault,omitzero"`
 	// Toolset instances linked to the agent (GET /agents/{agentKey} graph projection).
 	// Multiple instances of the same integration type are distinguished by `instanceId`
 	// and optional `instanceName`.
@@ -410,6 +416,13 @@ func (a *Agent) GetModels() []ModelUnion {
 		return []ModelUnion{}
 	}
 	return a.Models
+}
+
+func (a *Agent) GetUsesOrgDefault() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.UsesOrgDefault
 }
 
 func (a *Agent) GetToolsets() []Toolset {
