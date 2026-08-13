@@ -13,7 +13,7 @@ import (
 	"enterprise_search/auth"
 )
 
-const connectorName = "abc news"
+const defaultConnectorName = "abc news"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -21,6 +21,11 @@ func main() {
 	}
 	if err := godotenv.Load(os.Args[1]); err != nil {
 		log.Fatalf("load .env: %v", err)
+	}
+
+	connectorName := os.Getenv("PIPESHUB_CONNECTOR_NAME")
+	if connectorName == "" {
+		connectorName = defaultConnectorName
 	}
 
 	client, err := auth.NewClient(
@@ -42,7 +47,7 @@ func main() {
 	}
 	var connectorID string
 	for _, n := range nodes.KnowledgeHubNodesResponse.GetItems() {
-		if n.Name == connectorName && n.Origin == components.OriginConnector {
+		if n.Name == connectorName && n.Origin == components.KnowledgeHubNodeOriginConnector {
 			connectorID = n.ID
 			break
 		}
@@ -58,13 +63,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("search: %v", err)
 	}
-	if res == nil || res.SemanticSearchExecuteResponse == nil || res.SemanticSearchExecuteResponse.SearchResponse == nil {
+	if res == nil || res.SemanticSearchExecuteResponse == nil {
 		log.Fatal("search: empty response")
 	}
 
-	for i, searchResult := range res.SemanticSearchExecuteResponse.SearchResponse.SearchResults {
-		name, _ := searchResult.Metadata.RecordName.GetOrZero()
-		id, _ := searchResult.Metadata.RecordID.GetOrZero()
+	results := res.SemanticSearchExecuteResponse.SearchResponse.SearchResults
+	if len(results) == 0 {
+		log.Fatalf("search: no results — is anything indexed under %q?", connectorName)
+	}
+
+	for i, searchResult := range results {
+		// Metadata is optional on a hit; the generated getters are nil-safe,
+		// direct field access is not.
+		name, _ := searchResult.Metadata.GetRecordName().GetOrZero()
+		id, _ := searchResult.Metadata.GetRecordID().GetOrZero()
 		chunk, _ := searchResult.Content.GetOrZero()
 		fmt.Printf("─── Result %d ──────────────────────────────────────────────\n", i+1)
 		fmt.Printf("  Record:  %s\n", name)

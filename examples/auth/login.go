@@ -5,10 +5,18 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
+
+// http.Client.Timeout covers the whole request, including reading the body.
+// The SDK default is 60s, which cuts a long SSE stream off part way through
+// the answer, so the examples use a longer one.
+func streamFriendlyClient() *http.Client {
+	return &http.Client{Timeout: 5 * time.Minute}
+}
 
 func NewClient(email, password string) (*pipeshub.Pipeshub, error) {
 	baseURL := os.Getenv("PIPESHUB_BASE_URL")
@@ -18,7 +26,18 @@ func NewClient(email, password string) (*pipeshub.Pipeshub, error) {
 	baseURL += "/api/v1"
 	ctx := context.Background()
 
-	s := pipeshub.New(pipeshub.WithServerURL(baseURL))
+	if token := os.Getenv("PIPESHUB_BEARER_AUTH"); token != "" {
+		return pipeshub.New(
+			pipeshub.WithServerURL(baseURL),
+			pipeshub.WithClient(streamFriendlyClient()),
+			pipeshub.WithSecurity(components.Security{BearerAuth: &token}),
+		), nil
+	}
+
+	s := pipeshub.New(
+		pipeshub.WithServerURL(baseURL),
+		pipeshub.WithClient(streamFriendlyClient()),
+	)
 
 	initRes, err := s.UserAccount.InitAuth(ctx, &components.InitAuthRequest{Email: &email})
 	if err != nil {
@@ -42,6 +61,7 @@ func NewClient(email, password string) (*pipeshub.Pipeshub, error) {
 
 	return pipeshub.New(
 		pipeshub.WithServerURL(baseURL),
+		pipeshub.WithClient(streamFriendlyClient()),
 		pipeshub.WithSecurity(components.Security{BearerAuth: &accessToken}),
 	), nil
 }
