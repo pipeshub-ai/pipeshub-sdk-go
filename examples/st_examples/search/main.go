@@ -31,17 +31,25 @@ func main() {
 
 	ctx := context.Background()
 
+	// Search across every accessible knowledge base, following pagination so
+	// KBs beyond the first page are included too.
 	limit := int64(100)
-	kbsRes, err := client.KnowledgeBase.ListKnowledgeBases(ctx, operations.ListKnowledgeBasesRequest{
-		Limit: &limit,
-	})
-	if err != nil {
-		log.Fatalf("list knowledge bases: %v", err)
-	}
-	items := kbsRes.GetAllKnowledgeBaseResponseSchema.GetKnowledgeBases()
-	kbIDs := make([]string, 0, len(items))
-	for _, kb := range items {
-		kbIDs = append(kbIDs, kb.ID)
+	var kbIDs []string
+	for page := int64(1); ; page++ {
+		kbsRes, err := client.KnowledgeBase.ListKnowledgeBases(ctx, operations.ListKnowledgeBasesRequest{
+			Page:  &page,
+			Limit: &limit,
+		})
+		if err != nil {
+			log.Fatalf("list knowledge bases (page %d): %v", page, err)
+		}
+		schema := kbsRes.GetAllKnowledgeBaseResponseSchema
+		for _, kb := range schema.GetKnowledgeBases() {
+			kbIDs = append(kbIDs, kb.ID)
+		}
+		if !schema.GetPagination().HasNext {
+			break
+		}
 	}
 	if len(kbIDs) == 0 {
 		log.Fatal("no knowledge bases found")
