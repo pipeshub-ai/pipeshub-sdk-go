@@ -4,7 +4,7 @@ Four minimal Go programs that authenticate against a PipesHub instance and run e
 
 ## Prerequisites
 
-- Go 1.22+
+- Go 1.23+
 - A running PipesHub instance (default: `http://localhost:3000`)
 - A user account on that instance
 - At least one knowledge base and/or connector with indexed content
