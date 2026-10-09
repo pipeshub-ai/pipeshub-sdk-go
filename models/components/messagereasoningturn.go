@@ -2,12 +2,27 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 // MessageReasoningTurn - One model turn's chain-of-thought. Persisted only when reasoning
 // persistence is enabled; the array is empty otherwise.
 type MessageReasoningTurn struct {
 	MessageID *string  `json:"messageId,omitzero"`
 	TurnIndex *float64 `json:"turnIndex,omitzero"`
 	Content   string   `json:"content"`
+}
+
+func (m MessageReasoningTurn) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(m, "", false)
+}
+
+func (m *MessageReasoningTurn) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &m, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *MessageReasoningTurn) GetMessageID() *string {

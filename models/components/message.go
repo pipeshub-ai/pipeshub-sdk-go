@@ -3,6 +3,8 @@
 package components
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 	"time"
@@ -65,6 +67,122 @@ func (e *MessageContentFormat) IsExact() bool {
 	return false
 }
 
+type CitationUnionType string
+
+const (
+	CitationUnionTypeCitationReference          CitationUnionType = "CitationReference"
+	CitationUnionTypePopulatedCitationReference CitationUnionType = "PopulatedCitationReference"
+	CitationUnionTypeUnknown                    CitationUnionType = "Unknown"
+)
+
+type CitationUnion struct {
+	CitationReference          *CitationReference          `queryParam:"inline" union:"member"`
+	PopulatedCitationReference *PopulatedCitationReference `queryParam:"inline" union:"member"`
+	UnknownRaw                 json.RawMessage             `json:"-" union:"unknown"`
+
+	Type CitationUnionType
+}
+
+func CreateCitationUnionCitationReference(citationReference CitationReference) CitationUnion {
+	typ := CitationUnionTypeCitationReference
+
+	return CitationUnion{
+		CitationReference: &citationReference,
+		Type:              typ,
+	}
+}
+
+func CreateCitationUnionPopulatedCitationReference(populatedCitationReference PopulatedCitationReference) CitationUnion {
+	typ := CitationUnionTypePopulatedCitationReference
+
+	return CitationUnion{
+		PopulatedCitationReference: &populatedCitationReference,
+		Type:                       typ,
+	}
+}
+
+func CreateCitationUnionUnknown(raw json.RawMessage) CitationUnion {
+	return CitationUnion{
+		UnknownRaw: raw,
+		Type:       CitationUnionTypeUnknown,
+	}
+}
+
+func (u CitationUnion) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u CitationUnion) IsUnknown() bool {
+	return u.Type == CitationUnionTypeUnknown
+}
+
+func (u *CitationUnion) UnmarshalJSON(data []byte) error {
+	*u = CitationUnion{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var citationReference CitationReference = CitationReference{}
+	if err := utils.UnmarshalJSON(data, &citationReference, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  CitationUnionTypeCitationReference,
+			Value: &citationReference,
+		})
+	}
+
+	var populatedCitationReference PopulatedCitationReference = PopulatedCitationReference{}
+	if err := utils.UnmarshalJSON(data, &populatedCitationReference, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  CitationUnionTypePopulatedCitationReference,
+			Value: &populatedCitationReference,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = CitationUnionTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = CitationUnionTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(CitationUnionType)
+	switch best.Type {
+	case CitationUnionTypeCitationReference:
+		u.CitationReference = best.Value.(*CitationReference)
+		return nil
+	case CitationUnionTypePopulatedCitationReference:
+		u.PopulatedCitationReference = best.Value.(*PopulatedCitationReference)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = CitationUnionTypeUnknown
+	return nil
+}
+
+func (u CitationUnion) MarshalJSON() ([]byte, error) {
+	if u.CitationReference != nil {
+		return utils.MarshalJSON(u.CitationReference, "", true)
+	}
+
+	if u.PopulatedCitationReference != nil {
+		return utils.MarshalJSON(u.PopulatedCitationReference, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type CitationUnion: all fields are null")
+}
+
 type MessageMetadata struct {
 	// Time taken to generate response in milliseconds
 	ProcessingTimeMs *float64 `json:"processingTimeMs,omitzero"`
@@ -74,6 +192,17 @@ type MessageMetadata struct {
 	AiTransactionID *string `json:"aiTransactionId,omitzero"`
 	// Additional context or reasoning
 	Reason *string `json:"reason,omitzero"`
+}
+
+func (m MessageMetadata) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(m, "", false)
+}
+
+func (m *MessageMetadata) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &m, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *MessageMetadata) GetProcessingTimeMs() *float64 {
@@ -194,8 +323,11 @@ type Message struct {
 	Content *string `json:"content,omitzero"`
 	// Format of the content for rendering
 	ContentFormat *MessageContentFormat `default:"MARKDOWN" json:"contentFormat"`
-	// References to source documents used in the response
-	Citations []CitationReference `json:"citations,omitzero"`
+	// References to source documents used in the response. Routes that
+	// return the saved conversation after a turn (create, add message)
+	// populate each item to `{ citationId, citationData }`.
+	//
+	Citations []CitationUnion `json:"citations,omitzero"`
 	// AI confidence in the answer. Present only on `bot_response` messages,
 	// and only when the model emitted a trailing confidence block.
 	//
@@ -271,7 +403,7 @@ func (m *Message) GetContentFormat() *MessageContentFormat {
 	return m.ContentFormat
 }
 
-func (m *Message) GetCitations() []CitationReference {
+func (m *Message) GetCitations() []CitationUnion {
 	if m == nil {
 		return nil
 	}

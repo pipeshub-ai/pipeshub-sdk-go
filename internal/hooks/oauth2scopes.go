@@ -86,6 +86,15 @@ const (
 	// Send messages in conversations
 	OAuth2ScopeConversationChat OAuth2Scope = "conversation:chat"
 
+	// Read projects and their conversations
+	OAuth2ScopeProjectRead OAuth2Scope = "project:read"
+
+	// Create and manage projects
+	OAuth2ScopeProjectWrite OAuth2Scope = "project:write"
+
+	// Delete projects
+	OAuth2ScopeProjectDelete OAuth2Scope = "project:delete"
+
 	// Read AI agents
 	OAuth2ScopeAgentRead OAuth2Scope = "agent:read"
 

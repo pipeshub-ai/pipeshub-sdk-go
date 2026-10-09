@@ -9,8 +9,8 @@ is omitted when upstream middleware did not attach one.
 
 | Field                                     | Type                                      | Required                                  | Description                               |
 | ----------------------------------------- | ----------------------------------------- | ----------------------------------------- | ----------------------------------------- |
-| `RequestID`                               | **string*                                 | :heavy_minus_sign:                        | N/A                                       |
+| `RequestID`                               | `*string`                                 | :heavy_minus_sign:                        | N/A                                       |
 | `Timestamp`                               | [time.Time](https://pkg.go.dev/time#Time) | :heavy_check_mark:                        | N/A                                       |
-| `Duration`                                | *int64*                                   | :heavy_check_mark:                        | N/A                                       |
-| `ConversationID`                          | *string*                                  | :heavy_check_mark:                        | N/A                                       |
-| `MessageCount`                            | *int64*                                   | :heavy_check_mark:                        | N/A                                       |
+| `Duration`                                | `int64`                                   | :heavy_check_mark:                        | N/A                                       |
+| `ConversationID`                          | `string`                                  | :heavy_check_mark:                        | N/A                                       |
+| `MessageCount`                            | `int64`                                   | :heavy_check_mark:                        | N/A                                       |

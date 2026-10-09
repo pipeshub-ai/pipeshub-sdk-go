@@ -9,6 +9,19 @@ Type of message:
 - `tool_call` - Tool invocation turn; details are on `tools`
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.MessageMessageTypeUserQuery
+
+// Open enum: custom values can be created with a direct type cast
+custom := components.MessageMessageType("custom_value")
+```
+
 
 ## Values
 

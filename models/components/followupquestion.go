@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 // FollowUpQuestion - AI-suggested follow-up question
 type FollowUpQuestion struct {
 	// The suggested question text
@@ -10,6 +14,17 @@ type FollowUpQuestion struct {
 	Confidence *string `json:"confidence,omitzero"`
 	// Why this question might be relevant
 	Reasoning *string `json:"reasoning,omitzero"`
+}
+
+func (f FollowUpQuestion) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(f, "", false)
+}
+
+func (f *FollowUpQuestion) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &f, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (f *FollowUpQuestion) GetQuestion() *string {

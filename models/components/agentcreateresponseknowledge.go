@@ -69,6 +69,7 @@ func (u AgentCreateResponseKnowledgeFilters) IsUnknown() bool {
 }
 
 func (u *AgentCreateResponseKnowledgeFilters) UnmarshalJSON(data []byte) error {
+	*u = AgentCreateResponseKnowledgeFilters{}
 
 	var candidates []utils.UnionCandidate
 

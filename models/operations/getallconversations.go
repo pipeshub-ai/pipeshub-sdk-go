@@ -123,6 +123,13 @@ type GetAllConversationsRequest struct {
 	// `true`/`false`, or `1`/`0`.
 	//
 	Shared *string `queryParam:"style=form,explode=true,name=shared"`
+	// Restrict results to a single project. Pass a project's `id` to
+	// list conversations linked to that project (visible to the
+	// caller — owner, member, or org-visible project with
+	// `projectVisibility: project`), or the literal string
+	// `unassigned` to list conversations with no `projectId`.
+	//
+	ProjectID *string `queryParam:"style=form,explode=true,name=projectId"`
 }
 
 func (g GetAllConversationsRequest) MarshalJSON() ([]byte, error) {
@@ -204,6 +211,13 @@ func (g *GetAllConversationsRequest) GetShared() *string {
 		return nil
 	}
 	return g.Shared
+}
+
+func (g *GetAllConversationsRequest) GetProjectID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ProjectID
 }
 
 // GetAllConversationsSourceResponse - Echoes the requested `source` query value.

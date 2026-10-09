@@ -201,6 +201,10 @@ func (s *SearchHistoryRequest) GetEndDate() *time.Time {
 
 // SearchHistoryInternalServerErrorError - Error payload.
 type SearchHistoryInternalServerErrorError struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable error code. For this status the
 	// value is `HTTP_INTERNAL_SERVER_ERROR` for an
 	// explicit server-side failure, or `INTERNAL_ERROR`
@@ -210,6 +214,13 @@ type SearchHistoryInternalServerErrorError struct {
 	Code string `json:"code"`
 	// Human-readable description of the failure.
 	Message string `json:"message"`
+}
+
+func (s *SearchHistoryInternalServerErrorError) GetRequestID() *string {
+	if s == nil {
+		return nil
+	}
+	return s.RequestID
 }
 
 func (s *SearchHistoryInternalServerErrorError) GetCode() string {
@@ -228,6 +239,10 @@ func (s *SearchHistoryInternalServerErrorError) GetMessage() string {
 
 // SearchHistoryForbiddenError - Error payload.
 type SearchHistoryForbiddenError struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable error code. For this status the
 	// value is `HTTP_FORBIDDEN` (the token is valid but
 	// does not carry the `semantic:read` scope).
@@ -235,6 +250,13 @@ type SearchHistoryForbiddenError struct {
 	Code string `json:"code"`
 	// Human-readable description of the failure.
 	Message string `json:"message"`
+}
+
+func (s *SearchHistoryForbiddenError) GetRequestID() *string {
+	if s == nil {
+		return nil
+	}
+	return s.RequestID
 }
 
 func (s *SearchHistoryForbiddenError) GetCode() string {
@@ -253,6 +275,10 @@ func (s *SearchHistoryForbiddenError) GetMessage() string {
 
 // SearchHistoryUnauthorizedError - Error payload.
 type SearchHistoryUnauthorizedError struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable error code. For this status the
 	// value is `HTTP_UNAUTHORIZED` (missing, invalid, or
 	// expired bearer token, user no longer exists, or the
@@ -261,6 +287,13 @@ type SearchHistoryUnauthorizedError struct {
 	Code string `json:"code"`
 	// Human-readable description of the failure.
 	Message string `json:"message"`
+}
+
+func (s *SearchHistoryUnauthorizedError) GetRequestID() *string {
+	if s == nil {
+		return nil
+	}
+	return s.RequestID
 }
 
 func (s *SearchHistoryUnauthorizedError) GetCode() string {
@@ -279,6 +312,10 @@ func (s *SearchHistoryUnauthorizedError) GetMessage() string {
 
 // SearchHistoryBadRequestError - Error payload.
 type SearchHistoryBadRequestError struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable error code. For this status the
 	// value is either `VALIDATION_ERROR` (request failed
 	// schema validation) or `HTTP_BAD_REQUEST` (semantic
@@ -288,6 +325,13 @@ type SearchHistoryBadRequestError struct {
 	Code string `json:"code"`
 	// Human-readable description of the failure.
 	Message string `json:"message"`
+}
+
+func (s *SearchHistoryBadRequestError) GetRequestID() *string {
+	if s == nil {
+		return nil
+	}
+	return s.RequestID
 }
 
 func (s *SearchHistoryBadRequestError) GetCode() string {

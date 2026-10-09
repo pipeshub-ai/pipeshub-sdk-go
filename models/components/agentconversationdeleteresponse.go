@@ -4,7 +4,9 @@ package components
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
 
 type MessageEnum string
@@ -30,15 +32,143 @@ func (e *MessageEnum) UnmarshalJSON(data []byte) error {
 	}
 }
 
+type AgentConversationDeleteResponseConversation struct {
+}
+
+func (a AgentConversationDeleteResponseConversation) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *AgentConversationDeleteResponseConversation) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+type ConversationUnionType string
+
+const (
+	ConversationUnionTypeStoredAgentConversation                     ConversationUnionType = "StoredAgentConversation"
+	ConversationUnionTypeAgentConversationDeleteResponseConversation ConversationUnionType = "AgentConversationDeleteResponse_conversation"
+	ConversationUnionTypeUnknown                                     ConversationUnionType = "Unknown"
+)
+
+type ConversationUnion struct {
+	StoredAgentConversation                     *StoredAgentConversation                     `queryParam:"inline" union:"member"`
+	AgentConversationDeleteResponseConversation *AgentConversationDeleteResponseConversation `queryParam:"inline" union:"member"`
+	UnknownRaw                                  json.RawMessage                              `json:"-" union:"unknown"`
+
+	Type ConversationUnionType
+}
+
+func CreateConversationUnionStoredAgentConversation(storedAgentConversation StoredAgentConversation) ConversationUnion {
+	typ := ConversationUnionTypeStoredAgentConversation
+
+	return ConversationUnion{
+		StoredAgentConversation: &storedAgentConversation,
+		Type:                    typ,
+	}
+}
+
+func CreateConversationUnionAgentConversationDeleteResponseConversation(agentConversationDeleteResponseConversation AgentConversationDeleteResponseConversation) ConversationUnion {
+	typ := ConversationUnionTypeAgentConversationDeleteResponseConversation
+
+	return ConversationUnion{
+		AgentConversationDeleteResponseConversation: &agentConversationDeleteResponseConversation,
+		Type: typ,
+	}
+}
+
+func CreateConversationUnionUnknown(raw json.RawMessage) ConversationUnion {
+	return ConversationUnion{
+		UnknownRaw: raw,
+		Type:       ConversationUnionTypeUnknown,
+	}
+}
+
+func (u ConversationUnion) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u ConversationUnion) IsUnknown() bool {
+	return u.Type == ConversationUnionTypeUnknown
+}
+
+func (u *ConversationUnion) UnmarshalJSON(data []byte) error {
+	*u = ConversationUnion{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var storedAgentConversation StoredAgentConversation = StoredAgentConversation{}
+	if err := utils.UnmarshalJSON(data, &storedAgentConversation, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  ConversationUnionTypeStoredAgentConversation,
+			Value: &storedAgentConversation,
+		})
+	}
+
+	var agentConversationDeleteResponseConversation AgentConversationDeleteResponseConversation = AgentConversationDeleteResponseConversation{}
+	if err := utils.UnmarshalJSON(data, &agentConversationDeleteResponseConversation, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  ConversationUnionTypeAgentConversationDeleteResponseConversation,
+			Value: &agentConversationDeleteResponseConversation,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = ConversationUnionTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = ConversationUnionTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(ConversationUnionType)
+	switch best.Type {
+	case ConversationUnionTypeStoredAgentConversation:
+		u.StoredAgentConversation = best.Value.(*StoredAgentConversation)
+		return nil
+	case ConversationUnionTypeAgentConversationDeleteResponseConversation:
+		u.AgentConversationDeleteResponseConversation = best.Value.(*AgentConversationDeleteResponseConversation)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = ConversationUnionTypeUnknown
+	return nil
+}
+
+func (u ConversationUnion) MarshalJSON() ([]byte, error) {
+	if u.StoredAgentConversation != nil {
+		return utils.MarshalJSON(u.StoredAgentConversation, "", true)
+	}
+
+	if u.AgentConversationDeleteResponseConversation != nil {
+		return utils.MarshalJSON(u.AgentConversationDeleteResponseConversation, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type ConversationUnion: all fields are null")
+}
+
 // AgentConversationDeleteResponse - Envelope returned by `DELETE /agents/{agentKey}/conversations/{conversationId}`.
 // When the conversation does not exist, belongs to a different agent, or
 // was already deleted, the API still returns HTTP 200 with
 // `conversation: null`.
 type AgentConversationDeleteResponse struct {
-	Message MessageEnum `json:"message"`
-	// Stored agent conversation document returned by non-list endpoints.
-	//
-	Conversation StoredAgentConversation `json:"conversation"`
+	Message      MessageEnum        `json:"message"`
+	Conversation *ConversationUnion `json:"conversation"`
 }
 
 func (a *AgentConversationDeleteResponse) GetMessage() MessageEnum {
@@ -48,9 +178,9 @@ func (a *AgentConversationDeleteResponse) GetMessage() MessageEnum {
 	return a.Message
 }
 
-func (a *AgentConversationDeleteResponse) GetConversation() StoredAgentConversation {
+func (a *AgentConversationDeleteResponse) GetConversation() *ConversationUnion {
 	if a == nil {
-		return StoredAgentConversation{}
+		return nil
 	}
 	return a.Conversation
 }

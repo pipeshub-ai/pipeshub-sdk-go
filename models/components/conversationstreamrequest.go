@@ -9,6 +9,37 @@ import (
 	"time"
 )
 
+// ConversationStreamRequestProjectVisibility - Only meaningful together with `projectId`. Overrides the
+// project's default sharing behavior for this one conversation:
+// `private` keeps it visible to the owner only; `project` exposes
+// it to every project member. Defaults from the project's
+// `chatSharing` setting when omitted.
+type ConversationStreamRequestProjectVisibility string
+
+const (
+	ConversationStreamRequestProjectVisibilityPrivate ConversationStreamRequestProjectVisibility = "private"
+	ConversationStreamRequestProjectVisibilityProject ConversationStreamRequestProjectVisibility = "project"
+)
+
+func (e ConversationStreamRequestProjectVisibility) ToPointer() *ConversationStreamRequestProjectVisibility {
+	return &e
+}
+func (e *ConversationStreamRequestProjectVisibility) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "private":
+		fallthrough
+	case "project":
+		*e = ConversationStreamRequestProjectVisibility(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for ConversationStreamRequestProjectVisibility: %v", v)
+	}
+}
+
 // ConversationStreamRequestChatMode - Optional execution mode for non-stream consumers of this shared
 // request schema.
 // `agent` uses the universal agent loop, while `internal_search`
@@ -98,6 +129,21 @@ type ConversationStreamRequest struct {
 	// `POST /conversations/attachments/upload`).
 	//
 	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
+	// Link the new conversation to a project the caller has at least
+	// viewer access to. When the project's instructions, knowledge
+	// scope, or files are set and this request didn't supply its own
+	// `filters`/`attachments`, they are merged in as a fallback (the
+	// request always wins). Ignored on follow-up turns — only
+	// meaningful when creating a conversation.
+	//
+	ProjectID *string `json:"projectId,omitzero"`
+	// Only meaningful together with `projectId`. Overrides the
+	// project's default sharing behavior for this one conversation:
+	// `private` keeps it visible to the owner only; `project` exposes
+	// it to every project member. Defaults from the project's
+	// `chatSharing` setting when omitted.
+	//
+	ProjectVisibility *ConversationStreamRequestProjectVisibility `json:"projectVisibility,omitzero"`
 	// Identifier for the AI model configuration to use.
 	// Available models depend on organization settings.
 	//
@@ -138,6 +184,12 @@ type ConversationStreamRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Client-generated identifier for this run. Send it here to enable
+	// `POST /conversations/{conversationId}/cancel {runId}` while the
+	// stream is still generating. Optional — a caller that never sends
+	// one just can't cooperatively cancel the run.
+	//
+	RunID *string `json:"runId,omitzero"`
 }
 
 func (c ConversationStreamRequest) MarshalJSON() ([]byte, error) {
@@ -184,6 +236,20 @@ func (c *ConversationStreamRequest) GetAttachments() []ChatAttachmentRef {
 		return nil
 	}
 	return c.Attachments
+}
+
+func (c *ConversationStreamRequest) GetProjectID() *string {
+	if c == nil {
+		return nil
+	}
+	return c.ProjectID
+}
+
+func (c *ConversationStreamRequest) GetProjectVisibility() *ConversationStreamRequestProjectVisibility {
+	if c == nil {
+		return nil
+	}
+	return c.ProjectVisibility
 }
 
 func (c *ConversationStreamRequest) GetModelKey() *string {
@@ -247,4 +313,11 @@ func (c *ConversationStreamRequest) GetAgentCapabilities() *AgentCapabilities {
 		return nil
 	}
 	return c.AgentCapabilities
+}
+
+func (c *ConversationStreamRequest) GetRunID() *string {
+	if c == nil {
+		return nil
+	}
+	return c.RunID
 }

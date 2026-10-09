@@ -11,8 +11,8 @@ is optional here.
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `Values`           | []*string*         | :heavy_check_mark: | N/A                |
-| `Default`          | *string*           | :heavy_check_mark: | N/A                |
-| `Description`      | *string*           | :heavy_check_mark: | N/A                |
-| `Current`          | *string*           | :heavy_check_mark: | N/A                |
-| `Applied`          | **bool*            | :heavy_minus_sign: | N/A                |
+| `Values`           | []`string`         | :heavy_check_mark: | N/A                |
+| `Default`          | `string`           | :heavy_check_mark: | N/A                |
+| `Description`      | `string`           | :heavy_check_mark: | N/A                |
+| `Current`          | `string`           | :heavy_check_mark: | N/A                |
+| `Applied`          | `*bool`            | :heavy_minus_sign: | N/A                |

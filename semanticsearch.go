@@ -48,6 +48,8 @@ func newSemanticSearch(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hoo
 // with ranked matches, each carrying a relevance score and the
 // source document's metadata. Past searches can be retrieved via
 // `GET /search`.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *SemanticSearch) Search(ctx context.Context, request components.SemanticSearchRequest, opts ...operations.Option) (*operations.SearchResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -107,7 +109,7 @@ func (s *SemanticSearch) Search(ctx context.Context, request components.Semantic
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -191,7 +193,7 @@ func (s *SemanticSearch) Search(ctx context.Context, request components.Semantic
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "502", "503", "504", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -286,6 +288,8 @@ func (s *SemanticSearch) Search(ctx context.Context, request components.Semantic
 //
 // Pagination defaults to `page=1, limit=20` (maximum `limit` is 100).
 // Results are sorted by most recent activity by default.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *SemanticSearch) SearchHistory(ctx context.Context, request operations.SearchHistoryRequest, opts ...operations.Option) (*operations.SearchHistoryResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -342,7 +346,7 @@ func (s *SemanticSearch) SearchHistory(ctx context.Context, request operations.S
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -426,7 +430,7 @@ func (s *SemanticSearch) SearchHistory(ctx context.Context, request operations.S
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -480,7 +484,7 @@ func (s *SemanticSearch) SearchHistory(ctx context.Context, request operations.S
 
 			var out apierrors.SearchHistoryBadRequestError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -505,7 +509,7 @@ func (s *SemanticSearch) SearchHistory(ctx context.Context, request operations.S
 
 			var out apierrors.SearchHistoryUnauthorizedError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -530,7 +534,7 @@ func (s *SemanticSearch) SearchHistory(ctx context.Context, request operations.S
 
 			var out apierrors.SearchHistoryForbiddenError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -555,7 +559,7 @@ func (s *SemanticSearch) SearchHistory(ctx context.Context, request operations.S
 
 			var out apierrors.SearchHistoryInternalServerError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -603,6 +607,8 @@ func (s *SemanticSearch) SearchHistory(ctx context.Context, request operations.S
 // `isDeleted: false` and `isArchived: false`. If nothing matches
 // (including the case where every row is already archived), the
 // endpoint returns `404` rather than a successful no-op.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *SemanticSearch) DeleteSearchHistory(ctx context.Context, search *string, shared *operations.DeleteSearchHistoryShared, startDate *time.Time, endDate *time.Time, opts ...operations.Option) (*operations.DeleteSearchHistoryResponse, error) {
 	request := operations.DeleteSearchHistoryRequest{
 		Search:    search,
@@ -666,7 +672,7 @@ func (s *SemanticSearch) DeleteSearchHistory(ctx context.Context, search *string
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -750,7 +756,7 @@ func (s *SemanticSearch) DeleteSearchHistory(ctx context.Context, search *string
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -836,6 +842,8 @@ func (s *SemanticSearch) DeleteSearchHistory(ctx context.Context, search *string
 // persisted search document. An unknown id returns an empty array
 // with a `200` status — callers should check array length rather
 // than relying on a `404`.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *SemanticSearch) GetSearchByID(ctx context.Context, searchID string, opts ...operations.Option) (*operations.GetSearchByIDResponse, error) {
 	request := operations.GetSearchByIDRequest{
 		SearchID: searchID,
@@ -892,7 +900,7 @@ func (s *SemanticSearch) GetSearchByID(ctx context.Context, searchID string, opt
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -976,7 +984,7 @@ func (s *SemanticSearch) GetSearchByID(ctx context.Context, searchID string, opt
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1030,7 +1038,7 @@ func (s *SemanticSearch) GetSearchByID(ctx context.Context, searchID string, opt
 
 			var out apierrors.GetSearchByIDBadRequestError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1055,7 +1063,7 @@ func (s *SemanticSearch) GetSearchByID(ctx context.Context, searchID string, opt
 
 			var out apierrors.GetSearchByIDUnauthorizedError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1080,7 +1088,7 @@ func (s *SemanticSearch) GetSearchByID(ctx context.Context, searchID string, opt
 
 			var out apierrors.GetSearchByIDForbiddenError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1105,7 +1113,7 @@ func (s *SemanticSearch) GetSearchByID(ctx context.Context, searchID string, opt
 
 			var out apierrors.GetSearchByIDNotFoundError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1130,7 +1138,7 @@ func (s *SemanticSearch) GetSearchByID(ctx context.Context, searchID string, opt
 
 			var out apierrors.GetSearchByIDInternalServerError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1177,6 +1185,8 @@ func (s *SemanticSearch) GetSearchByID(ctx context.Context, searchID string, opt
 // Scoped to the caller's org and limited to rows where
 // `isDeleted: false` and `isArchived: false`; archived or
 // already-deleted rows surface as `404`.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *SemanticSearch) DeleteSearchByID(ctx context.Context, request operations.DeleteSearchByIDRequest, opts ...operations.Option) (*operations.DeleteSearchByIDResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1233,7 +1243,7 @@ func (s *SemanticSearch) DeleteSearchByID(ctx context.Context, request operation
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1317,7 +1327,7 @@ func (s *SemanticSearch) DeleteSearchByID(ctx context.Context, request operation
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1399,6 +1409,8 @@ func (s *SemanticSearch) DeleteSearchByID(ctx context.Context, request operation
 // Archive a specific search result. Archived searches are hidden
 // from the default search history view but remain retrievable via
 // the archive-aware listing endpoints.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *SemanticSearch) ArchiveSearch(ctx context.Context, searchID string, opts ...operations.Option) (*operations.ArchiveSearchResponse, error) {
 	request := operations.ArchiveSearchRequest{
 		SearchID: searchID,
@@ -1455,7 +1467,7 @@ func (s *SemanticSearch) ArchiveSearch(ctx context.Context, searchID string, opt
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1539,7 +1551,7 @@ func (s *SemanticSearch) ArchiveSearch(ctx context.Context, searchID string, opt
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1619,6 +1631,8 @@ func (s *SemanticSearch) ArchiveSearch(ctx context.Context, searchID string, opt
 
 // UnarchiveSearch - Unarchive a search
 // Restore a previously archived search result back to the active search history.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *SemanticSearch) UnarchiveSearch(ctx context.Context, searchID string, opts ...operations.Option) (*operations.UnarchiveSearchResponse, error) {
 	request := operations.UnarchiveSearchRequest{
 		SearchID: searchID,
@@ -1675,7 +1689,7 @@ func (s *SemanticSearch) UnarchiveSearch(ctx context.Context, searchID string, o
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1759,7 +1773,7 @@ func (s *SemanticSearch) UnarchiveSearch(ctx context.Context, searchID string, o
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err

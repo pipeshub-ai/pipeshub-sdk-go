@@ -1,0 +1,9 @@
+# SetConversationProjectResponse
+
+
+## Fields
+
+| Field                                                                                                           | Type                                                                                                            | Required                                                                                                        | Description                                                                                                     |
+| --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                              | :heavy_check_mark:                                                                                              | N/A                                                                                                             |
+| `Object`                                                                                                        | [*operations.SetConversationProjectResponseBody](../../models/operations/setconversationprojectresponsebody.md) | :heavy_minus_sign:                                                                                              | Conversation's project link updated                                                                             |

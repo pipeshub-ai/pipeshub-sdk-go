@@ -40,6 +40,7 @@ type SemanticSearchGraphRecord struct {
 	IsVLMOcrProcessed           optionalnullable.OptionalNullable[bool]     `json:"isVLMOcrProcessed,omitzero"`
 	DeletedByUserID             optionalnullable.OptionalNullable[string]   `json:"deletedByUserId,omitzero"`
 	ProcessingStartedAt         optionalnullable.OptionalNullable[float64]  `json:"processingStartedAt,omitzero"`
+	QueuedAtTimestamp           optionalnullable.OptionalNullable[float64]  `json:"queuedAtTimestamp,omitzero"`
 	ParsingStatus               optionalnullable.OptionalNullable[string]   `json:"parsingStatus,omitzero"`
 	IndexingStatus              optionalnullable.OptionalNullable[string]   `json:"indexingStatus,omitzero"`
 	ExtractionStatus            optionalnullable.OptionalNullable[string]   `json:"extractionStatus,omitzero"`
@@ -269,6 +270,13 @@ func (s *SemanticSearchGraphRecord) GetProcessingStartedAt() optionalnullable.Op
 		return nil
 	}
 	return s.ProcessingStartedAt
+}
+
+func (s *SemanticSearchGraphRecord) GetQueuedAtTimestamp() optionalnullable.OptionalNullable[float64] {
+	if s == nil {
+		return nil
+	}
+	return s.QueuedAtTimestamp
 }
 
 func (s *SemanticSearchGraphRecord) GetParsingStatus() optionalnullable.OptionalNullable[string] {

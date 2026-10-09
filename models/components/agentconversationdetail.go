@@ -55,6 +55,7 @@ const (
 	AgentConversationDetailStatusInprogress AgentConversationDetailStatus = "Inprogress"
 	AgentConversationDetailStatusComplete   AgentConversationDetailStatus = "Complete"
 	AgentConversationDetailStatusFailed     AgentConversationDetailStatus = "Failed"
+	AgentConversationDetailStatusStopped    AgentConversationDetailStatus = "Stopped"
 )
 
 func (e AgentConversationDetailStatus) ToPointer() *AgentConversationDetailStatus {
@@ -65,7 +66,7 @@ func (e AgentConversationDetailStatus) ToPointer() *AgentConversationDetailStatu
 func (e *AgentConversationDetailStatus) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "None", "Inprogress", "Complete", "Failed":
+		case "None", "Inprogress", "Complete", "Failed", "Stopped":
 			return true
 		}
 	}

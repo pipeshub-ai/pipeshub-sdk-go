@@ -5,6 +5,16 @@
 Defaults to `owned` when omitted.
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+)
+
+value := operations.QueryParamSourceOwned
+```
+
 
 ## Values
 

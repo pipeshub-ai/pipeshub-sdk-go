@@ -17,6 +17,7 @@ const (
 	AgentConversationListItemStatusInprogress AgentConversationListItemStatus = "Inprogress"
 	AgentConversationListItemStatusComplete   AgentConversationListItemStatus = "Complete"
 	AgentConversationListItemStatusFailed     AgentConversationListItemStatus = "Failed"
+	AgentConversationListItemStatusStopped    AgentConversationListItemStatus = "Stopped"
 )
 
 func (e AgentConversationListItemStatus) ToPointer() *AgentConversationListItemStatus {
@@ -27,7 +28,7 @@ func (e AgentConversationListItemStatus) ToPointer() *AgentConversationListItemS
 func (e *AgentConversationListItemStatus) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "None", "Inprogress", "Complete", "Failed":
+		case "None", "Inprogress", "Complete", "Failed", "Stopped":
 			return true
 		}
 	}
@@ -184,6 +185,30 @@ func (e *AgentConversationListItemAccessLevel) IsExact() bool {
 	return false
 }
 
+// AgentConversationListItemProjectVisibility - Only meaningful when `projectId` is set. `project` exposes the
+// conversation to every member of the linked project.
+type AgentConversationListItemProjectVisibility string
+
+const (
+	AgentConversationListItemProjectVisibilityPrivate AgentConversationListItemProjectVisibility = "private"
+	AgentConversationListItemProjectVisibilityProject AgentConversationListItemProjectVisibility = "project"
+)
+
+func (e AgentConversationListItemProjectVisibility) ToPointer() *AgentConversationListItemProjectVisibility {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *AgentConversationListItemProjectVisibility) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "private", "project":
+			return true
+		}
+	}
+	return false
+}
+
 // AgentConversationListItem - Conversation summary returned by `GET /agents/{agentKey}/conversations`.
 // The handler excludes `messages` and `__v` from both result sets. Rows
 // in `sharedWithMeConversations` also omit `sharedWith` because the
@@ -225,6 +250,12 @@ type AgentConversationListItem struct {
 	// explicit share grant is attached to the serialized row.
 	//
 	AccessLevel *AgentConversationListItemAccessLevel `json:"accessLevel,omitzero"`
+	// The project this agent conversation is linked to, if any.
+	ProjectID optionalnullable.OptionalNullable[string] `json:"projectId,omitzero"`
+	// Only meaningful when `projectId` is set. `project` exposes the
+	// conversation to every member of the linked project.
+	//
+	ProjectVisibility optionalnullable.OptionalNullable[AgentConversationListItemProjectVisibility] `json:"projectVisibility,omitzero"`
 }
 
 func (a AgentConversationListItem) MarshalJSON() ([]byte, error) {
@@ -404,4 +435,18 @@ func (a *AgentConversationListItem) GetAccessLevel() *AgentConversationListItemA
 		return nil
 	}
 	return a.AccessLevel
+}
+
+func (a *AgentConversationListItem) GetProjectID() optionalnullable.OptionalNullable[string] {
+	if a == nil {
+		return nil
+	}
+	return a.ProjectID
+}
+
+func (a *AgentConversationListItem) GetProjectVisibility() optionalnullable.OptionalNullable[AgentConversationListItemProjectVisibility] {
+	if a == nil {
+		return nil
+	}
+	return a.ProjectVisibility
 }

@@ -2,6 +2,16 @@
 
 Hint about token type
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.OAuthIntrospectRequestTokenTypeHintAccessToken
+```
+
 
 ## Values
 

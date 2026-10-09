@@ -9,8 +9,37 @@ import (
 	"time"
 )
 
-// AgentStreamCreateConversationRequestChatMode - Required execution mode. Scoped agent conversations currently
-// support only `quick`.
+// AgentStreamCreateConversationRequestProjectVisibility - Only meaningful together with `projectId`. Overrides the
+// project's default sharing behavior for this one conversation.
+type AgentStreamCreateConversationRequestProjectVisibility string
+
+const (
+	AgentStreamCreateConversationRequestProjectVisibilityPrivate AgentStreamCreateConversationRequestProjectVisibility = "private"
+	AgentStreamCreateConversationRequestProjectVisibilityProject AgentStreamCreateConversationRequestProjectVisibility = "project"
+)
+
+func (e AgentStreamCreateConversationRequestProjectVisibility) ToPointer() *AgentStreamCreateConversationRequestProjectVisibility {
+	return &e
+}
+func (e *AgentStreamCreateConversationRequestProjectVisibility) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "private":
+		fallthrough
+	case "project":
+		*e = AgentStreamCreateConversationRequestProjectVisibility(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AgentStreamCreateConversationRequestProjectVisibility: %v", v)
+	}
+}
+
+// AgentStreamCreateConversationRequestChatMode - Execution mode. Scoped agent conversations support only `quick`.
+// Required on the `/stream` route; optional on the non-streaming
+// route.
 type AgentStreamCreateConversationRequestChatMode string
 
 const (
@@ -87,8 +116,19 @@ type AgentStreamCreateConversationRequest struct {
 	// record id returned from the agent attachment upload endpoint.
 	//
 	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
-	// Required execution mode. Scoped agent conversations currently
-	// support only `quick`.
+	// Link the new agent conversation to a project the caller has at
+	// least viewer access to. Same fallback/merge semantics as
+	// `POST /conversations/create`. Ignored on follow-up turns — the
+	// session row is the source of truth once the conversation exists.
+	//
+	ProjectID *string `json:"projectId,omitzero"`
+	// Only meaningful together with `projectId`. Overrides the
+	// project's default sharing behavior for this one conversation.
+	//
+	ProjectVisibility *AgentStreamCreateConversationRequestProjectVisibility `json:"projectVisibility,omitzero"`
+	// Execution mode. Scoped agent conversations support only `quick`.
+	// Required on the `/stream` route; optional on the non-streaming
+	// route.
 	//
 	ChatMode AgentStreamCreateConversationRequestChatMode `json:"chatMode"`
 	// AI model configuration id for this turn. Omit to use the agent's
@@ -125,6 +165,11 @@ type AgentStreamCreateConversationRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Client-generated identifier for this run. Send it here to enable
+	// `POST /agents/{agentKey}/conversations/{conversationId}/cancel
+	// {runId}` while the stream is still generating.
+	//
+	RunID *string `json:"runId,omitzero"`
 }
 
 func (a AgentStreamCreateConversationRequest) MarshalJSON() ([]byte, error) {
@@ -171,6 +216,20 @@ func (a *AgentStreamCreateConversationRequest) GetAttachments() []ChatAttachment
 		return nil
 	}
 	return a.Attachments
+}
+
+func (a *AgentStreamCreateConversationRequest) GetProjectID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ProjectID
+}
+
+func (a *AgentStreamCreateConversationRequest) GetProjectVisibility() *AgentStreamCreateConversationRequestProjectVisibility {
+	if a == nil {
+		return nil
+	}
+	return a.ProjectVisibility
 }
 
 func (a *AgentStreamCreateConversationRequest) GetChatMode() AgentStreamCreateConversationRequestChatMode {
@@ -234,4 +293,11 @@ func (a *AgentStreamCreateConversationRequest) GetAgentCapabilities() *AgentCapa
 		return nil
 	}
 	return a.AgentCapabilities
+}
+
+func (a *AgentStreamCreateConversationRequest) GetRunID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.RunID
 }

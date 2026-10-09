@@ -10,6 +10,19 @@ Type of authentication method:
 - `oauth`: Generic OAuth 2.0 provider
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.AuthMethodTypeSamlSso
+
+// Open enum: custom values can be created with a direct type cast
+custom := components.AuthMethodType("custom_value")
+```
+
 
 ## Values
 

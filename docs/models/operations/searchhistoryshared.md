@@ -6,6 +6,16 @@ Filter results by their shared status. Accepted values are
 case-insensitive and surrounding whitespace is trimmed.
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+)
+
+value := operations.SearchHistorySharedTrue
+```
+
 
 ## Values
 

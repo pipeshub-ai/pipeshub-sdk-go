@@ -7,6 +7,10 @@ import (
 )
 
 type ErrorResponseError struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable error code. For application errors it takes the form `HTTP_<VARIANT>`
 	// For unhandled runtime errors (e.g. database unavailable) it is `INTERNAL_ERROR`.
 	//
@@ -26,6 +30,13 @@ func (e *ErrorResponseError) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (e *ErrorResponseError) GetRequestID() *string {
+	if e == nil {
+		return nil
+	}
+	return e.RequestID
 }
 
 func (e *ErrorResponseError) GetCode() string {

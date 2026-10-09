@@ -1,0 +1,9 @@
+# SetConversationProjectRequest
+
+
+## Fields
+
+| Field                                                                                                        | Type                                                                                                         | Required                                                                                                     | Description                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `ConversationID`                                                                                             | `string`                                                                                                     | :heavy_check_mark:                                                                                           | Unique conversation identifier                                                                               |
+| `Body`                                                                                                       | [operations.SetConversationProjectRequestBody](../../models/operations/setconversationprojectrequestbody.md) | :heavy_check_mark:                                                                                           | N/A                                                                                                          |
