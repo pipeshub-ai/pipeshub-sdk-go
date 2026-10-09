@@ -10,6 +10,13 @@ the app.
 - **Any authenticated org member** — unlike OAuth apps, this is
   deliberately not admin-gated.
 
+**Session only**
+- Every `/personal-access-tokens/*` route requires the user's interactive
+  session JWT. OAuth access tokens and personal access tokens (`phpat_...`)
+  are rejected with `403`. `scopes` is capped at the instance's `MCP_SCOPES`,
+  not at the caller's own token, so a narrowly scoped token could otherwise
+  mint itself a full-scope, non-expiring PAT.
+
 **How it's issued**
 - Minted through the same OAuth access-token machinery as `/oauth2/token`,
   against one lazily-created, per-org synthetic OAuth app
@@ -121,6 +128,11 @@ that org — the same signing, hashing, and revocation machinery as
 env var, not the full role-aware OAuth-app scope catalog — a
 non-admin can request any scope in that set.
 
+**Session only.** The bearer token must be the user's interactive
+session JWT. OAuth access tokens and personal access tokens
+(`phpat_...`) are rejected with `403`, so a token that is already
+issued cannot mint another with wider scopes or a longer life.
+
 The response's `accessToken` is shown **once**; only its SHA-256
 hash is stored. It's prefixed `phpat_` (see the `bearerAuth`
 security scheme).
@@ -184,7 +196,7 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 400, 401                                      | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403                                 | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
@@ -299,7 +311,7 @@ func main() {
 | Parameter                                                                   | Type                                                                        | Required                                                                    | Description                                                                 |
 | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `ctx`                                                                       | [context.Context](https://pkg.go.dev/context#Context)                       | :heavy_check_mark:                                                          | The context to use for the request.                                         |
-| `tokenID`                                                                   | *string*                                                                    | :heavy_check_mark:                                                          | Personal access token ID                                                    |
+| `tokenID`                                                                   | `string`                                                                    | :heavy_check_mark:                                                          | Personal access token ID                                                    |
 | `body`                                                                      | [*components.RevokePatRequest](../../models/components/revokepatrequest.md) | :heavy_minus_sign:                                                          | Optional request body for Revoke personal access token                      |
 | `opts`                                                                      | [][operations.Option](../../models/operations/option.md)                    | :heavy_minus_sign:                                                          | The options for this request.                                               |
 
@@ -367,8 +379,8 @@ func main() {
 | Parameter                                                         | Type                                                              | Required                                                          | Description                                                       |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
 | `ctx`                                                             | [context.Context](https://pkg.go.dev/context#Context)             | :heavy_check_mark:                                                | The context to use for the request.                               |
-| `page`                                                            | **int64*                                                          | :heavy_minus_sign:                                                | Page number (defaults to `1` when omitted or empty)               |
-| `limit`                                                           | **int64*                                                          | :heavy_minus_sign:                                                | Items per page (defaults to `100` when omitted or empty; max 100) |
+| `page`                                                            | `*int64`                                                          | :heavy_minus_sign:                                                | Page number (defaults to `1` when omitted or empty)               |
+| `limit`                                                           | `*int64`                                                          | :heavy_minus_sign:                                                | Items per page (defaults to `100` when omitted or empty; max 100) |
 | `opts`                                                            | [][operations.Option](../../models/operations/option.md)          | :heavy_minus_sign:                                                | The options for this request.                                     |
 
 ### Response
@@ -432,7 +444,7 @@ func main() {
 | Parameter                                                                   | Type                                                                        | Required                                                                    | Description                                                                 |
 | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `ctx`                                                                       | [context.Context](https://pkg.go.dev/context#Context)                       | :heavy_check_mark:                                                          | The context to use for the request.                                         |
-| `tokenID`                                                                   | *string*                                                                    | :heavy_check_mark:                                                          | Personal access token ID                                                    |
+| `tokenID`                                                                   | `string`                                                                    | :heavy_check_mark:                                                          | Personal access token ID                                                    |
 | `body`                                                                      | [*components.RevokePatRequest](../../models/components/revokepatrequest.md) | :heavy_minus_sign:                                                          | Optional request body for Admin revoke personal access token                |
 | `opts`                                                                      | [][operations.Option](../../models/operations/option.md)                    | :heavy_minus_sign:                                                          | The options for this request.                                               |
 

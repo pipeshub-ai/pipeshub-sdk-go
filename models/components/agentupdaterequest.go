@@ -84,12 +84,17 @@ type AgentUpdateRequest struct {
 	// an empty array to clear all skill assignments.
 	//
 	Skills []AgentSkillAssignment `json:"skills,omitzero"`
-	// Web-search attachment for an agent. Accepts either a provider string
-	// or an object with at least a `provider` field.
+	// Web-search attachment for an agent. Accepts a provider string, an object
+	// with at least a `provider` field, or `null`.
 	//
 	WebSearch optionalnullable.OptionalNullable[AgentCreateWebSearchUnion] `json:"webSearch,omitzero"`
 	// Agent-level reasoning effort used when a chat request omits its own.
 	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentUpdateRequestDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
+	// When true (default), include the current user's name, email, and
+	// organization in this agent's system prompt. When false, omit that
+	// profile data.
+	//
+	SendUserContext *bool `json:"sendUserContext,omitzero"`
 }
 
 func (a AgentUpdateRequest) MarshalJSON() ([]byte, error) {
@@ -199,4 +204,11 @@ func (a *AgentUpdateRequest) GetDefaultReasoningEffort() optionalnullable.Option
 		return nil
 	}
 	return a.DefaultReasoningEffort
+}
+
+func (a *AgentUpdateRequest) GetSendUserContext() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.SendUserContext
 }

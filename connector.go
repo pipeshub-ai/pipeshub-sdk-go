@@ -59,6 +59,8 @@ func newConnector(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks *h
 // verified via the knowledge graph before content is returned — a
 // caller with a valid scope but no access to this specific record gets
 // a `403`.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Connector) GetRecordContent(ctx context.Context, recordID string, opts ...operations.Option) (*operations.GetRecordContentResponse, error) {
 	request := operations.GetRecordContentRequest{
 		RecordID: recordID,
@@ -115,7 +117,7 @@ func (s *Connector) GetRecordContent(ctx context.Context, recordID string, opts 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -199,7 +201,7 @@ func (s *Connector) GetRecordContent(ctx context.Context, recordID string, opts 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -255,7 +257,7 @@ func (s *Connector) GetRecordContent(ctx context.Context, recordID string, opts 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -282,7 +284,7 @@ func (s *Connector) GetRecordContent(ctx context.Context, recordID string, opts 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -380,6 +382,8 @@ func (s *Connector) GetRecordContent(ctx context.Context, recordID string, opts 
 // the caller, it can therefore name ancestors the caller cannot open.
 // Treat breadcrumb entries as labels, not as nodes guaranteed to be
 // navigable.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Connector) NavigateKnowledgeGraph(ctx context.Context, request operations.NavigateKnowledgeGraphRequest, opts ...operations.Option) (*operations.NavigateKnowledgeGraphResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -436,7 +440,7 @@ func (s *Connector) NavigateKnowledgeGraph(ctx context.Context, request operatio
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -520,7 +524,7 @@ func (s *Connector) NavigateKnowledgeGraph(ctx context.Context, request operatio
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -580,7 +584,7 @@ func (s *Connector) NavigateKnowledgeGraph(ctx context.Context, request operatio
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -607,7 +611,7 @@ func (s *Connector) NavigateKnowledgeGraph(ctx context.Context, request operatio
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -698,6 +702,8 @@ func (s *Connector) NavigateKnowledgeGraph(ctx context.Context, request operatio
 //
 // **Scope:** resolution searches every connector the caller can access,
 // regardless of any source filter used elsewhere.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Connector) LookupRecordByIdentifier(ctx context.Context, identifiers []string, connectorName *components.ConnectorNameEnum, opts ...operations.Option) (*operations.LookupRecordByIdentifierResponse, error) {
 	request := operations.LookupRecordByIdentifierRequest{
 		Identifiers:   identifiers,
@@ -759,7 +765,7 @@ func (s *Connector) LookupRecordByIdentifier(ctx context.Context, identifiers []
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -843,7 +849,7 @@ func (s *Connector) LookupRecordByIdentifier(ctx context.Context, identifiers []
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -903,7 +909,7 @@ func (s *Connector) LookupRecordByIdentifier(ctx context.Context, identifiers []
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -930,7 +936,7 @@ func (s *Connector) LookupRecordByIdentifier(ctx context.Context, identifiers []
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{

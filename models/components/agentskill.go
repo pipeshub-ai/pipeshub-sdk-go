@@ -17,7 +17,7 @@ type AgentSkill struct {
 	Category    optionalnullable.OptionalNullable[string] `json:"category,omitzero"`
 	Subcategory optionalnullable.OptionalNullable[string] `json:"subcategory,omitzero"`
 	Version     optionalnullable.OptionalNullable[string] `json:"version,omitzero"`
-	// Lifecycle state of the skill — `active` or `deprecated`.
+	// Lifecycle state of the skill — `active`, `deprecated`, or `disabled`. `candidate` is a learning-loop record state, not an assignable skill, and is not returned here.
 	Status optionalnullable.OptionalNullable[string] `json:"status,omitzero"`
 }
 

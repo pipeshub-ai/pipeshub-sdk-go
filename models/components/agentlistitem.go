@@ -126,6 +126,8 @@ type AgentListItem struct {
 	WebSearch optionalnullable.OptionalNullable[AgentListItemWebSearch] `json:"webSearch,omitzero"`
 	// Agent-level reasoning effort used when a chat request omits its own. Null when unset.
 	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentListItemDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
+	// When false, this agent omits user name/email/org from its system prompt.
+	SendUserContext *bool `json:"sendUserContext,omitzero"`
 	// Whether the agent is shared with the organization.
 	ShareWithOrg bool `json:"shareWithOrg"`
 	// Toolset instances linked to the agent. Same projection as
@@ -306,6 +308,13 @@ func (a *AgentListItem) GetDefaultReasoningEffort() optionalnullable.OptionalNul
 		return nil
 	}
 	return a.DefaultReasoningEffort
+}
+
+func (a *AgentListItem) GetSendUserContext() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.SendUserContext
 }
 
 func (a *AgentListItem) GetShareWithOrg() bool {

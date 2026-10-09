@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 // ChatAttachmentRef - Reference to an attachment produced by `POST /conversations/attachments/upload`
 // (or the equivalent agent route). Include in create/stream/message bodies
 // so the turn is sent with uploaded files.
@@ -16,6 +20,17 @@ type ChatAttachmentRef struct {
 	Extension *string `json:"extension,omitzero"`
 	// Optional synthetic record id used by the graph layer.
 	VirtualRecordID *string `json:"virtualRecordId,omitzero"`
+}
+
+func (c ChatAttachmentRef) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(c, "", false)
+}
+
+func (c *ChatAttachmentRef) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *ChatAttachmentRef) GetRecordID() string {

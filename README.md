@@ -185,13 +185,18 @@ func main() {
 * [StreamAgentConversation](docs/sdks/agents/README.md#streamagentconversation) - Create agent conversation with streaming response
 * [StreamAgentConversationMessage](docs/sdks/agents/README.md#streamagentconversationmessage) - Add message to agent conversation with streaming response
 * [RegenerateAgentConversationMessage](docs/sdks/agents/README.md#regenerateagentconversationmessage) - Regenerate agent conversation message
+* [CancelAgentConversationStream](docs/sdks/agents/README.md#cancelagentconversationstream) - Cancel an in-flight agent chat stream
 * [UpdateAgentConversationMessageFeedback](docs/sdks/agents/README.md#updateagentconversationmessagefeedback) - Submit feedback for an agent message
+* [AddAgentConversationMessage](docs/sdks/agents/README.md#addagentconversationmessage) - Add message to agent conversation (non-streaming)
 * [ArchiveAgentConversation](docs/sdks/agents/README.md#archiveagentconversation) - Archive an agent conversation
 * [UnarchiveAgentConversation](docs/sdks/agents/README.md#unarchiveagentconversation) - Unarchive an agent conversation
 * [UpdateAgentConversationTitle](docs/sdks/agents/README.md#updateagentconversationtitle) - Update agent conversation title
+* [SetAgentConversationProject](docs/sdks/agents/README.md#setagentconversationproject) - Link or unlink an agent conversation to a project
+* [SetAgentConversationProjectVisibility](docs/sdks/agents/README.md#setagentconversationprojectvisibility) - Override an agent conversation's project visibility
 * [DeleteAgentConversationByID](docs/sdks/agents/README.md#deleteagentconversationbyid) - Delete an agent conversation
 * [GetAgentConversationByID](docs/sdks/agents/README.md#getagentconversationbyid) - Get agent conversation by ID
 * [ListAgentConversations](docs/sdks/agents/README.md#listagentconversations) - List agent conversations
+* [CreateAgentConversation](docs/sdks/agents/README.md#createagentconversation) - Create agent conversation (non-streaming)
 
 ### [AIModelsProviders](docs/sdks/aimodelsproviders/README.md)
 
@@ -205,18 +210,24 @@ func main() {
 
 ### [Conversations](docs/sdks/conversations/README.md)
 
+* [CreateConversation](docs/sdks/conversations/README.md#createconversation) - Create conversation (non-streaming)
 * [StreamChat](docs/sdks/conversations/README.md#streamchat) - Create conversation with streaming response
 * [GetAllConversations](docs/sdks/conversations/README.md#getallconversations) - List all conversations
 * [GetArchivedConversations](docs/sdks/conversations/README.md#getarchivedconversations) - List archived conversations
 * [SearchArchivedConversations](docs/sdks/conversations/README.md#searcharchivedconversations) - Search archived conversations
 * [GetConversationByID](docs/sdks/conversations/README.md#getconversationbyid) - Get conversation by ID
 * [DeleteConversationByID](docs/sdks/conversations/README.md#deleteconversationbyid) - Delete conversation
+* [AddMessage](docs/sdks/conversations/README.md#addmessage) - Add message (non-streaming)
 * [AddMessageStream](docs/sdks/conversations/README.md#addmessagestream) - Add message to a conversation with streaming response
 * [UpdateConversationTitle](docs/sdks/conversations/README.md#updateconversationtitle) - Update conversation title
 * [ArchiveConversation](docs/sdks/conversations/README.md#archiveconversation) - Archive conversation
 * [UnarchiveConversation](docs/sdks/conversations/README.md#unarchiveconversation) - Unarchive conversation
 * [RegenerateAnswer](docs/sdks/conversations/README.md#regenerateanswer) - Regenerate AI response
+* [CancelConversationStream](docs/sdks/conversations/README.md#cancelconversationstream) - Cancel an in-flight chat stream
 * [UpdateMessageFeedback](docs/sdks/conversations/README.md#updatemessagefeedback) - Submit feedback on AI response
+* [SetConversationProject](docs/sdks/conversations/README.md#setconversationproject) - Link or unlink a conversation to a project
+* [SetConversationProjectVisibility](docs/sdks/conversations/README.md#setconversationprojectvisibility) - Override a conversation's project visibility
+* [GetProjectConversations](docs/sdks/conversations/README.md#getprojectconversations) - List a project's conversations
 
 ### [KnowledgeBase](docs/sdks/knowledgebase/README.md)
 
@@ -287,6 +298,27 @@ func main() {
 * [RevokePersonalAccessToken](docs/sdks/personalaccesstokens/README.md#revokepersonalaccesstoken) - Revoke one of your own personal access tokens
 * [AdminListPersonalAccessTokens](docs/sdks/personalaccesstokens/README.md#adminlistpersonalaccesstokens) - Admin: list every active personal access token in the org
 * [AdminRevokePersonalAccessToken](docs/sdks/personalaccesstokens/README.md#adminrevokepersonalaccesstoken) - Admin: revoke any user's personal access token by id
+
+### [Projects](docs/sdks/projects/README.md)
+
+* [SetConversationProject](docs/sdks/projects/README.md#setconversationproject) - Link or unlink a conversation to a project
+* [SetConversationProjectVisibility](docs/sdks/projects/README.md#setconversationprojectvisibility) - Override a conversation's project visibility
+* [CreateProject](docs/sdks/projects/README.md#createproject) - Create a project
+* [ListProjects](docs/sdks/projects/README.md#listprojects) - List projects
+* [GetProjectByID](docs/sdks/projects/README.md#getprojectbyid) - Get a project
+* [UpdateProject](docs/sdks/projects/README.md#updateproject) - Update a project
+* [DeleteProject](docs/sdks/projects/README.md#deleteproject) - Delete a project
+* [ArchiveProject](docs/sdks/projects/README.md#archiveproject) - Archive a project
+* [UnarchiveProject](docs/sdks/projects/README.md#unarchiveproject) - Unarchive a project
+* [PinProject](docs/sdks/projects/README.md#pinproject) - Pin a project
+* [UnpinProject](docs/sdks/projects/README.md#unpinproject) - Unpin a project
+* [GetProjectConversations](docs/sdks/projects/README.md#getprojectconversations) - List a project's conversations
+* [EnsureProjectKnowledgeBase](docs/sdks/projects/README.md#ensureprojectknowledgebase) - Ensure (create-if-absent) the project's hidden file Collection
+* [ListProjectMembers](docs/sdks/projects/README.md#listprojectmembers) - List project members
+* [UpsertProjectMembers](docs/sdks/projects/README.md#upsertprojectmembers) - Add or update project members
+* [RemoveProjectMember](docs/sdks/projects/README.md#removeprojectmember) - Remove a project member
+* [SetAgentConversationProject](docs/sdks/projects/README.md#setagentconversationproject) - Link or unlink an agent conversation to a project
+* [SetAgentConversationProjectVisibility](docs/sdks/projects/README.md#setagentconversationprojectvisibility) - Override an agent conversation's project visibility
 
 ### [SemanticSearch](docs/sdks/semanticsearch/README.md)
 

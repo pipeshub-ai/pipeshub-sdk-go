@@ -3,12 +3,14 @@
 package components
 
 import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
 // ReIndexRecordResponseSchema - Response returned by POST /knowledgeBase/reindex/record/{recordId}.
 type ReIndexRecordResponseSchema struct {
-	Success        bool                                      `json:"success"`
+	//lint:ignore U1000 accessed via reflection for JSON marshaling
+	success        bool                                      `const:"true" json:"success"`
 	Message        string                                    `json:"message"`
 	RecordID       optionalnullable.OptionalNullable[string] `json:"recordId,omitzero"`
 	RecordName     optionalnullable.OptionalNullable[string] `json:"recordName,omitzero"`
@@ -18,11 +20,19 @@ type ReIndexRecordResponseSchema struct {
 	Depth          int64                                     `json:"depth"`
 }
 
-func (r *ReIndexRecordResponseSchema) GetSuccess() bool {
-	if r == nil {
-		return false
+func (r ReIndexRecordResponseSchema) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(r, "", false)
+}
+
+func (r *ReIndexRecordResponseSchema) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
+		return err
 	}
-	return r.Success
+	return nil
+}
+
+func (r *ReIndexRecordResponseSchema) GetSuccess() bool {
+	return true
 }
 
 func (r *ReIndexRecordResponseSchema) GetMessage() string {

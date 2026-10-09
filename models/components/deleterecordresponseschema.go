@@ -3,23 +3,33 @@
 package components
 
 import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
 // DeleteRecordResponseSchema - Response returned by DELETE /knowledgeBase/record/{recordId}.
 type DeleteRecordResponseSchema struct {
-	Success   bool                                      `json:"success"`
+	//lint:ignore U1000 accessed via reflection for JSON marshaling
+	success   bool                                      `const:"true" json:"success"`
 	Message   string                                    `json:"message"`
 	RecordID  string                                    `json:"recordId"`
 	Connector optionalnullable.OptionalNullable[string] `json:"connector,omitzero"`
 	Timestamp optionalnullable.OptionalNullable[int64]  `json:"timestamp,omitzero"`
 }
 
-func (d *DeleteRecordResponseSchema) GetSuccess() bool {
-	if d == nil {
-		return false
+func (d DeleteRecordResponseSchema) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(d, "", false)
+}
+
+func (d *DeleteRecordResponseSchema) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
+		return err
 	}
-	return d.Success
+	return nil
+}
+
+func (d *DeleteRecordResponseSchema) GetSuccess() bool {
+	return true
 }
 
 func (d *DeleteRecordResponseSchema) GetMessage() string {

@@ -9,8 +9,9 @@ import (
 	"time"
 )
 
-// AgentAddMessageStreamRequestChatMode - Required execution mode. Scoped agent conversations currently
-// support only `quick`.
+// AgentAddMessageStreamRequestChatMode - Execution mode. Scoped agent conversations support only `quick`.
+// Required on the `/stream` route; optional on the non-streaming
+// route.
 type AgentAddMessageStreamRequestChatMode string
 
 const (
@@ -84,8 +85,9 @@ type AgentAddMessageStreamRequest struct {
 	// record id returned from the agent attachment upload endpoint.
 	//
 	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
-	// Required execution mode. Scoped agent conversations currently
-	// support only `quick`.
+	// Execution mode. Scoped agent conversations support only `quick`.
+	// Required on the `/stream` route; optional on the non-streaming
+	// route.
 	//
 	ChatMode AgentAddMessageStreamRequestChatMode `json:"chatMode"`
 	// AI model configuration id override for this turn. Omit to use the
@@ -122,6 +124,11 @@ type AgentAddMessageStreamRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Client-generated identifier for this run. Send it here to enable
+	// `POST /agents/{agentKey}/conversations/{conversationId}/cancel
+	// {runId}` while the stream is still generating.
+	//
+	RunID *string `json:"runId,omitzero"`
 }
 
 func (a AgentAddMessageStreamRequest) MarshalJSON() ([]byte, error) {
@@ -224,4 +231,11 @@ func (a *AgentAddMessageStreamRequest) GetAgentCapabilities() *AgentCapabilities
 		return nil
 	}
 	return a.AgentCapabilities
+}
+
+func (a *AgentAddMessageStreamRequest) GetRunID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.RunID
 }

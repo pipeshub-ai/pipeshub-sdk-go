@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 )
 
 type ServerEvent struct {
@@ -26,21 +28,41 @@ var (
 	bom        = "\uFEFF"
 )
 
-func scanServerEvents(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	if atEOF && len(data) == 0 {
+// maxBoundaryLen is the length of the longest message boundary (\r\n\r\n).
+const maxBoundaryLen = 4
+
+// maxEventSize bounds a single server-sent event. The scanner buffer grows on
+// demand, so this caps pathological streams without reserving memory up front.
+const maxEventSize = 1 << 30
+
+// newServerEventSplitter returns a stateful bufio.SplitFunc that only re-scans
+// the trailing maxBoundaryLen-1 bytes across reads. That keeps large events
+// linear to parse while still finding boundaries split across two chunks.
+func newServerEventSplitter() bufio.SplitFunc {
+	scanned := 0
+	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if atEOF && len(data) == 0 {
+			return 0, nil, nil
+		}
+
+		start := scanned - (maxBoundaryLen - 1)
+		if start < 0 {
+			start = 0
+		}
+
+		if result := boundary.FindIndex(data[start:]); result != nil {
+			scanned = 0
+			return start + result[1], data[:start+result[0]], nil
+		}
+
+		if atEOF {
+			scanned = 0
+			return len(data), bytes.TrimRight(data, "\r\n"), nil
+		}
+
+		scanned = len(data)
 		return 0, nil, nil
 	}
-
-	result := boundary.FindIndex(data)
-	if result != nil {
-		return result[1], data[:result[0]], nil
-	}
-
-	if atEOF {
-		return len(data), bytes.TrimRight(data, "\r\n"), nil
-	}
-
-	return 0, nil, nil
 }
 
 type EventType interface {
@@ -53,8 +75,11 @@ type EventStream[T any] struct {
 	unmarshaller func(se []byte) (T, error)
 	sentinel     string
 	ctx          context.Context
+	cancel       context.CancelFunc
+	releaseOnce  sync.Once
+	dataRequired bool
 
-	finished bool
+	finished atomic.Bool
 	first    bool
 	err      error
 	val      *T
@@ -66,9 +91,11 @@ func NewEventStream[T any](
 	source io.Reader,
 	unmarshaller func(se []byte) (T, error),
 	sentinel string,
+	opts ...func(*EventStream[T]),
 ) *EventStream[T] {
 	scanner := bufio.NewScanner(source)
-	scanner.Split(scanServerEvents)
+	scanner.Buffer(nil, maxEventSize)
+	scanner.Split(newServerEventSplitter())
 
 	var src io.ReadCloser
 	if s, ok := source.(io.ReadCloser); ok {
@@ -81,14 +108,46 @@ func NewEventStream[T any](
 		ctx = context.Background()
 	}
 
-	return &EventStream[T]{
+	es := &EventStream[T]{
 		r:            src,
 		scanner:      scanner,
 		unmarshaller: unmarshaller,
 		sentinel:     sentinel,
 		ctx:          ctx,
 		first:        true,
+		dataRequired: true,
 	}
+	for _, opt := range opts {
+		opt(es)
+	}
+	return es
+}
+
+func WithDataRequired[T any](dataRequired bool) func(*EventStream[T]) {
+	return func(es *EventStream[T]) {
+		es.dataRequired = dataRequired
+	}
+}
+
+// WithCancel hands ownership of a context cancel function (typically the
+// request timeout's) to the stream. The deadline keeps bounding the whole
+// stream; the stream releases the context when it ends or is closed instead
+// of the caller cancelling it before iteration. A nil cancel is ignored.
+func WithCancel[T any](cancel context.CancelFunc) func(*EventStream[T]) {
+	return func(es *EventStream[T]) {
+		if cancel != nil {
+			es.cancel = cancel
+		}
+	}
+}
+
+// release cancels the owned context, once.
+func (es *EventStream[T]) release() {
+	es.releaseOnce.Do(func() {
+		if es.cancel != nil {
+			es.cancel()
+		}
+	})
 }
 
 // Next waits for the next event from a stream which will be available
@@ -96,25 +155,26 @@ func NewEventStream[T any](
 // an error occurred. After this method returns false, the Err method is used
 // to check for any errors that occurred while parsing the stream.
 func (es *EventStream[T]) Next() bool {
-	if es.err != nil || es.finished {
+	if es.err != nil || es.finished.Load() {
 		return false
-	}
-
-	// Check if context is canceled
-	select {
-	case <-es.ctx.Done():
-		es.err = es.ctx.Err()
-		return false
-	default:
 	}
 
 	for {
-		if !es.scanner.Scan() {
+		// Re-checked every iteration: comment-only and data-less keepalive
+		// frames loop here without publishing, and the retained operation
+		// timeout must still be able to stop the stream.
+		select {
+		case <-es.ctx.Done():
+			es.err = es.ctx.Err()
+			es.release()
 			return false
+		default:
 		}
 
-		es.err = es.scanner.Err()
-		if es.err != nil {
+		if !es.scanner.Scan() {
+			es.err = es.scanner.Err()
+			es.finished.Store(true)
+			es.release()
 			return false
 		}
 
@@ -175,10 +235,16 @@ func (es *EventStream[T]) Next() bool {
 			continue
 		}
 
+		// Skip events with no data lines when data is required
+		if data == "" && es.dataRequired {
+			continue
+		}
+
 		event.ID = es.eventID
 
 		if es.sentinel != "" && data == es.sentinel+"\n" {
-			es.finished = true
+			es.finished.Store(true)
+			es.release()
 			return false
 		}
 
@@ -194,12 +260,7 @@ func (es *EventStream[T]) Next() bool {
 			if event.Event != nil {
 				ev = *event.Event
 			}
-			var err error
-			encoding, err = et.GetEventEncoding(ev)
-			if err != nil {
-				es.err = err
-				return false
-			}
+			encoding, _ = et.GetEventEncoding(ev)
 		} else {
 			var a interface{}
 			if err := json.Unmarshal([]byte(data), &a); err != nil {
@@ -207,10 +268,22 @@ func (es *EventStream[T]) Next() bool {
 			}
 		}
 
+		// "auto" means the data field is a mixed union (JSON + plain-text variants).
+		// Probe the actual data to decide.
+		if encoding == "auto" {
+			var a interface{}
+			if err := json.Unmarshal([]byte(data), &a); err != nil {
+				encoding = "string"
+			} else {
+				encoding = "application/json"
+			}
+		}
+
 		if encoding == "string" {
 			jsonData, err := json.Marshal(data)
 			if err != nil {
 				es.err = err
+				es.release()
 				return false
 			}
 			event.Data = jsonData
@@ -221,12 +294,14 @@ func (es *EventStream[T]) Next() bool {
 		e, err := json.Marshal(event)
 		if err != nil {
 			es.err = err
+			es.release()
 			return false
 		}
 
 		parsedEvent, err := es.unmarshaller(e)
 		if err != nil {
 			es.err = err
+			es.release()
 			return false
 		}
 
@@ -249,6 +324,8 @@ func (es *EventStream[T]) Err() error {
 // Close will release underlying resources held by an event stream. It must
 // always be called.
 func (es *EventStream[T]) Close() error {
-	es.finished = true
-	return es.r.Close()
+	es.finished.Store(true)
+	err := es.r.Close()
+	es.release()
+	return err
 }

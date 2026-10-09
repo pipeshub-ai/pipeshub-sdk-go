@@ -105,7 +105,8 @@ Requires a valid session token from `/initAuth`.
 - `microsoft`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
 - `azureAd`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
 - `oauth`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
-- `samlSso`: Handled via redirect flow (use `/saml/signIn` instead)
+- `samlSso`: not accepted here; this endpoint answers `400`. SAML sign-in runs as a browser
+  redirect: send the browser to `/saml/signIn` instead
 
 **Multi-Step Response:**
 
@@ -119,8 +120,12 @@ After completing all steps:
 
 **Security:**
 
-- Account locks after 5 consecutive failed attempts
+- Account locks for 24 hours after 5 consecutive failed attempts, and the owner is
+  sent an email saying so. While it is locked, sign-in is refused with the same answer
+  as a wrong password or code, even when the password or code is right
 - CAPTCHA may be required if enabled (pass `cf-turnstile-response`)
+- An email with no account gets the same status and message as a real account given
+  a wrong password (`400`) or a wrong, missing or expired sign-in code (`401`)
 
 
 ### Example Usage
@@ -171,7 +176,7 @@ func main() {
 | Parameter                                                                        | Type                                                                             | Required                                                                         | Description                                                                      |
 | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `ctx`                                                                            | [context.Context](https://pkg.go.dev/context#Context)                            | :heavy_check_mark:                                                               | The context to use for the request.                                              |
-| `xSessionToken`                                                                  | *string*                                                                         | :heavy_check_mark:                                                               | Session token received from `/initAuth` endpoint                                 |
+| `xSessionToken`                                                                  | `string`                                                                         | :heavy_check_mark:                                                               | Session token received from `/initAuth` endpoint                                 |
 | `body`                                                                           | [components.AuthenticateRequest](../../models/components/authenticaterequest.md) | :heavy_check_mark:                                                               | Request payload                                                                  |
 | `opts`                                                                           | [][operations.Option](../../models/operations/option.md)                         | :heavy_minus_sign:                                                               | The options for this request.                                                    |
 
@@ -183,7 +188,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404, 410      | application/json        |
+| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
 | apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 

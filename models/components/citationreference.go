@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 // CitationReference - Reference to a source document cited in a response
 type CitationReference struct {
 	// ID of the citation record
@@ -12,6 +16,17 @@ type CitationReference struct {
 	Excerpt *string `json:"excerpt,omitzero"`
 	// Additional context around the citation
 	Context *string `json:"context,omitzero"`
+}
+
+func (c CitationReference) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(c, "", false)
+}
+
+func (c *CitationReference) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *CitationReference) GetCitationID() *string {

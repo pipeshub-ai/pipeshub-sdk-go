@@ -60,6 +60,7 @@ func (u AuthenticateResponse) IsUnknown() bool {
 }
 
 func (u *AuthenticateResponse) UnmarshalJSON(data []byte) error {
+	*u = AuthenticateResponse{}
 
 	var candidates []utils.UnionCandidate
 

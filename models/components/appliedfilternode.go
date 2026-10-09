@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 // AppliedFilterNode - A single filter node selected by the user (used for display/persistence of active filters)
 type AppliedFilterNode struct {
 	// Unique identifier of the filter node
@@ -12,6 +16,17 @@ type AppliedFilterNode struct {
 	NodeType *string `json:"nodeType,omitzero"`
 	// Connector identifier associated with this node
 	Connector *string `json:"connector,omitzero"`
+}
+
+func (a AppliedFilterNode) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *AppliedFilterNode) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *AppliedFilterNode) GetID() *string {

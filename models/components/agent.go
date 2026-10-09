@@ -140,6 +140,7 @@ func (u ModelUnion) IsUnknown() bool {
 }
 
 func (u *ModelUnion) UnmarshalJSON(data []byte) error {
+	*u = ModelUnion{}
 
 	var candidates []utils.UnionCandidate
 
@@ -309,6 +310,11 @@ type Agent struct {
 	WebSearch optionalnullable.OptionalNullable[AgentWebSearch] `json:"webSearch,omitzero"`
 	// Agent-level reasoning effort used when a chat request omits its own. Null when unset.
 	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
+	// When true (default), the agent's system prompt includes the current
+	// user's name, email, and organization. When false, the agent relies
+	// on tools, actions, and knowledge sources without that profile data.
+	//
+	SendUserContext *bool `json:"sendUserContext,omitzero"`
 	// Free-form agent tags.
 	Tags []string `json:"tags"`
 	// Unix epoch timestamp in milliseconds when the agent was created.
@@ -472,6 +478,13 @@ func (a *Agent) GetDefaultReasoningEffort() optionalnullable.OptionalNullable[Ag
 		return nil
 	}
 	return a.DefaultReasoningEffort
+}
+
+func (a *Agent) GetSendUserContext() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.SendUserContext
 }
 
 func (a *Agent) GetTags() []string {

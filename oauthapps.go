@@ -25,6 +25,9 @@ import (
 // **Who can see which apps**
 // - **Everyone (including org admins)** sees and manages only OAuth apps **they created** (`createdBy`). Other members' apps are hidden (not listed; individual operations return not found).
 //
+// **Session only**
+// - Every `/oauth-clients/*` route requires the user's interactive session JWT. OAuth access tokens and personal access tokens (`phpat_...`) are rejected with `403`, so a token issued to a client can never register, reconfigure, or revoke clients on its own.
+//
 // **Who authorizes vs. client credentials**
 // - **Authorization code:** Any authenticated user in the workspace may complete consent for a valid `client_id`; issued tokens represent **that user**.
 // - **Client credentials:** Access tokens represent the **OAuth app creator** (who registered the client), not the caller.
@@ -62,6 +65,8 @@ func newOAuthApps(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks *h
 // Each entry carries the full app configuration except the client secret, which is only ever returned at creation time and immediately after a regeneration.
 //
 // Use the `status` query parameter to filter by lifecycle state (`active`, `suspended`, `revoked`) and `search` for a case-insensitive substring match against `name` or `description`.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) ListOAuthApps(ctx context.Context, page *int64, limit *int64, status *operations.ListOAuthAppsStatus, search *string, opts ...operations.Option) (*operations.ListOAuthAppsResponse, error) {
 	request := operations.ListOAuthAppsRequest{
 		Page:   page,
@@ -99,7 +104,7 @@ func (s *OAuthApps) ListOAuthApps(ctx context.Context, page *int64, limit *int64
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "listOAuthApps",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -125,7 +130,7 @@ func (s *OAuthApps) ListOAuthApps(ctx context.Context, page *int64, limit *int64
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -209,7 +214,7 @@ func (s *OAuthApps) ListOAuthApps(ctx context.Context, page *int64, limit *int64
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -265,7 +270,7 @@ func (s *OAuthApps) ListOAuthApps(ctx context.Context, page *int64, limit *int64
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -290,7 +295,7 @@ func (s *OAuthApps) ListOAuthApps(ctx context.Context, page *int64, limit *int64
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -337,6 +342,8 @@ func (s *OAuthApps) ListOAuthApps(ctx context.Context, page *int64, limit *int64
 // `allowedScopes` is validated against the caller's role-aware scope set (see `GET /oauth-clients/scopes`). Org admins may include admin-only scopes; non-admins requesting a restricted scope receive `400`.
 //
 // All `/oauth-clients/*` routes share a per-user rate limiter (default 1000 req/min, configurable via the `MAX_OAUTH_CLIENT_REQUESTS_PER_MINUTE` env var).
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) CreateOAuthApp(ctx context.Context, request components.CreateOAuthAppRequest, opts ...operations.Option) (*operations.CreateOAuthAppResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -367,7 +374,7 @@ func (s *OAuthApps) CreateOAuthApp(ctx context.Context, request components.Creat
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "createOAuthApp",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
@@ -396,7 +403,7 @@ func (s *OAuthApps) CreateOAuthApp(ctx context.Context, request components.Creat
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -480,7 +487,7 @@ func (s *OAuthApps) CreateOAuthApp(ctx context.Context, request components.Creat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -538,7 +545,7 @@ func (s *OAuthApps) CreateOAuthApp(ctx context.Context, request components.Creat
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -563,7 +570,7 @@ func (s *OAuthApps) CreateOAuthApp(ctx context.Context, request components.Creat
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -610,6 +617,8 @@ func (s *OAuthApps) CreateOAuthApp(ctx context.Context, request components.Creat
 // Each key in the `scopes` map matches the `category` field on the `OAuthScopeInfo` entries it contains. A category may appear with an empty array when every scope it contains is restricted for the caller — treat empty buckets as "no permitted scopes in this group", not as a missing category.
 //
 // Shares the per-user rate limiter applied to every `/oauth-clients/*` route (default 1000 req/min, `MAX_OAUTH_CLIENT_REQUESTS_PER_MINUTE`).
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) ListOAuthScopes(ctx context.Context, opts ...operations.Option) (*operations.ListOAuthScopesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -640,7 +649,7 @@ func (s *OAuthApps) ListOAuthScopes(ctx context.Context, opts ...operations.Opti
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "listOAuthScopes",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -662,7 +671,7 @@ func (s *OAuthApps) ListOAuthScopes(ctx context.Context, opts ...operations.Opti
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -746,7 +755,7 @@ func (s *OAuthApps) ListOAuthScopes(ctx context.Context, opts ...operations.Opti
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -800,7 +809,7 @@ func (s *OAuthApps) ListOAuthScopes(ctx context.Context, opts ...operations.Opti
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -825,7 +834,7 @@ func (s *OAuthApps) ListOAuthScopes(ctx context.Context, opts ...operations.Opti
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -868,6 +877,8 @@ func (s *OAuthApps) ListOAuthScopes(ctx context.Context, opts ...operations.Opti
 // Returns the full configuration of an OAuth app you registered. The `clientSecret` is never echoed back here; if you need a new one, call `POST /oauth-clients/{appId}/regenerate-secret`.
 //
 // Access is creator-scoped: even org admins receive `404` for apps owned by other users. This avoids leaking app metadata across org members and keeps the read surface symmetric with `listOAuthApps`.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) GetOAuthApp(ctx context.Context, appID string, opts ...operations.Option) (*operations.GetOAuthAppResponse, error) {
 	request := operations.GetOAuthAppRequest{
 		AppID: appID,
@@ -902,7 +913,7 @@ func (s *OAuthApps) GetOAuthApp(ctx context.Context, appID string, opts ...opera
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "getOAuthApp",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -924,7 +935,7 @@ func (s *OAuthApps) GetOAuthApp(ctx context.Context, appID string, opts ...opera
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -1008,7 +1019,7 @@ func (s *OAuthApps) GetOAuthApp(ctx context.Context, appID string, opts ...opera
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "404", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1066,7 +1077,7 @@ func (s *OAuthApps) GetOAuthApp(ctx context.Context, appID string, opts ...opera
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1091,7 +1102,7 @@ func (s *OAuthApps) GetOAuthApp(ctx context.Context, appID string, opts ...opera
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1138,6 +1149,8 @@ func (s *OAuthApps) GetOAuthApp(ctx context.Context, appID string, opts ...opera
 // When modifying `allowedScopes`, the new set must remain a subset of the caller's role-aware scope list (same rule as `GET /oauth-clients/scopes`). When adding `authorization_code` to `allowedGrantTypes`, `redirectUris` becomes required and must contain at least one URI; otherwise the request is rejected with `400` by the Zod refine on `updateAppSchema`.
 //
 // This endpoint never rotates the client secret — use `POST /oauth-clients/{appId}/regenerate-secret` for that.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) UpdateOAuthApp(ctx context.Context, appID string, body components.UpdateOAuthAppRequest, opts ...operations.Option) (*operations.UpdateOAuthAppResponse, error) {
 	request := operations.UpdateOAuthAppRequest{
 		AppID: appID,
@@ -1173,7 +1186,7 @@ func (s *OAuthApps) UpdateOAuthApp(ctx context.Context, appID string, body compo
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "updateOAuthApp",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
@@ -1202,7 +1215,7 @@ func (s *OAuthApps) UpdateOAuthApp(ctx context.Context, appID string, body compo
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -1286,7 +1299,7 @@ func (s *OAuthApps) UpdateOAuthApp(ctx context.Context, appID string, body compo
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1346,7 +1359,7 @@ func (s *OAuthApps) UpdateOAuthApp(ctx context.Context, appID string, body compo
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1371,7 +1384,7 @@ func (s *OAuthApps) UpdateOAuthApp(ctx context.Context, appID string, body compo
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1414,6 +1427,8 @@ func (s *OAuthApps) UpdateOAuthApp(ctx context.Context, appID string, body compo
 // Soft-deletes an OAuth app. The app is flagged `isDeleted=true` on the `OAuthApp` document, removed from list/get responses for every caller, and all of its access and refresh tokens are revoked in the same operation. There is no restore endpoint — deletion is final.
 //
 // Creator-only: even org admins cannot delete apps owned by other users.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) DeleteOAuthApp(ctx context.Context, appID string, opts ...operations.Option) (*operations.DeleteOAuthAppResponse, error) {
 	request := operations.DeleteOAuthAppRequest{
 		AppID: appID,
@@ -1448,7 +1463,7 @@ func (s *OAuthApps) DeleteOAuthApp(ctx context.Context, appID string, opts ...op
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "deleteOAuthApp",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -1470,7 +1485,7 @@ func (s *OAuthApps) DeleteOAuthApp(ctx context.Context, appID string, opts ...op
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -1554,7 +1569,7 @@ func (s *OAuthApps) DeleteOAuthApp(ctx context.Context, appID string, opts ...op
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "404", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1612,7 +1627,7 @@ func (s *OAuthApps) DeleteOAuthApp(ctx context.Context, appID string, opts ...op
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1637,7 +1652,7 @@ func (s *OAuthApps) DeleteOAuthApp(ctx context.Context, appID string, opts ...op
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1682,6 +1697,8 @@ func (s *OAuthApps) DeleteOAuthApp(ctx context.Context, appID string, opts ...op
 // The new secret is returned in this response **only** and cannot be retrieved later. Pair this call with credential propagation to every integration that uses the app. If the rotation was triggered by a suspected leak, also call `POST /oauth-clients/{appId}/revoke-all-tokens` to invalidate already-issued access and refresh tokens instead of waiting for their natural expiry.
 //
 // Creator-only: even org admins cannot rotate secrets for other users' apps.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) RegenerateOAuthAppSecret(ctx context.Context, appID string, opts ...operations.Option) (*operations.RegenerateOAuthAppSecretResponse, error) {
 	request := operations.RegenerateOAuthAppSecretRequest{
 		AppID: appID,
@@ -1716,7 +1733,7 @@ func (s *OAuthApps) RegenerateOAuthAppSecret(ctx context.Context, appID string, 
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "regenerateOAuthAppSecret",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -1738,7 +1755,7 @@ func (s *OAuthApps) RegenerateOAuthAppSecret(ctx context.Context, appID string, 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -1822,7 +1839,7 @@ func (s *OAuthApps) RegenerateOAuthAppSecret(ctx context.Context, appID string, 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "404", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1880,7 +1897,7 @@ func (s *OAuthApps) RegenerateOAuthAppSecret(ctx context.Context, appID string, 
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1905,7 +1922,7 @@ func (s *OAuthApps) RegenerateOAuthAppSecret(ctx context.Context, appID string, 
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1950,6 +1967,8 @@ func (s *OAuthApps) RegenerateOAuthAppSecret(ctx context.Context, appID string, 
 // Use this for temporary suspensions where you intend to reactivate later. For permanent removal, use `DELETE /oauth-clients/{appId}`. Suspending an app that is already suspended returns `400`.
 //
 // Creator-only.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) SuspendOAuthApp(ctx context.Context, appID string, opts ...operations.Option) (*operations.SuspendOAuthAppResponse, error) {
 	request := operations.SuspendOAuthAppRequest{
 		AppID: appID,
@@ -1984,7 +2003,7 @@ func (s *OAuthApps) SuspendOAuthApp(ctx context.Context, appID string, opts ...o
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "suspendOAuthApp",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -2006,7 +2025,7 @@ func (s *OAuthApps) SuspendOAuthApp(ctx context.Context, appID string, opts ...o
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -2090,7 +2109,7 @@ func (s *OAuthApps) SuspendOAuthApp(ctx context.Context, appID string, opts ...o
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2150,7 +2169,7 @@ func (s *OAuthApps) SuspendOAuthApp(ctx context.Context, appID string, opts ...o
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2175,7 +2194,7 @@ func (s *OAuthApps) SuspendOAuthApp(ctx context.Context, appID string, opts ...o
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2220,6 +2239,8 @@ func (s *OAuthApps) SuspendOAuthApp(ctx context.Context, appID string, opts ...o
 // A revoked app cannot be reactivated (returns `400`); the only path back is to register a new app. Activating an app that is already active also returns `400`.
 //
 // Creator-only.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) ActivateOAuthApp(ctx context.Context, appID string, opts ...operations.Option) (*operations.ActivateOAuthAppResponse, error) {
 	request := operations.ActivateOAuthAppRequest{
 		AppID: appID,
@@ -2254,7 +2275,7 @@ func (s *OAuthApps) ActivateOAuthApp(ctx context.Context, appID string, opts ...
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "activateOAuthApp",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -2276,7 +2297,7 @@ func (s *OAuthApps) ActivateOAuthApp(ctx context.Context, appID string, opts ...
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -2360,7 +2381,7 @@ func (s *OAuthApps) ActivateOAuthApp(ctx context.Context, appID string, opts ...
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2420,7 +2441,7 @@ func (s *OAuthApps) ActivateOAuthApp(ctx context.Context, appID string, opts ...
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2445,7 +2466,7 @@ func (s *OAuthApps) ActivateOAuthApp(ctx context.Context, appID string, opts ...
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2490,6 +2511,8 @@ func (s *OAuthApps) ActivateOAuthApp(ctx context.Context, appID string, opts ...
 // Each entry includes the token type (`access` or `refresh`), the user the token was issued for (omitted for client-credentials access tokens), the granted scopes, the issuance and expiry timestamps, and the revocation flag. Each type is capped at 100 most-recent rows server-side (`listTokensForApp` in `oauth_token.service.ts`); revoked and expired tokens are excluded.
 //
 // Creator-only.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) ListOAuthAppTokens(ctx context.Context, appID string, opts ...operations.Option) (*operations.ListOAuthAppTokensResponse, error) {
 	request := operations.ListOAuthAppTokensRequest{
 		AppID: appID,
@@ -2524,7 +2547,7 @@ func (s *OAuthApps) ListOAuthAppTokens(ctx context.Context, appID string, opts .
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "listOAuthAppTokens",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -2546,7 +2569,7 @@ func (s *OAuthApps) ListOAuthAppTokens(ctx context.Context, appID string, opts .
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -2630,7 +2653,7 @@ func (s *OAuthApps) ListOAuthAppTokens(ctx context.Context, appID string, opts .
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "404", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2688,7 +2711,7 @@ func (s *OAuthApps) ListOAuthAppTokens(ctx context.Context, appID string, opts .
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2713,7 +2736,7 @@ func (s *OAuthApps) ListOAuthAppTokens(ctx context.Context, appID string, opts .
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2758,6 +2781,8 @@ func (s *OAuthApps) ListOAuthAppTokens(ctx context.Context, appID string, opts .
 // The response `count` is the total number of tokens revoked across both types. Clients of this app must then obtain new tokens via the standard OAuth flow.
 //
 // Creator-only.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OAuthApps) RevokeAllOAuthAppTokens(ctx context.Context, appID string, opts ...operations.Option) (*operations.RevokeAllOAuthAppTokensResponse, error) {
 	request := operations.RevokeAllOAuthAppTokensRequest{
 		AppID: appID,
@@ -2792,7 +2817,7 @@ func (s *OAuthApps) RevokeAllOAuthAppTokens(ctx context.Context, appID string, o
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "revokeAllOAuthAppTokens",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -2814,7 +2839,7 @@ func (s *OAuthApps) RevokeAllOAuthAppTokens(ctx context.Context, appID string, o
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -2898,7 +2923,7 @@ func (s *OAuthApps) RevokeAllOAuthAppTokens(ctx context.Context, appID string, o
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "404", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2956,7 +2981,7 @@ func (s *OAuthApps) RevokeAllOAuthAppTokens(ctx context.Context, appID string, o
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2981,7 +3006,7 @@ func (s *OAuthApps) RevokeAllOAuthAppTokens(ctx context.Context, appID string, o
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{

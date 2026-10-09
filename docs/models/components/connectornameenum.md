@@ -6,6 +6,19 @@ records store the enum value (e.g. Google Drive is `DRIVE`,
 SharePoint Online is `SHAREPOINT ONLINE`), not the enum member name.
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.ConnectorNameEnumDrive
+
+// Open enum: custom values can be created with a direct type cast
+custom := components.ConnectorNameEnum("custom_value")
+```
+
 
 ## Values
 
@@ -23,6 +36,7 @@ SharePoint Online is `SHAREPOINT ONLINE`), not the enum member name.
 | `ConnectorNameEnumOutlookCalendar`              | OUTLOOK CALENDAR                                |
 | `ConnectorNameEnumMicrosoftTeams`               | MICROSOFT TEAMS                                 |
 | `ConnectorNameEnumNotion`                       | NOTION                                          |
+| `ConnectorNameEnumNotionPersonal`               | NOTION PERSONAL                                 |
 | `ConnectorNameEnumSlack`                        | SLACK                                           |
 | `ConnectorNameEnumSlackWorkspace`               | SLACK WORKSPACE                                 |
 | `ConnectorNameEnumKb`                           | KB                                              |
@@ -39,7 +53,9 @@ SharePoint Online is `SHAREPOINT ONLINE`), not the enum member name.
 | `ConnectorNameEnumDropboxPersonal`              | DROPBOX PERSONAL                                |
 | `ConnectorNameEnumWeb`                          | WEB                                             |
 | `ConnectorNameEnumBookstack`                    | BOOKSTACK                                       |
+| `ConnectorNameEnumDrupalWiki`                   | DRUPAL WIKI                                     |
 | `ConnectorNameEnumGithub`                       | GITHUB                                          |
+| `ConnectorNameEnumGithubTeams`                  | GITHUB TEAMS                                    |
 | `ConnectorNameEnumServicenow`                   | SERVICENOW                                      |
 | `ConnectorNameEnumSalesforce`                   | SALESFORCE                                      |
 | `ConnectorNameEnumS3`                           | S3                                              |

@@ -3,6 +3,9 @@
 package components
 
 import (
+	"encoding/json"
+	"errors"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
@@ -10,6 +13,17 @@ type AgentCreateResponseAgentWebSearch struct {
 	Provider      *string `json:"provider,omitzero"`
 	ProviderKey   *string `json:"providerKey,omitzero"`
 	ProviderLabel *string `json:"providerLabel,omitzero"`
+}
+
+func (a AgentCreateResponseAgentWebSearch) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *AgentCreateResponseAgentWebSearch) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *AgentCreateResponseAgentWebSearch) GetProvider() *string {
@@ -31,6 +45,96 @@ func (a *AgentCreateResponseAgentWebSearch) GetProviderLabel() *string {
 		return nil
 	}
 	return a.ProviderLabel
+}
+
+type WebSearchType string
+
+const (
+	WebSearchTypeAgentCreateResponseAgentWebSearch WebSearchType = "AgentCreateResponseAgent_webSearch"
+	WebSearchTypeUnknown                           WebSearchType = "Unknown"
+)
+
+type WebSearch struct {
+	AgentCreateResponseAgentWebSearch *AgentCreateResponseAgentWebSearch `queryParam:"inline" union:"member"`
+	UnknownRaw                        json.RawMessage                    `json:"-" union:"unknown"`
+
+	Type WebSearchType
+}
+
+func CreateWebSearchAgentCreateResponseAgentWebSearch(agentCreateResponseAgentWebSearch AgentCreateResponseAgentWebSearch) WebSearch {
+	typ := WebSearchTypeAgentCreateResponseAgentWebSearch
+
+	return WebSearch{
+		AgentCreateResponseAgentWebSearch: &agentCreateResponseAgentWebSearch,
+		Type:                              typ,
+	}
+}
+
+func CreateWebSearchUnknown(raw json.RawMessage) WebSearch {
+	return WebSearch{
+		UnknownRaw: raw,
+		Type:       WebSearchTypeUnknown,
+	}
+}
+
+func (u WebSearch) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u WebSearch) IsUnknown() bool {
+	return u.Type == WebSearchTypeUnknown
+}
+
+func (u *WebSearch) UnmarshalJSON(data []byte) error {
+	*u = WebSearch{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var agentCreateResponseAgentWebSearch AgentCreateResponseAgentWebSearch = AgentCreateResponseAgentWebSearch{}
+	if err := utils.UnmarshalJSON(data, &agentCreateResponseAgentWebSearch, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  WebSearchTypeAgentCreateResponseAgentWebSearch,
+			Value: &agentCreateResponseAgentWebSearch,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = WebSearchTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = WebSearchTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(WebSearchType)
+	switch best.Type {
+	case WebSearchTypeAgentCreateResponseAgentWebSearch:
+		u.AgentCreateResponseAgentWebSearch = best.Value.(*AgentCreateResponseAgentWebSearch)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = WebSearchTypeUnknown
+	return nil
+}
+
+func (u WebSearch) MarshalJSON() ([]byte, error) {
+	if u.AgentCreateResponseAgentWebSearch != nil {
+		return utils.MarshalJSON(u.AgentCreateResponseAgentWebSearch, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type WebSearch: all fields are null")
 }
 
 // AgentCreateResponseAgentDefaultReasoningEffort - Agent-level reasoning effort used when a chat request omits its own. Null when unset.
@@ -60,28 +164,30 @@ func (e *AgentCreateResponseAgentDefaultReasoningEffort) IsExact() bool {
 }
 
 type AgentCreateResponseAgent struct {
-	Key          string                             `json:"_key"`
-	Name         string                             `json:"name"`
-	Description  string                             `json:"description"`
-	StartMessage string                             `json:"startMessage"`
-	SystemPrompt string                             `json:"systemPrompt"`
-	Instructions *string                            `json:"instructions"`
-	Models       []string                           `json:"models"`
-	Tags         []string                           `json:"tags"`
-	WebSearch    *AgentCreateResponseAgentWebSearch `json:"webSearch"`
+	Key          string     `json:"_key"`
+	Name         string     `json:"name"`
+	Description  string     `json:"description"`
+	StartMessage string     `json:"startMessage"`
+	SystemPrompt string     `json:"systemPrompt"`
+	Instructions *string    `json:"instructions"`
+	Models       []string   `json:"models"`
+	Tags         []string   `json:"tags"`
+	WebSearch    *WebSearch `json:"webSearch"`
 	// Agent-level reasoning effort used when a chat request omits its own. Null when unset.
 	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentCreateResponseAgentDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
-	IsActive               bool                                                                              `json:"isActive"`
-	IsServiceAccount       bool                                                                              `json:"isServiceAccount"`
-	CreatedBy              string                                                                            `json:"createdBy"`
-	UpdatedBy              *string                                                                           `json:"updatedBy"`
-	CreatedAtTimestamp     int64                                                                             `json:"createdAtTimestamp"`
-	UpdatedAtTimestamp     int64                                                                             `json:"updatedAtTimestamp"`
-	IsDeleted              bool                                                                              `json:"isDeleted"`
-	Toolsets               []AgentCreateResponseToolset                                                      `json:"toolsets"`
-	McpServers             []AgentCreateResponseMcpServer                                                    `json:"mcpServers"`
-	Knowledge              []AgentCreateResponseKnowledge                                                    `json:"knowledge"`
-	Skills                 []AgentCreateResponseSkill                                                        `json:"skills"`
+	// When false, this agent omits user name/email/org from its system prompt.
+	SendUserContext    *bool                          `json:"sendUserContext,omitzero"`
+	IsActive           bool                           `json:"isActive"`
+	IsServiceAccount   bool                           `json:"isServiceAccount"`
+	CreatedBy          string                         `json:"createdBy"`
+	UpdatedBy          *string                        `json:"updatedBy"`
+	CreatedAtTimestamp int64                          `json:"createdAtTimestamp"`
+	UpdatedAtTimestamp int64                          `json:"updatedAtTimestamp"`
+	IsDeleted          bool                           `json:"isDeleted"`
+	Toolsets           []AgentCreateResponseToolset   `json:"toolsets"`
+	McpServers         []AgentCreateResponseMcpServer `json:"mcpServers"`
+	Knowledge          []AgentCreateResponseKnowledge `json:"knowledge"`
+	Skills             []AgentCreateResponseSkill     `json:"skills"`
 }
 
 func (a *AgentCreateResponseAgent) GetKey() string {
@@ -140,7 +246,7 @@ func (a *AgentCreateResponseAgent) GetTags() []string {
 	return a.Tags
 }
 
-func (a *AgentCreateResponseAgent) GetWebSearch() *AgentCreateResponseAgentWebSearch {
+func (a *AgentCreateResponseAgent) GetWebSearch() *WebSearch {
 	if a == nil {
 		return nil
 	}
@@ -152,6 +258,13 @@ func (a *AgentCreateResponseAgent) GetDefaultReasoningEffort() optionalnullable.
 		return nil
 	}
 	return a.DefaultReasoningEffort
+}
+
+func (a *AgentCreateResponseAgent) GetSendUserContext() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.SendUserContext
 }
 
 func (a *AgentCreateResponseAgent) GetIsActive() bool {

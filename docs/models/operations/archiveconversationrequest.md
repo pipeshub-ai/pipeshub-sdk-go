@@ -5,4 +5,4 @@
 
 | Field                   | Type                    | Required                | Description             |
 | ----------------------- | ----------------------- | ----------------------- | ----------------------- |
-| `ConversationID`        | *string*                | :heavy_check_mark:      | Conversation identifier |
+| `ConversationID`        | `string`                | :heavy_check_mark:      | Conversation identifier |

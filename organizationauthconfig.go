@@ -55,6 +55,8 @@ func newOrganizationAuthConfig(rootSDK *Pipeshub, sdkConfig config.SDKConfigurat
 // ```
 //
 // **Admin Access Required:** Only organization admins can view auth configuration.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...operations.Option) (*operations.GetAuthMethodsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -85,7 +87,7 @@ func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...ope
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "getAuthMethods",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -107,7 +109,7 @@ func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...ope
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -191,7 +193,7 @@ func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...ope
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -249,7 +251,7 @@ func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...ope
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -274,7 +276,7 @@ func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...ope
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -323,6 +325,7 @@ func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...ope
 // - No duplicate methods within the same step
 // - No method can appear in multiple steps
 // - Each step must have at least one allowed method
+// - `samlSso` is only allowed in a single-step policy; it can't be combined with other steps
 //
 // **Available Methods:**
 // - `password`: Email/password authentication
@@ -359,6 +362,8 @@ func (s *OrganizationAuthConfig) GetAuthMethods(ctx context.Context, opts ...ope
 // ```
 //
 // **Admin Access Required:** Only organization admins can update auth configuration.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request operations.UpdateAuthMethodRequest, opts ...operations.Option) (*operations.UpdateAuthMethodResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -389,7 +394,7 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request o
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "updateAuthMethod",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
@@ -418,7 +423,7 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request o
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -502,7 +507,7 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request o
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -560,7 +565,7 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request o
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -585,7 +590,7 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request o
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -626,6 +631,8 @@ func (s *OrganizationAuthConfig) UpdateAuthMethod(ctx context.Context, request o
 
 // SetUpAuthConfig - Set up auth configuration
 // Set up or initialize the organization's authentication configuration.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OrganizationAuthConfig) SetUpAuthConfig(ctx context.Context, request components.OrgAuthConfigCreateRequest, opts ...operations.Option) (*operations.SetUpAuthConfigResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -656,7 +663,7 @@ func (s *OrganizationAuthConfig) SetUpAuthConfig(ctx context.Context, request co
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "setUpAuthConfig",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
@@ -685,7 +692,7 @@ func (s *OrganizationAuthConfig) SetUpAuthConfig(ctx context.Context, request co
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -769,7 +776,7 @@ func (s *OrganizationAuthConfig) SetUpAuthConfig(ctx context.Context, request co
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -829,7 +836,7 @@ func (s *OrganizationAuthConfig) SetUpAuthConfig(ctx context.Context, request co
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -854,7 +861,7 @@ func (s *OrganizationAuthConfig) SetUpAuthConfig(ctx context.Context, request co
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{

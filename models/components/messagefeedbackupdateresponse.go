@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type Meta struct {
+type MessageFeedbackUpdateResponseMeta struct {
 	// Server-side request identifier. Read from the `X-Request-ID`
 	// header when supplied, otherwise auto-generated, so this field
 	// is always present.
@@ -18,32 +18,32 @@ type Meta struct {
 	Duration int64 `json:"duration"`
 }
 
-func (m Meta) MarshalJSON() ([]byte, error) {
+func (m MessageFeedbackUpdateResponseMeta) MarshalJSON() ([]byte, error) {
 	return utils.MarshalJSON(m, "", false)
 }
 
-func (m *Meta) UnmarshalJSON(data []byte) error {
+func (m *MessageFeedbackUpdateResponseMeta) UnmarshalJSON(data []byte) error {
 	if err := utils.UnmarshalJSON(data, &m, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *Meta) GetRequestID() string {
+func (m *MessageFeedbackUpdateResponseMeta) GetRequestID() string {
 	if m == nil {
 		return ""
 	}
 	return m.RequestID
 }
 
-func (m *Meta) GetTimestamp() time.Time {
+func (m *MessageFeedbackUpdateResponseMeta) GetTimestamp() time.Time {
 	if m == nil {
 		return time.Time{}
 	}
 	return m.Timestamp
 }
 
-func (m *Meta) GetDuration() int64 {
+func (m *MessageFeedbackUpdateResponseMeta) GetDuration() int64 {
 	if m == nil {
 		return 0
 	}
@@ -60,8 +60,8 @@ type MessageFeedbackUpdateResponse struct {
 	// supplied in the request plus server-stamped `feedbackProvider`,
 	// `timestamp`, and `metrics`.
 	//
-	Feedback MessageFeedbackAppendEntry `json:"feedback"`
-	Meta     Meta                       `json:"meta"`
+	Feedback MessageFeedbackAppendEntry        `json:"feedback"`
+	Meta     MessageFeedbackUpdateResponseMeta `json:"meta"`
 }
 
 func (m *MessageFeedbackUpdateResponse) GetConversationID() string {
@@ -85,9 +85,9 @@ func (m *MessageFeedbackUpdateResponse) GetFeedback() MessageFeedbackAppendEntry
 	return m.Feedback
 }
 
-func (m *MessageFeedbackUpdateResponse) GetMeta() Meta {
+func (m *MessageFeedbackUpdateResponse) GetMeta() MessageFeedbackUpdateResponseMeta {
 	if m == nil {
-		return Meta{}
+		return MessageFeedbackUpdateResponseMeta{}
 	}
 	return m.Meta
 }

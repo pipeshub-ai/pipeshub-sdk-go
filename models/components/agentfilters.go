@@ -63,6 +63,7 @@ func (u AgentFilters) IsUnknown() bool {
 }
 
 func (u *AgentFilters) UnmarshalJSON(data []byte) error {
+	*u = AgentFilters{}
 
 	var candidates []utils.UnionCandidate
 

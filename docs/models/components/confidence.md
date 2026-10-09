@@ -6,6 +6,19 @@ and only when the model emitted a trailing confidence block.
 This field is now optional and nullable; it was previously always present and non-nullable. Treat a missing or `null` value as "no confidence reported" and guard before using it. Change effective in SDK v1.3.0 (v1.2.0 and earlier always populated it).
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.ConfidenceVeryHigh
+
+// Open enum: custom values can be created with a direct type cast
+custom := components.Confidence("custom_value")
+```
+
 
 ## Values
 

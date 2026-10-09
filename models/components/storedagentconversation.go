@@ -17,6 +17,7 @@ const (
 	StoredAgentConversationStatusInprogress StoredAgentConversationStatus = "Inprogress"
 	StoredAgentConversationStatusComplete   StoredAgentConversationStatus = "Complete"
 	StoredAgentConversationStatusFailed     StoredAgentConversationStatus = "Failed"
+	StoredAgentConversationStatusStopped    StoredAgentConversationStatus = "Stopped"
 )
 
 func (e StoredAgentConversationStatus) ToPointer() *StoredAgentConversationStatus {
@@ -27,7 +28,7 @@ func (e StoredAgentConversationStatus) ToPointer() *StoredAgentConversationStatu
 func (e *StoredAgentConversationStatus) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "None", "Inprogress", "Complete", "Failed":
+		case "None", "Inprogress", "Complete", "Failed", "Stopped":
 			return true
 		}
 	}
@@ -59,6 +60,17 @@ func (e *StoredAgentConversationAccessLevel) IsExact() bool {
 type StoredAgentConversationSharedWith struct {
 	UserID      *string                             `json:"userId,omitzero"`
 	AccessLevel *StoredAgentConversationAccessLevel `json:"accessLevel,omitzero"`
+}
+
+func (s StoredAgentConversationSharedWith) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(s, "", false)
+}
+
+func (s *StoredAgentConversationSharedWith) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &s, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *StoredAgentConversationSharedWith) GetUserID() *string {

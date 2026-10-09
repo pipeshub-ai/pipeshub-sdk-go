@@ -3,12 +3,14 @@
 package components
 
 import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
 // ReIndexRecordGroupResponseSchema - Response returned by POST /knowledgeBase/reindex/record-group/{recordGroupId}.
 type ReIndexRecordGroupResponseSchema struct {
-	Success        bool                                      `json:"success"`
+	//lint:ignore U1000 accessed via reflection for JSON marshaling
+	success        bool                                      `const:"true" json:"success"`
 	Message        string                                    `json:"message"`
 	RecordGroupID  string                                    `json:"recordGroupId"`
 	Depth          int64                                     `json:"depth"`
@@ -16,11 +18,19 @@ type ReIndexRecordGroupResponseSchema struct {
 	EventPublished bool                                      `json:"eventPublished"`
 }
 
-func (r *ReIndexRecordGroupResponseSchema) GetSuccess() bool {
-	if r == nil {
-		return false
+func (r ReIndexRecordGroupResponseSchema) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(r, "", false)
+}
+
+func (r *ReIndexRecordGroupResponseSchema) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
+		return err
 	}
-	return r.Success
+	return nil
+}
+
+func (r *ReIndexRecordGroupResponseSchema) GetSuccess() bool {
+	return true
 }
 
 func (r *ReIndexRecordGroupResponseSchema) GetMessage() string {

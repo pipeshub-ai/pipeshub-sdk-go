@@ -7,4 +7,4 @@ Credentials for OTP authentication
 
 | Field                     | Type                      | Required                  | Description               | Example                   |
 | ------------------------- | ------------------------- | ------------------------- | ------------------------- | ------------------------- |
-| `Otp`                     | *string*                  | :heavy_check_mark:        | 6-digit one-time password | 123456                    |
+| `Otp`                     | `string`                  | :heavy_check_mark:        | 6-digit one-time password | 123456                    |

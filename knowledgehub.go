@@ -75,6 +75,8 @@ func newKnowledgeHub(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks
 // must be present; regular JWT bearer tokens pass through without scope
 // enforcement.
 //
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+//
 // Deprecated: Use the Knowledge Base API instead. This grouping will be removed in a future release.
 func (s *KnowledgeHub) GetKnowledgeHubRootNodes(ctx context.Context, request operations.GetKnowledgeHubRootNodesRequest, opts ...operations.Option) (*operations.GetKnowledgeHubRootNodesResponse, error) {
 	o := operations.Options{}
@@ -132,7 +134,7 @@ func (s *KnowledgeHub) GetKnowledgeHubRootNodes(ctx context.Context, request ope
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -216,7 +218,7 @@ func (s *KnowledgeHub) GetKnowledgeHubRootNodes(ctx context.Context, request ope
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -270,7 +272,7 @@ func (s *KnowledgeHub) GetKnowledgeHubRootNodes(ctx context.Context, request ope
 
 			var out apierrors.GetKnowledgeHubRootNodesBadRequestError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -295,7 +297,7 @@ func (s *KnowledgeHub) GetKnowledgeHubRootNodes(ctx context.Context, request ope
 
 			var out apierrors.GetKnowledgeHubRootNodesUnauthorizedError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -320,7 +322,7 @@ func (s *KnowledgeHub) GetKnowledgeHubRootNodes(ctx context.Context, request ope
 
 			var out apierrors.GetKnowledgeHubRootNodesForbiddenError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -345,7 +347,7 @@ func (s *KnowledgeHub) GetKnowledgeHubRootNodes(ctx context.Context, request ope
 
 			var out apierrors.GetKnowledgeHubRootNodesInternalServerError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -421,6 +423,8 @@ func (s *KnowledgeHub) GetKnowledgeHubRootNodes(ctx context.Context, request ope
 // must be present; regular JWT bearer tokens pass through without scope
 // enforcement.
 //
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+//
 // Deprecated: Use the Knowledge Base API instead. This grouping will be removed in a future release.
 func (s *KnowledgeHub) GetKnowledgeHubChildNodes(ctx context.Context, request operations.GetKnowledgeHubChildNodesRequest, opts ...operations.Option) (*operations.GetKnowledgeHubChildNodesResponse, error) {
 	o := operations.Options{}
@@ -478,7 +482,7 @@ func (s *KnowledgeHub) GetKnowledgeHubChildNodes(ctx context.Context, request op
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -562,7 +566,7 @@ func (s *KnowledgeHub) GetKnowledgeHubChildNodes(ctx context.Context, request op
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -616,7 +620,7 @@ func (s *KnowledgeHub) GetKnowledgeHubChildNodes(ctx context.Context, request op
 
 			var out apierrors.GetKnowledgeHubChildNodesBadRequestError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -641,7 +645,7 @@ func (s *KnowledgeHub) GetKnowledgeHubChildNodes(ctx context.Context, request op
 
 			var out apierrors.GetKnowledgeHubRootNodesUnauthorizedError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -666,7 +670,7 @@ func (s *KnowledgeHub) GetKnowledgeHubChildNodes(ctx context.Context, request op
 
 			var out apierrors.GetKnowledgeHubRootNodesForbiddenError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -691,7 +695,7 @@ func (s *KnowledgeHub) GetKnowledgeHubChildNodes(ctx context.Context, request op
 
 			var out apierrors.GetKnowledgeHubChildNodesNotFoundError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -716,7 +720,7 @@ func (s *KnowledgeHub) GetKnowledgeHubChildNodes(ctx context.Context, request op
 
 			var out apierrors.GetKnowledgeHubRootNodesInternalServerError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
