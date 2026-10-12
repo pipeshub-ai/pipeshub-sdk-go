@@ -126,6 +126,11 @@ type ConversationMessageStreamRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Client-generated identifier for this run. Send it here to enable
+	// `POST /conversations/{conversationId}/cancel {runId}` while the
+	// stream is still generating.
+	//
+	RunID *string `json:"runId,omitzero"`
 }
 
 func (c ConversationMessageStreamRequest) MarshalJSON() ([]byte, error) {
@@ -228,4 +233,11 @@ func (c *ConversationMessageStreamRequest) GetAgentCapabilities() *AgentCapabili
 		return nil
 	}
 	return c.AgentCapabilities
+}
+
+func (c *ConversationMessageStreamRequest) GetRunID() *string {
+	if c == nil {
+		return nil
+	}
+	return c.RunID
 }

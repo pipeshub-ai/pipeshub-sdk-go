@@ -10,6 +10,9 @@ or organizations. Each app receives a client ID and secret for authentication.
 **Who can see which apps**
 - **Everyone (including org admins)** sees and manages only OAuth apps **they created** (`createdBy`). Other members' apps are hidden (not listed; individual operations return not found).
 
+**Session only**
+- Every `/oauth-clients/*` route requires the user's interactive session JWT. OAuth access tokens and personal access tokens (`phpat_...`) are rejected with `403`, so a token issued to a client can never register, reconfigure, or revoke clients on its own.
+
 **Who authorizes vs. client credentials**
 - **Authorization code:** Any authenticated user in the workspace may complete consent for a valid `client_id`; issued tokens represent **that user**.
 - **Client credentials:** Access tokens represent the **OAuth app creator** (who registered the client), not the caller.
@@ -90,10 +93,10 @@ func main() {
 | Parameter                                                                            | Type                                                                                 | Required                                                                             | Description                                                                          |
 | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | `ctx`                                                                                | [context.Context](https://pkg.go.dev/context#Context)                                | :heavy_check_mark:                                                                   | The context to use for the request.                                                  |
-| `page`                                                                               | **int64*                                                                             | :heavy_minus_sign:                                                                   | Page number (matches `listAppsQuerySchema`: defaults to `1` when omitted or empty).<br/> |
-| `limit`                                                                              | **int64*                                                                             | :heavy_minus_sign:                                                                   | Items per page (defaults to `20` when omitted or empty; max 100).<br/>               |
+| `page`                                                                               | `*int64`                                                                             | :heavy_minus_sign:                                                                   | Page number (matches `listAppsQuerySchema`: defaults to `1` when omitted or empty).<br/> |
+| `limit`                                                                              | `*int64`                                                                             | :heavy_minus_sign:                                                                   | Items per page (defaults to `20` when omitted or empty; max 100).<br/>               |
 | `status`                                                                             | [*operations.ListOAuthAppsStatus](../../models/operations/listoauthappsstatus.md)    | :heavy_minus_sign:                                                                   | Filter by status                                                                     |
-| `search`                                                                             | **string*                                                                            | :heavy_minus_sign:                                                                   | Search by app name or description (case-insensitive)                                 |
+| `search`                                                                             | `*string`                                                                            | :heavy_minus_sign:                                                                   | Search by app name or description (case-insensitive)                                 |
 | `opts`                                                                               | [][operations.Option](../../models/operations/option.md)                             | :heavy_minus_sign:                                                                   | The options for this request.                                                        |
 
 ### Response
@@ -297,7 +300,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `appID`                                                  | *string*                                                 | :heavy_check_mark:                                       | OAuth app ID (MongoDB ObjectId)                          |
+| `appID`                                                  | `string`                                                 | :heavy_check_mark:                                       | OAuth app ID (MongoDB ObjectId)                          |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -361,7 +364,7 @@ func main() {
 | Parameter                                                                            | Type                                                                                 | Required                                                                             | Description                                                                          |
 | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | `ctx`                                                                                | [context.Context](https://pkg.go.dev/context#Context)                                | :heavy_check_mark:                                                                   | The context to use for the request.                                                  |
-| `appID`                                                                              | *string*                                                                             | :heavy_check_mark:                                                                   | OAuth app ID                                                                         |
+| `appID`                                                                              | `string`                                                                             | :heavy_check_mark:                                                                   | OAuth app ID                                                                         |
 | `body`                                                                               | [components.UpdateOAuthAppRequest](../../models/components/updateoauthapprequest.md) | :heavy_check_mark:                                                                   | Request payload                                                                      |
 | `opts`                                                                               | [][operations.Option](../../models/operations/option.md)                             | :heavy_minus_sign:                                                                   | The options for this request.                                                        |
 
@@ -422,7 +425,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `appID`                                                  | *string*                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
+| `appID`                                                  | `string`                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -484,7 +487,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `appID`                                                  | *string*                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
+| `appID`                                                  | `string`                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -546,7 +549,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `appID`                                                  | *string*                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
+| `appID`                                                  | `string`                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -608,7 +611,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `appID`                                                  | *string*                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
+| `appID`                                                  | `string`                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -670,7 +673,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `appID`                                                  | *string*                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
+| `appID`                                                  | `string`                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -732,7 +735,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `appID`                                                  | *string*                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
+| `appID`                                                  | `string`                                                 | :heavy_check_mark:                                       | OAuth app ID                                             |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response

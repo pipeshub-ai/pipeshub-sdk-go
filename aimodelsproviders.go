@@ -50,6 +50,8 @@ func newAIModelsProviders(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, 
 // **Access control:** requires a valid bearer token. For OAuth tokens the
 // `config:read` scope must be present; regular JWT bearer tokens pass through
 // without scope enforcement.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelType components.ModelType, opts ...operations.Option) (*operations.GetAvailableModelsByTypeResponse, error) {
 	request := operations.GetAvailableModelsByTypeRequest{
 		ModelType: modelType,
@@ -106,7 +108,7 @@ func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelT
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -190,7 +192,7 @@ func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelT
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -244,7 +246,7 @@ func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelT
 
 			var out apierrors.GetAvailableModelsByTypeBadRequestError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -269,7 +271,7 @@ func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelT
 
 			var out apierrors.GetKnowledgeHubRootNodesUnauthorizedError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -294,7 +296,7 @@ func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelT
 
 			var out apierrors.GetAvailableModelsByTypeForbiddenError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -319,7 +321,7 @@ func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelT
 
 			var out apierrors.GetKnowledgeHubRootNodesInternalServerError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{

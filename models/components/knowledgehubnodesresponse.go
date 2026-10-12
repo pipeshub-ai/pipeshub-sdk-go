@@ -3,6 +3,7 @@
 package components
 
 import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
@@ -508,7 +509,8 @@ func (p *Permissions) GetCanManagePermissions() bool {
 // omitted properties).
 type KnowledgeHubNodesResponse struct {
 	// Always `true` on HTTP 200. Failures use 4xx/5xx error envelopes, not this body shape.
-	Success bool `json:"success"`
+	//lint:ignore U1000 accessed via reflection for JSON marshaling
+	success bool `const:"true" json:"success"`
 	// Always `null` on HTTP 200.
 	Error *string `json:"error"`
 	// Current parent node ID when browsing children; `null` at root.
@@ -529,11 +531,19 @@ type KnowledgeHubNodesResponse struct {
 	Permissions *Permissions `json:"permissions"`
 }
 
-func (k *KnowledgeHubNodesResponse) GetSuccess() bool {
-	if k == nil {
-		return false
+func (k KnowledgeHubNodesResponse) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(k, "", false)
+}
+
+func (k *KnowledgeHubNodesResponse) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &k, "", false, nil); err != nil {
+		return err
 	}
-	return k.Success
+	return nil
+}
+
+func (k *KnowledgeHubNodesResponse) GetSuccess() bool {
+	return true
 }
 
 func (k *KnowledgeHubNodesResponse) GetError() *string {

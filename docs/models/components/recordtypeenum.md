@@ -35,6 +35,19 @@ may use any of the connector-specific types below.
 - OTHERS: Miscellaneous content types
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.RecordTypeEnumFile
+
+// Open enum: custom values can be created with a direct type cast
+custom := components.RecordTypeEnum("custom_value")
+```
+
 
 ## Values
 

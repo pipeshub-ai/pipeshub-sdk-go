@@ -13,6 +13,19 @@ Current indexing/processing status:
 - ENABLE_MULTIMODAL_MODELS: Requires multimodal AI models
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.IndexingStatusNotStarted
+
+// Open enum: custom values can be created with a direct type cast
+custom := components.IndexingStatus("custom_value")
+```
+
 
 ## Values
 

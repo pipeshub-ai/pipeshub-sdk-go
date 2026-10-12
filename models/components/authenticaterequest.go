@@ -106,7 +106,14 @@ func CreateCredentialsStr(str string) Credentials {
 	}
 }
 
-func (u *Credentials) UnmarshalJSON(data []byte) error {
+func (u *Credentials) UnmarshalJSON(data []byte) (err error) {
+	previous := *u
+	*u = Credentials{}
+	defer func() {
+		if err != nil {
+			*u = previous
+		}
+	}()
 
 	var candidates []utils.UnionCandidate
 
@@ -201,7 +208,7 @@ func (u Credentials) MarshalJSON() ([]byte, error) {
 // - `microsoft`: `{ accessToken: "...", idToken: "..." }`
 // - `azureAd`: `{ accessToken: "...", idToken: "..." }`
 // - `oauth`: `{ accessToken: "...", idToken: "..." }`
-// - `samlSso`: handled via redirect flow
+// - `samlSso`: not accepted by `/userAccount/authenticate`, which answers `400`. SAML sign-in runs as a browser redirect: send the browser to `/saml/signIn` instead
 type AuthenticateRequest struct {
 	// Authentication method to use
 	Method Method `json:"method"`

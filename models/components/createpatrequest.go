@@ -98,7 +98,14 @@ func CreateExpiryDaysExpiryDaysNever(expiryDaysNever ExpiryDaysNever) ExpiryDays
 	}
 }
 
-func (u *ExpiryDays) UnmarshalJSON(data []byte) error {
+func (u *ExpiryDays) UnmarshalJSON(data []byte) (err error) {
+	previous := *u
+	*u = ExpiryDays{}
+	defer func() {
+		if err != nil {
+			*u = previous
+		}
+	}()
 
 	var candidates []utils.UnionCandidate
 

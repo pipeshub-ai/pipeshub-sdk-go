@@ -13,8 +13,8 @@ through from `req.query`, hence string-or-null even when `type` is
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `Type`             | **string*          | :heavy_minus_sign: | N/A                |
-| `Values`           | []*string*         | :heavy_minus_sign: | N/A                |
-| `Description`      | *string*           | :heavy_check_mark: | N/A                |
-| `Current`          | *string*           | :heavy_check_mark: | N/A                |
-| `Applied`          | *bool*             | :heavy_check_mark: | N/A                |
+| `Type`             | `*string`          | :heavy_minus_sign: | N/A                |
+| `Values`           | []`string`         | :heavy_minus_sign: | N/A                |
+| `Description`      | `string`           | :heavy_check_mark: | N/A                |
+| `Current`          | `*string`          | :heavy_check_mark: | N/A                |
+| `Applied`          | `bool`             | :heavy_check_mark: | N/A                |

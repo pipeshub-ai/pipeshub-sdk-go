@@ -164,10 +164,12 @@ func (g *GetArchivedConversationsRequest) GetConversationID() *string {
 }
 
 // GetArchivedConversationsStatus - Current status of the conversation:
-// - `None` — no activity yet
-// - `Inprogress` — AI is processing
-// - `Complete` — response ready
-// - `Failed` — error occurred
+//   - `None` — no activity yet
+//   - `Inprogress` — AI is processing
+//   - `Complete` — response ready
+//   - `Failed` — error occurred
+//   - `Stopped` — cancelled, or the client disconnected mid-answer;
+//     the last message keeps the partial answer
 type GetArchivedConversationsStatus string
 
 const (
@@ -175,6 +177,7 @@ const (
 	GetArchivedConversationsStatusInprogress GetArchivedConversationsStatus = "Inprogress"
 	GetArchivedConversationsStatusComplete   GetArchivedConversationsStatus = "Complete"
 	GetArchivedConversationsStatusFailed     GetArchivedConversationsStatus = "Failed"
+	GetArchivedConversationsStatusStopped    GetArchivedConversationsStatus = "Stopped"
 )
 
 func (e GetArchivedConversationsStatus) ToPointer() *GetArchivedConversationsStatus {
@@ -185,7 +188,7 @@ func (e GetArchivedConversationsStatus) ToPointer() *GetArchivedConversationsSta
 func (e *GetArchivedConversationsStatus) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "None", "Inprogress", "Complete", "Failed":
+		case "None", "Inprogress", "Complete", "Failed", "Stopped":
 			return true
 		}
 	}
@@ -364,6 +367,32 @@ func (e *GetArchivedConversationsAccessLevel) IsExact() bool {
 	return false
 }
 
+// GetArchivedConversationsProjectVisibility - Only meaningful when `projectId` is set. `private` (default)
+// keeps the conversation visible to its owner only; `project`
+// exposes it to every member of the linked project. See
+// `PATCH /conversations/{conversationId}/project-visibility`.
+type GetArchivedConversationsProjectVisibility string
+
+const (
+	GetArchivedConversationsProjectVisibilityPrivate GetArchivedConversationsProjectVisibility = "private"
+	GetArchivedConversationsProjectVisibilityProject GetArchivedConversationsProjectVisibility = "project"
+)
+
+func (e GetArchivedConversationsProjectVisibility) ToPointer() *GetArchivedConversationsProjectVisibility {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *GetArchivedConversationsProjectVisibility) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "private", "project":
+			return true
+		}
+	}
+	return false
+}
+
 // GetArchivedConversationsConversation - A conversation represents a chat session between a user and the AI.
 // Conversations maintain context across multiple messages and can be
 // shared, archived, and organized.
@@ -387,6 +416,8 @@ type GetArchivedConversationsConversation struct {
 	// - `Inprogress` — AI is processing
 	// - `Complete` — response ready
 	// - `Failed` — error occurred
+	// - `Stopped` — cancelled, or the client disconnected mid-answer;
+	//   the last message keeps the partial answer
 	//
 	Status *GetArchivedConversationsStatus `json:"status,omitzero"`
 	// Error description, populated only when `status` is `Failed`.
@@ -426,6 +457,21 @@ type GetArchivedConversationsConversation struct {
 	// their entry in `sharedWith`, or `read` by default.
 	//
 	AccessLevel *GetArchivedConversationsAccessLevel `json:"accessLevel,omitzero"`
+	// The project this conversation is linked to, if any. Set via
+	// `PUT /conversations/{conversationId}/project` or at creation
+	// time; absent on conversations that were never linked.
+	//
+	ProjectID optionalnullable.OptionalNullable[string] `json:"projectId,omitzero"`
+	// Only meaningful when `projectId` is set. `private` (default)
+	// keeps the conversation visible to its owner only; `project`
+	// exposes it to every member of the linked project. See
+	// `PATCH /conversations/{conversationId}/project-visibility`.
+	//
+	ProjectVisibility optionalnullable.OptionalNullable[GetArchivedConversationsProjectVisibility] `json:"projectVisibility,omitzero"`
+	// Present on conversations the caller received via share. Identifies the
+	// conversation initiator (the only user who can share a chat).
+	//
+	SharedBy *components.ConversationSharedBy `json:"sharedBy,omitzero"`
 	// Timestamp when the conversation was archived
 	ArchivedAt *time.Time `json:"archivedAt,omitzero"`
 }
@@ -600,6 +646,27 @@ func (g *GetArchivedConversationsConversation) GetAccessLevel() *GetArchivedConv
 		return nil
 	}
 	return g.AccessLevel
+}
+
+func (g *GetArchivedConversationsConversation) GetProjectID() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.ProjectID
+}
+
+func (g *GetArchivedConversationsConversation) GetProjectVisibility() optionalnullable.OptionalNullable[GetArchivedConversationsProjectVisibility] {
+	if g == nil {
+		return nil
+	}
+	return g.ProjectVisibility
+}
+
+func (g *GetArchivedConversationsConversation) GetSharedBy() *components.ConversationSharedBy {
+	if g == nil {
+		return nil
+	}
+	return g.SharedBy
 }
 
 func (g *GetArchivedConversationsConversation) GetArchivedAt() *time.Time {

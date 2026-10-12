@@ -6,6 +6,16 @@ OAuth grant type:
 - `refresh_token`: Get new access token using refresh token
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.GrantTypeAuthorizationCode
+```
+
 
 ## Values
 

@@ -5,4 +5,4 @@
 
 | Field                                | Type                                 | Required                             | Description                          | Example                              |
 | ------------------------------------ | ------------------------------------ | ------------------------------------ | ------------------------------------ | ------------------------------------ |
-| `KbID`                               | *string*                             | :heavy_check_mark:                   | Knowledge base ID (non-empty string) | 8a095180-2989-4018-b448-70eb75fba1c7 |
+| `KbID`                               | `string`                             | :heavy_check_mark:                   | Knowledge base ID (non-empty string) | 8a095180-2989-4018-b448-70eb75fba1c7 |

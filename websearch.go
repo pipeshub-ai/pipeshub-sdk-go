@@ -37,6 +37,13 @@ func newWebSearch(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks *h
 //
 // **Authentication:** Session JWT or OAuth 2.0 access token via `Authorization: Bearer`.
 // OAuth tokens must include the `config:read` scope. Admin role is not required.
+//
+// **API keys:** for anyone who isn't an org admin, each provider's `configuration.apiKey`
+// comes back as the placeholder `****************`. Admins get the stored key, unless the
+// server hides secrets from everyone (`HIDE_SECRET_CONFIG=true`). When updating a provider,
+// sending the placeholder back keeps the stored key.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *WebSearch) GetWebSearchProviders(ctx context.Context, opts ...operations.Option) (*operations.GetWebSearchProvidersResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -89,7 +96,7 @@ func (s *WebSearch) GetWebSearchProviders(ctx context.Context, opts ...operation
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -173,7 +180,7 @@ func (s *WebSearch) GetWebSearchProviders(ctx context.Context, opts ...operation
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -229,7 +236,7 @@ func (s *WebSearch) GetWebSearchProviders(ctx context.Context, opts ...operation
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{

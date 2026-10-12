@@ -21,6 +21,7 @@ const (
 	ConnectorNameEnumOutlookCalendar              ConnectorNameEnum = "OUTLOOK CALENDAR"
 	ConnectorNameEnumMicrosoftTeams               ConnectorNameEnum = "MICROSOFT TEAMS"
 	ConnectorNameEnumNotion                       ConnectorNameEnum = "NOTION"
+	ConnectorNameEnumNotionPersonal               ConnectorNameEnum = "NOTION PERSONAL"
 	ConnectorNameEnumSlack                        ConnectorNameEnum = "SLACK"
 	ConnectorNameEnumSlackWorkspace               ConnectorNameEnum = "SLACK WORKSPACE"
 	ConnectorNameEnumKb                           ConnectorNameEnum = "KB"
@@ -37,7 +38,9 @@ const (
 	ConnectorNameEnumDropboxPersonal              ConnectorNameEnum = "DROPBOX PERSONAL"
 	ConnectorNameEnumWeb                          ConnectorNameEnum = "WEB"
 	ConnectorNameEnumBookstack                    ConnectorNameEnum = "BOOKSTACK"
+	ConnectorNameEnumDrupalWiki                   ConnectorNameEnum = "DRUPAL WIKI"
 	ConnectorNameEnumGithub                       ConnectorNameEnum = "GITHUB"
+	ConnectorNameEnumGithubTeams                  ConnectorNameEnum = "GITHUB TEAMS"
 	ConnectorNameEnumServicenow                   ConnectorNameEnum = "SERVICENOW"
 	ConnectorNameEnumSalesforce                   ConnectorNameEnum = "SALESFORCE"
 	ConnectorNameEnumS3                           ConnectorNameEnum = "S3"
@@ -70,7 +73,7 @@ func (e ConnectorNameEnum) ToPointer() *ConnectorNameEnum {
 func (e *ConnectorNameEnum) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "DRIVE", "DRIVE WORKSPACE", "GMAIL", "GMAIL WORKSPACE", "CALENDAR", "ONEDRIVE", "SHAREPOINT ONLINE", "OUTLOOK", "OUTLOOK PERSONAL", "OUTLOOK CALENDAR", "MICROSOFT TEAMS", "NOTION", "SLACK", "SLACK WORKSPACE", "KB", "CONFLUENCE", "CONFLUENCE DATA CENTER", "CONFLUENCE DATA CENTER PERSONAL", "JIRA", "JIRA PERSONAL", "JIRA DATA CENTER", "JIRA DATA CENTER PERSONAL", "BOX", "NEXTCLOUD", "DROPBOX", "DROPBOX PERSONAL", "WEB", "BOOKSTACK", "GITHUB", "SERVICENOW", "SALESFORCE", "S3", "MINIO", "GCS", "AZURE BLOB", "AZURE FILES", "LINEAR", "ZAMMAD", "ZOOM", "GITLAB", "GITLAB PERSONAL", "SNOWFLAKE", "POSTGRESQL", "MARIADB", "UNKNOWN", "RSS", "LOCAL_FS", "CODING_SANDBOX", "DATABASE_SANDBOX", "IMAGE_GENERATION", "ATTACHMENTS":
+		case "DRIVE", "DRIVE WORKSPACE", "GMAIL", "GMAIL WORKSPACE", "CALENDAR", "ONEDRIVE", "SHAREPOINT ONLINE", "OUTLOOK", "OUTLOOK PERSONAL", "OUTLOOK CALENDAR", "MICROSOFT TEAMS", "NOTION", "NOTION PERSONAL", "SLACK", "SLACK WORKSPACE", "KB", "CONFLUENCE", "CONFLUENCE DATA CENTER", "CONFLUENCE DATA CENTER PERSONAL", "JIRA", "JIRA PERSONAL", "JIRA DATA CENTER", "JIRA DATA CENTER PERSONAL", "BOX", "NEXTCLOUD", "DROPBOX", "DROPBOX PERSONAL", "WEB", "BOOKSTACK", "DRUPAL WIKI", "GITHUB", "GITHUB TEAMS", "SERVICENOW", "SALESFORCE", "S3", "MINIO", "GCS", "AZURE BLOB", "AZURE FILES", "LINEAR", "ZAMMAD", "ZOOM", "GITLAB", "GITLAB PERSONAL", "SNOWFLAKE", "POSTGRESQL", "MARIADB", "UNKNOWN", "RSS", "LOCAL_FS", "CODING_SANDBOX", "DATABASE_SANDBOX", "IMAGE_GENERATION", "ATTACHMENTS":
 			return true
 		}
 	}

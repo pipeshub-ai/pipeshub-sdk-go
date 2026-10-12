@@ -11,6 +11,19 @@ Parse-phase status (ahead of indexing/extraction):
 - EMPTY: File has no extractable content
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.ParsingStatusNotStarted
+
+// Open enum: custom values can be created with a direct type cast
+custom := components.ParsingStatus("custom_value")
+```
+
 
 ## Values
 

@@ -51,7 +51,14 @@ func CreateAgentCreateKnowledgeFiltersArrayOfAny(arrayOfAny []any) AgentCreateKn
 	}
 }
 
-func (u *AgentCreateKnowledgeFilters) UnmarshalJSON(data []byte) error {
+func (u *AgentCreateKnowledgeFilters) UnmarshalJSON(data []byte) (err error) {
+	previous := *u
+	*u = AgentCreateKnowledgeFilters{}
+	defer func() {
+		if err != nil {
+			*u = previous
+		}
+	}()
 
 	var candidates []utils.UnionCandidate
 

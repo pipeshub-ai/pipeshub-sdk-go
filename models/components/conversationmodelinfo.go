@@ -2,11 +2,15 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 // ConversationModelInfo - AI model configuration recorded against a conversation or message.
 type ConversationModelInfo struct {
 	// Stable identifier of the configured model record
 	ModelKey *string `json:"modelKey,omitzero"`
-	// Provider-facing model name (e.g. `gpt-4o-mini`)
+	// Provider-facing model name (e.g. `gpt-5.6-luna`)
 	ModelName *string `json:"modelName,omitzero"`
 	// Provider key (e.g. `openai`, `anthropic`)
 	ModelProvider *string `json:"modelProvider,omitzero"`
@@ -14,6 +18,17 @@ type ConversationModelInfo struct {
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	// Chat mode used for this turn (e.g. `quick`, `internal_search`)
 	ChatMode *string `json:"chatMode,omitzero"`
+}
+
+func (c ConversationModelInfo) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(c, "", false)
+}
+
+func (c *ConversationModelInfo) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *ConversationModelInfo) GetModelKey() *string {

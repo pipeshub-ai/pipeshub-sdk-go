@@ -65,6 +65,10 @@ func (u Forbidden) IsUnknown() bool {
 }
 
 func (u *Forbidden) UnmarshalJSON(data []byte) error {
+	previous := *u
+	*u = Forbidden{
+		HTTPMeta: previous.HTTPMeta,
+	}
 
 	var candidates []utils.UnionCandidate
 

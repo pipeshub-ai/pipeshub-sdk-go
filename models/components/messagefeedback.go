@@ -17,6 +17,17 @@ type Ratings struct {
 	Clarity *int64 `json:"clarity,omitzero"`
 }
 
+func (r Ratings) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(r, "", false)
+}
+
+func (r *Ratings) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *Ratings) GetAccuracy() *int64 {
 	if r == nil {
 		return nil
@@ -83,6 +94,17 @@ type MessageFeedbackComments struct {
 	Suggestions *string `json:"suggestions,omitzero"`
 }
 
+func (m MessageFeedbackComments) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(m, "", false)
+}
+
+func (m *MessageFeedbackComments) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &m, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *MessageFeedbackComments) GetPositive() *string {
 	if m == nil {
 		return nil
@@ -111,6 +133,17 @@ type CitationFeedback struct {
 	IsRelevant     *bool   `json:"isRelevant,omitzero"`
 	RelevanceScore *int64  `json:"relevanceScore,omitzero"`
 	Comment        *string `json:"comment,omitzero"`
+}
+
+func (c CitationFeedback) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(c, "", false)
+}
+
+func (c *CitationFeedback) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *CitationFeedback) GetID() *string {
@@ -242,6 +275,17 @@ type Metrics struct {
 	FeedbackSessionID   *string  `json:"feedbackSessionId,omitzero"`
 	UserAgent           *string  `json:"userAgent,omitzero"`
 	Platform            *string  `json:"platform,omitzero"`
+}
+
+func (m Metrics) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(m, "", false)
+}
+
+func (m *Metrics) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &m, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *Metrics) GetTimeToFeedback() *float64 {

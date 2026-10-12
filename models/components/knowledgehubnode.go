@@ -93,6 +93,8 @@ type KnowledgeHubNode struct {
 	Origin KnowledgeHubNodeOrigin `json:"origin"`
 	// Connector display name / key when applicable; otherwise `null`.
 	Connector *string `json:"connector"`
+	// Connector instance id for records and groups that come from a connector; otherwise `null` (Collections, and app nodes).
+	ConnectorID *string `json:"connectorId"`
 	// Record type when `nodeType` is `record`; otherwise `null`.
 	RecordType *string `json:"recordType"`
 	// Record group type when `nodeType` is `recordGroup`; otherwise `null`.
@@ -165,6 +167,13 @@ func (k *KnowledgeHubNode) GetConnector() *string {
 		return nil
 	}
 	return k.Connector
+}
+
+func (k *KnowledgeHubNode) GetConnectorID() *string {
+	if k == nil {
+		return nil
+	}
+	return k.ConnectorID
 }
 
 func (k *KnowledgeHubNode) GetRecordType() *string {

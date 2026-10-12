@@ -2,7 +2,7 @@
 
 package pipeshub
 
-// Generated from OpenAPI doc version 1.0.0 and generator version 2.845.1
+// Generated from OpenAPI doc version 1.0.0 and generator version 2.946.0
 
 import (
 	"context"
@@ -122,6 +122,9 @@ type Pipeshub struct {
 	// **Who can see which apps**
 	// - **Everyone (including org admins)** sees and manages only OAuth apps **they created** (`createdBy`). Other members' apps are hidden (not listed; individual operations return not found).
 	//
+	// **Session only**
+	// - Every `/oauth-clients/*` route requires the user's interactive session JWT. OAuth access tokens and personal access tokens (`phpat_...`) are rejected with `403`, so a token issued to a client can never register, reconfigure, or revoke clients on its own.
+	//
 	// **Who authorizes vs. client credentials**
 	// - **Authorization code:** Any authenticated user in the workspace may complete consent for a valid `client_id`; issued tokens represent **that user**.
 	// - **Client credentials:** Access tokens represent the **OAuth app creator** (who registered the client), not the caller.
@@ -148,6 +151,13 @@ type Pipeshub struct {
 	// **Who can create one**
 	// - **Any authenticated org member** — unlike OAuth apps, this is
 	//   deliberately not admin-gated.
+	//
+	// **Session only**
+	// - Every `/personal-access-tokens/*` route requires the user's interactive
+	//   session JWT. OAuth access tokens and personal access tokens (`phpat_...`)
+	//   are rejected with `403`. `scopes` is capped at the instance's `MCP_SCOPES`,
+	//   not at the caller's own token, so a narrowly scoped token could otherwise
+	//   mint itself a full-scope, non-expiring PAT.
 	//
 	// **How it's issued**
 	// - Minted through the same OAuth access-token machinery as `/oauth2/token`,
@@ -185,6 +195,16 @@ type Pipeshub struct {
 	KnowledgeHub *KnowledgeHub
 	// AI-powered conversational chat management with citations and follow-up questions
 	Conversations *Conversations
+	// Workspaces that group related assistant and agent conversations under a
+	// shared name, custom instructions, a knowledge scope, and reference
+	// files. Projects can be shared with teammates; project membership only
+	// grants read access to conversations explicitly marked
+	// `projectVisibility: project` — a member never gets access to another
+	// member's private chats. See `Conversations` for the two fields
+	// (`projectId`, `projectVisibility`) that link a conversation to a
+	// project.
+	//
+	Projects *Projects
 	// Enterprise semantic search across all indexed knowledge with relevance scoring
 	SemanticSearch *SemanticSearch
 	// Custom AI agents with specialized capabilities and tool integrations
@@ -202,7 +222,7 @@ type Pipeshub struct {
 
 type SDKOption func(*Pipeshub)
 
-// WithServerURL allows the overriding of the default server URL
+// WithServerURL allows providing an alternative server URL
 func WithServerURL(serverURL string) SDKOption {
 	return func(sdk *Pipeshub) {
 		sdk.sdkConfiguration.ServerURL = serverURL
@@ -283,10 +303,13 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *Pipeshub {
 	sdk := &Pipeshub{
-		SDKVersion: "1.6.0",
+		SDKVersion: "1.7.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:  "speakeasy-sdk/go 1.6.0 2.845.1 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
-			ServerList: ServerList,
+			UserAgent:         "speakeasy-sdk/go 1.7.0 2.946.0 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
+			SDKVersion:        "1.7.0",
+			GenVersion:        "2.946.0",
+			OpenAPIDocVersion: "1.0.0",
+			ServerList:        ServerList,
 			ServerVariables: []map[string]string{
 				{
 					"instance_url": "https://app.pipeshub.com",
@@ -326,6 +349,7 @@ func New(opts ...SDKOption) *Pipeshub {
 	sdk.KnowledgeBase = newKnowledgeBase(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.KnowledgeHub = newKnowledgeHub(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Conversations = newConversations(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.Projects = newProjects(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.SemanticSearch = newSemanticSearch(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Agents = newAgents(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Connector = newConnector(sdk, sdk.sdkConfiguration, sdk.hooks)

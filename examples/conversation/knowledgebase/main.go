@@ -1,21 +1,24 @@
+// Command knowledgebase streams one answer scoped to a single knowledge base,
+// using Filters.Kb.
+//
+// Usage: go run . <path-to-.env>
 package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 
+	"enterprise_search/agui"
 	"enterprise_search/auth"
 )
 
-const knowledgeBaseName = "SDK-test"
+const defaultKnowledgeBaseName = "SDK-test"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -33,107 +36,74 @@ func main() {
 		log.Fatal(err)
 	}
 
+	knowledgeBaseName := os.Getenv("PIPESHUB_KB_NAME")
+	if knowledgeBaseName == "" {
+		knowledgeBaseName = defaultKnowledgeBaseName
+	}
+
 	ctx := context.Background()
 
-	kbID, err := findKnowledgeBaseID(ctx, sdk, knowledgeBaseName)
+	kbsRes, err := sdk.KnowledgeBase.ListKnowledgeBases(ctx, operations.ListKnowledgeBasesRequest{
+		Search: &knowledgeBaseName,
+	})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("list knowledge bases: %v", err)
+	}
+	var kbID string
+	for _, kb := range kbsRes.GetAllKnowledgeBaseResponseSchema.GetKnowledgeBases() {
+		if kb.Name == knowledgeBaseName {
+			kbID = kb.ID
+			break
+		}
+	}
+	if kbID == "" {
+		log.Fatalf("knowledge base %q not found", knowledgeBaseName)
 	}
 
 	query := "Who moved the cheese?"
-	chatMode := "internal_search"
 
-	res, err := sdk.Conversations.StreamChat(ctx, components.CreateConversationRequest{
+	res, err := sdk.Conversations.StreamChat(ctx, components.ConversationStreamRequest{
 		Query:    query,
-		ChatMode: &chatMode,
+		ChatMode: components.ConversationStreamRequestChatModeInternalSearch,
 		Filters:  &components.Filters{Kb: []string{kbID}},
 	})
 	if err != nil {
 		log.Fatalf("conversation: %v", err)
 	}
-	if res == nil || res.AssistantStreamSSEEvent == nil {
+	if res == nil || res.ConversationStreamSSEEvent == nil {
 		log.Fatal("no SSE stream returned")
 	}
-		log.Fatal("no SSE stream returned")
-	}
-	stream := res.AssistantStreamSSEEvent
+	stream := res.ConversationStreamSSEEvent
 	defer stream.Close()
 
 	fmt.Printf("You: %s\n\nBot: ", query)
 
+	c := agui.Collector{Echo: os.Stdout}
 	for stream.Next() {
 		ev := stream.Value()
 		if ev == nil || ev.Event == nil || ev.Data == nil {
 			continue
 		}
-		switch *ev.Event {
-		case components.AssistantStreamSSEEventEventComplete:
-			var payload struct {
-				Conversation struct {
-					Messages []struct {
-						MessageType string `json:"messageType"`
-						Content     string `json:"content"`
-					} `json:"messages"`
-				} `json:"conversation"`
-			}
-			if err := json.Unmarshal([]byte(*ev.Data), &payload); err != nil {
-				log.Fatalf("decode complete: %v", err)
-			}
-			for _, m := range payload.Conversation.Messages {
-				if m.MessageType == "bot_response" {
-					fmt.Println(m.Content)
-					return
-				}
-			}
-			log.Fatal("no bot response in complete event")
-		case components.AssistantStreamSSEEventEventError:
-			log.Fatalf("stream error: %s", *ev.Data)
+		done, err := c.Handle(string(*ev.Event), *ev.Data)
+		if err != nil {
+			log.Fatalf("stream: %v", err)
+		}
+		if done {
+			break
 		}
 	}
 	if err := stream.Err(); err != nil {
 		log.Fatalf("stream: %v", err)
 	}
-}
-
-func findKnowledgeBaseID(ctx context.Context, sdk *pipeshub.Pipeshub, name string) (string, error) {
-	parentID, err := getKnowledgeBaseParentID(ctx, sdk)
-	if err != nil {
-		return "", err
+	if !c.Done {
+		log.Fatal("stream ended without RUN_FINISHED")
 	}
 
-	kbsRes, err := sdk.KnowledgeHub.GetKnowledgeHubChildNodes(ctx, operations.GetKnowledgeHubChildNodesRequest{
-		ParentType: operations.ParentTypeApp,
-		ParentID:   parentID,
-	})
-	if err != nil {
-		return "", fmt.Errorf("list knowledge bases: %w", err)
+	fmt.Println()
+	// Citation references are rewritten as the answer is finalized, so the
+	// persisted message can differ from the streamed tokens.
+	if answer := c.Answer(); answer != c.Streamed {
+		fmt.Printf("\nFinal answer:\n%s\n", answer)
 	}
-	if kbsRes == nil || kbsRes.KnowledgeHubNodesResponse == nil {
-		return "", fmt.Errorf("list knowledge bases: empty response")
-	}
-
-	fmt.Println("[debug] available knowledge bases:")
-	for _, kb := range kbsRes.KnowledgeHubNodesResponse.GetItems() {
-		fmt.Printf("  - %q (id=%s)\n", kb.Name, kb.ID)
-		if kb.Name == name {
-			return kb.ID, nil
-		}
-	}
-
-	return "", fmt.Errorf("knowledge base %q not found for parent %q", name, parentID)
-}
-
-// Before getting the knowledge bases available for the org, we need to find out the org id
-// Parent ID is the org id prefixed with "knowledgeBase_"
-
-func getKnowledgeBaseParentID(ctx context.Context, sdk *pipeshub.Pipeshub) (string, error) {
-	orgRes, err := sdk.Organizations.GetCurrentOrganization(ctx)
-	if err != nil {
-		return "", fmt.Errorf("get current organization: %w", err)
-	}
-	if orgRes == nil || orgRes.Organization == nil || orgRes.Organization.ID == nil || *orgRes.Organization.ID == "" {
-		return "", fmt.Errorf("get current organization: missing organization id")
-	}
-
-	return "knowledgeBase_" + *orgRes.Organization.ID, nil
+	fmt.Printf("\nconversation: %s\n", c.ConversationID)
 }

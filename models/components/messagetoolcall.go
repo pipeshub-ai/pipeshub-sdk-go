@@ -2,10 +2,25 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 // MessageToolCall - One tool invocation recorded on a message turn.
 type MessageToolCall struct {
 	ToolName   *string `json:"toolName,omitzero"`
 	ToolResult any     `json:"toolResult,omitzero"`
+}
+
+func (m MessageToolCall) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(m, "", false)
+}
+
+func (m *MessageToolCall) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &m, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *MessageToolCall) GetToolName() *string {

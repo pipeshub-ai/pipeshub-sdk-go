@@ -35,15 +35,20 @@ generation:
     generateNewTests: false
     skipResponseBodyAssertions: false
 go:
-  version: 1.6.0
+  version: 1.7.0
   additionalDependencies: {}
   baseErrorName: PipeshubError
   clientServerStatusCodesAsErrors: true
   defaultErrorName: APIError
+  enableCustomCodeRegions: false
+  enableSkipDeserialization: false
   envVarPrefix: PIPESHUB
+  fixFlags:
+    encodePathParams: false
   flattenGlobalSecurity: true
   forwardCompatibleEnumsByDefault: true
   forwardCompatibleUnionsByDefault: tagged-and-untagged
+  idiomaticMethodCollisionNames: false
   imports:
     option: openapi
     paths:
@@ -60,9 +65,11 @@ go:
   modulePath: github.com/pipeshub-ai/pipeshub-sdk-go
   multipartArrayFormat: standard
   nullableOptionalWrapper: true
+  optionalMethodArguments: pointers
   outputModelSuffix: output
   respectRequiredFields: false
   respectTitlesForPrimitiveUnionMembers: true
   responseFormat: envelope-http
   sdkPackageName: Pipeshub
+  unionGenerics: false
   unionStrategy: populated-fields

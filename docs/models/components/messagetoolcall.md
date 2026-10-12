@@ -7,5 +7,5 @@ One tool invocation recorded on a message turn.
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `ToolName`         | **string*          | :heavy_minus_sign: | N/A                |
-| `ToolResult`       | *any*              | :heavy_minus_sign: | N/A                |
+| `ToolName`         | `*string`          | :heavy_minus_sign: | N/A                |
+| `ToolResult`       | `any`              | :heavy_minus_sign: | N/A                |

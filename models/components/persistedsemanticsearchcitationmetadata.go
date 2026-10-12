@@ -12,23 +12,28 @@ import (
 // may come through as `null` because the AI retrieval service emits
 // explicit nulls for absent fields.
 type PersistedSemanticSearchCitationMetadata struct {
-	OrgID             string                                                                  `json:"orgId"`
-	MimeType          string                                                                  `json:"mimeType"`
-	RecordID          string                                                                  `json:"recordId"`
-	RecordName        string                                                                  `json:"recordName"`
-	Origin            string                                                                  `json:"origin"`
-	RecordVersion     optionalnullable.OptionalNullable[int64]                                `json:"recordVersion,omitzero"`
-	Extension         optionalnullable.OptionalNullable[string]                               `json:"extension,omitzero"`
-	WebURL            optionalnullable.OptionalNullable[string]                               `json:"webUrl,omitzero"`
-	PreviewRenderable optionalnullable.OptionalNullable[bool]                                 `json:"previewRenderable,omitzero"`
-	HideWeburl        optionalnullable.OptionalNullable[bool]                                 `json:"hideWeburl,omitzero"`
-	Connector         optionalnullable.OptionalNullable[string]                               `json:"connector,omitzero"`
-	RecordType        optionalnullable.OptionalNullable[string]                               `json:"recordType,omitzero"`
-	BlockNum          optionalnullable.OptionalNullable[[]*float64]                           `json:"blockNum,omitzero"`
-	PageNum           optionalnullable.OptionalNullable[[]*float64]                           `json:"pageNum,omitzero"`
-	SheetNum          optionalnullable.OptionalNullable[float64]                              `json:"sheetNum,omitzero"`
-	SheetName         optionalnullable.OptionalNullable[string]                               `json:"sheetName,omitzero"`
-	BoundingBox       optionalnullable.OptionalNullable[[]PersistedSemanticSearchBoundingBox] `json:"bounding_box,omitzero"`
+	OrgID             string                                    `json:"orgId"`
+	MimeType          string                                    `json:"mimeType"`
+	RecordID          string                                    `json:"recordId"`
+	RecordName        string                                    `json:"recordName"`
+	Origin            string                                    `json:"origin"`
+	RecordVersion     optionalnullable.OptionalNullable[int64]  `json:"recordVersion,omitzero"`
+	Extension         optionalnullable.OptionalNullable[string] `json:"extension,omitzero"`
+	WebURL            optionalnullable.OptionalNullable[string] `json:"webUrl,omitzero"`
+	PreviewRenderable optionalnullable.OptionalNullable[bool]   `json:"previewRenderable,omitzero"`
+	HideWeburl        optionalnullable.OptionalNullable[bool]   `json:"hideWeburl,omitzero"`
+	Connector         optionalnullable.OptionalNullable[string] `json:"connector,omitzero"`
+	// The connector instance the record came from. `connector` names only
+	// the kind of source (for example `SLACK`), which several instances can
+	// share. Absent on citations saved before this field was stored.
+	//
+	ConnectorID optionalnullable.OptionalNullable[string]                               `json:"connectorId,omitzero"`
+	RecordType  optionalnullable.OptionalNullable[string]                               `json:"recordType,omitzero"`
+	BlockNum    optionalnullable.OptionalNullable[[]*float64]                           `json:"blockNum,omitzero"`
+	PageNum     optionalnullable.OptionalNullable[[]*float64]                           `json:"pageNum,omitzero"`
+	SheetNum    optionalnullable.OptionalNullable[float64]                              `json:"sheetNum,omitzero"`
+	SheetName   optionalnullable.OptionalNullable[string]                               `json:"sheetName,omitzero"`
+	BoundingBox optionalnullable.OptionalNullable[[]PersistedSemanticSearchBoundingBox] `json:"bounding_box,omitzero"`
 	// Block type for this citation. Common values: `text`, `image`, `table_row`, `table`,
 	// `record_summary` (whole-record semantic summary chunk).
 	//
@@ -125,6 +130,13 @@ func (p *PersistedSemanticSearchCitationMetadata) GetConnector() optionalnullabl
 		return nil
 	}
 	return p.Connector
+}
+
+func (p *PersistedSemanticSearchCitationMetadata) GetConnectorID() optionalnullable.OptionalNullable[string] {
+	if p == nil {
+		return nil
+	}
+	return p.ConnectorID
 }
 
 func (p *PersistedSemanticSearchCitationMetadata) GetRecordType() optionalnullable.OptionalNullable[string] {

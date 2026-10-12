@@ -2,23 +2,119 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+)
+
+// Kind - Whether this account is a person who signs in (`human`) or a
+// machine identity that automation authenticates as (`service`).
+// Absent on records written before service accounts existed, which
+// are all human.
+type Kind string
+
+const (
+	KindHuman   Kind = "human"
+	KindService Kind = "service"
+)
+
+func (e Kind) ToPointer() *Kind {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *Kind) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "human", "service":
+			return true
+		}
+	}
+	return false
+}
+
+// RefreshTokenUserRole - Organization role stored on the user document (`admin` or `member`)
+type RefreshTokenUserRole string
+
+const (
+	RefreshTokenUserRoleAdmin  RefreshTokenUserRole = "admin"
+	RefreshTokenUserRoleMember RefreshTokenUserRole = "member"
+)
+
+func (e RefreshTokenUserRole) ToPointer() *RefreshTokenUserRole {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *RefreshTokenUserRole) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "admin", "member":
+			return true
+		}
+	}
+	return false
+}
+
 // RefreshTokenUser - User record returned with a refreshed access token
 type RefreshTokenUser struct {
 	// User ID
 	ID string `json:"_id"`
 	// Organization ID
-	OrgID       string  `json:"orgId"`
-	Email       string  `json:"email"`
-	FullName    string  `json:"fullName"`
-	FirstName   *string `json:"firstName,omitzero"`
-	LastName    *string `json:"lastName,omitzero"`
+	OrgID      string  `json:"orgId"`
+	Email      string  `json:"email"`
+	FullName   string  `json:"fullName"`
+	FirstName  *string `json:"firstName,omitzero"`
+	LastName   *string `json:"lastName,omitzero"`
+	MiddleName *string `json:"middleName,omitzero"`
+	// Mobile number (10-15 digits with optional +)
+	Mobile      *string `json:"mobile,omitzero"`
 	Designation *string `json:"designation,omitzero"`
-	HasLoggedIn bool    `json:"hasLoggedIn"`
-	IsDeleted   bool    `json:"isDeleted"`
-	Slug        string  `json:"slug"`
-	CreatedAt   string  `json:"createdAt"`
-	UpdatedAt   string  `json:"updatedAt"`
-	V           int64   `json:"__v"`
+	// Whether this account is a person who signs in (`human`) or a
+	// machine identity that automation authenticates as (`service`).
+	// Absent on records written before service accounts existed, which
+	// are all human.
+	//
+	Kind *Kind `json:"kind,omitzero"`
+	// Free text explaining what a service account is for. Unused for people.
+	Description *string `json:"description,omitzero"`
+	// The account is suspended: its tokens stop working and no session
+	// can be issued, but the record, its group memberships and its
+	// permission-graph node survive so it can be switched back on.
+	//
+	IsDisabled *bool `default:"false" json:"isDisabled"`
+	// Internal and transient. Present only while a deleted service
+	// account is being brought back, and cleared when that finishes
+	// either way. It lets the steps that complete or undo a restore tell
+	// their own attempt from a later one. Not something to depend on.
+	//
+	RestoreOpID *string `json:"restoreOpId,omitzero"`
+	// Organization role stored on the user document (`admin` or `member`)
+	Role    *RefreshTokenUserRole `json:"role,omitzero"`
+	Address *Address              `json:"address,omitzero"`
+	// Whether user has consented to data collection
+	DataCollectionConsent *bool `json:"dataCollectionConsent,omitzero"`
+	HasLoggedIn           bool  `json:"hasLoggedIn"`
+	IsDeleted             bool  `json:"isDeleted"`
+	// ID of user who deleted this user
+	DeletedBy *string `json:"deletedBy,omitzero"`
+	// Base64-encoded data URI of the user's display picture
+	ProfilePicture optionalnullable.OptionalNullable[string] `json:"profilePicture,omitzero"`
+	Slug           string                                    `json:"slug"`
+	CreatedAt      string                                    `json:"createdAt"`
+	UpdatedAt      string                                    `json:"updatedAt"`
+	V              int64                                     `json:"__v"`
+}
+
+func (r RefreshTokenUser) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(r, "", false)
+}
+
+func (r *RefreshTokenUser) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *RefreshTokenUser) GetID() string {
@@ -63,11 +159,74 @@ func (r *RefreshTokenUser) GetLastName() *string {
 	return r.LastName
 }
 
+func (r *RefreshTokenUser) GetMiddleName() *string {
+	if r == nil {
+		return nil
+	}
+	return r.MiddleName
+}
+
+func (r *RefreshTokenUser) GetMobile() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Mobile
+}
+
 func (r *RefreshTokenUser) GetDesignation() *string {
 	if r == nil {
 		return nil
 	}
 	return r.Designation
+}
+
+func (r *RefreshTokenUser) GetKind() *Kind {
+	if r == nil {
+		return nil
+	}
+	return r.Kind
+}
+
+func (r *RefreshTokenUser) GetDescription() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Description
+}
+
+func (r *RefreshTokenUser) GetIsDisabled() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.IsDisabled
+}
+
+func (r *RefreshTokenUser) GetRestoreOpID() *string {
+	if r == nil {
+		return nil
+	}
+	return r.RestoreOpID
+}
+
+func (r *RefreshTokenUser) GetRole() *RefreshTokenUserRole {
+	if r == nil {
+		return nil
+	}
+	return r.Role
+}
+
+func (r *RefreshTokenUser) GetAddress() *Address {
+	if r == nil {
+		return nil
+	}
+	return r.Address
+}
+
+func (r *RefreshTokenUser) GetDataCollectionConsent() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.DataCollectionConsent
 }
 
 func (r *RefreshTokenUser) GetHasLoggedIn() bool {
@@ -82,6 +241,20 @@ func (r *RefreshTokenUser) GetIsDeleted() bool {
 		return false
 	}
 	return r.IsDeleted
+}
+
+func (r *RefreshTokenUser) GetDeletedBy() *string {
+	if r == nil {
+		return nil
+	}
+	return r.DeletedBy
+}
+
+func (r *RefreshTokenUser) GetProfilePicture() optionalnullable.OptionalNullable[string] {
+	if r == nil {
+		return nil
+	}
+	return r.ProfilePicture
 }
 
 func (r *RefreshTokenUser) GetSlug() string {

@@ -7,5 +7,5 @@ Response returned by PUT /knowledgeBase/{kbId}/record/{recordId}/move (moveRecor
 
 | Field                     | Type                      | Required                  | Description               | Example                   |
 | ------------------------- | ------------------------- | ------------------------- | ------------------------- | ------------------------- |
-| `Success`                 | *bool*                    | :heavy_check_mark:        | N/A                       | true                      |
-| `Message`                 | *string*                  | :heavy_check_mark:        | N/A                       | Record moved successfully |
+| `Success`                 | `bool`                    | :heavy_check_mark:        | N/A                       | true                      |
+| `Message`                 | `string`                  | :heavy_check_mark:        | N/A                       | Record moved successfully |

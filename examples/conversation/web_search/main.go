@@ -1,8 +1,10 @@
+// Command web_search streams one answer from the web search path.
+//
+// Usage: go run . <path-to-.env>
 package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +12,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 
+	"enterprise_search/agui"
 	"enterprise_search/auth"
 )
 
@@ -30,55 +33,48 @@ func main() {
 	}
 
 	query := "Where is Pipeshub hq located?"
-	chatMode := "web_search"
 
-	res, err := client.Conversations.StreamChat(context.Background(), components.CreateConversationRequest{
+	res, err := client.Conversations.StreamChat(context.Background(), components.ConversationStreamRequest{
 		Query:    query,
-		ChatMode: &chatMode,
+		ChatMode: components.ConversationStreamRequestChatModeWebSearch,
 	})
 	if err != nil {
 		log.Fatalf("conversation: %v", err)
 	}
-	if res == nil || res.AssistantStreamSSEEvent == nil {
+	if res == nil || res.ConversationStreamSSEEvent == nil {
 		log.Fatal("no SSE stream returned")
 	}
-		log.Fatal("no SSE stream returned")
-	}
-	stream := res.AssistantStreamSSEEvent
+	stream := res.ConversationStreamSSEEvent
 	defer stream.Close()
 
 	fmt.Printf("You: %s\n\nBot: ", query)
 
+	c := agui.Collector{Echo: os.Stdout}
 	for stream.Next() {
 		ev := stream.Value()
 		if ev == nil || ev.Event == nil || ev.Data == nil {
 			continue
 		}
-		switch *ev.Event {
-		case components.AssistantStreamSSEEventEventComplete:
-			var payload struct {
-				Conversation struct {
-					Messages []struct {
-						MessageType string `json:"messageType"`
-						Content     string `json:"content"`
-					} `json:"messages"`
-				} `json:"conversation"`
-			}
-			if err := json.Unmarshal([]byte(*ev.Data), &payload); err != nil {
-				log.Fatalf("decode complete: %v", err)
-			}
-			for _, m := range payload.Conversation.Messages {
-				if m.MessageType == "bot_response" {
-					fmt.Println(m.Content)
-					return
-				}
-			}
-			log.Fatal("no bot response in complete event")
-		case components.AssistantStreamSSEEventEventError:
-			log.Fatalf("stream error: %s", *ev.Data)
+		done, err := c.Handle(string(*ev.Event), *ev.Data)
+		if err != nil {
+			log.Fatalf("stream: %v", err)
+		}
+		if done {
+			break
 		}
 	}
 	if err := stream.Err(); err != nil {
 		log.Fatalf("stream: %v", err)
 	}
+	if !c.Done {
+		log.Fatal("stream ended without RUN_FINISHED")
+	}
+
+	fmt.Println()
+	// Citation references are rewritten as the answer is finalized, so the
+	// persisted message can differ from the streamed tokens.
+	if answer := c.Answer(); answer != c.Streamed {
+		fmt.Printf("\nFinal answer:\n%s\n", answer)
+	}
+	fmt.Printf("\nconversation: %s\n", c.ConversationID)
 }

@@ -47,3 +47,6 @@ func (s *SchemeOauth2) GetTokenURL() string {
 	}
 	return s.TokenURL
 }
+
+// #region class-body-schemeoauth2
+// #endregion class-body-schemeoauth2

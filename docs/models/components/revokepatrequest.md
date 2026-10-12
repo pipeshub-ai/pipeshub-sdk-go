@@ -11,4 +11,4 @@ auditing.
 
 | Field              | Type               | Required           | Description        | Example            |
 | ------------------ | ------------------ | ------------------ | ------------------ | ------------------ |
-| `Reason`           | **string*          | :heavy_minus_sign: | N/A                | rotated            |
+| `Reason`           | `*string`          | :heavy_minus_sign: | N/A                | rotated            |

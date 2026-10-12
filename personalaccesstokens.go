@@ -25,6 +25,13 @@ import (
 //   - **Any authenticated org member** — unlike OAuth apps, this is
 //     deliberately not admin-gated.
 //
+// **Session only**
+//   - Every `/personal-access-tokens/*` route requires the user's interactive
+//     session JWT. OAuth access tokens and personal access tokens (`phpat_...`)
+//     are rejected with `403`. `scopes` is capped at the instance's `MCP_SCOPES`,
+//     not at the caller's own token, so a narrowly scoped token could otherwise
+//     mint itself a full-scope, non-expiring PAT.
+//
 // **How it's issued**
 //   - Minted through the same OAuth access-token machinery as `/oauth2/token`,
 //     against one lazily-created, per-org synthetic OAuth app
@@ -69,6 +76,8 @@ func newPersonalAccessTokens(rootSDK *Pipeshub, sdkConfig config.SDKConfiguratio
 //
 // Shares the same per-user rate limiter as `/oauth-clients/*`
 // (default 1000 req/min, `MAX_OAUTH_CLIENT_REQUESTS_PER_MINUTE`).
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *PersonalAccessTokens) ListPersonalAccessTokens(ctx context.Context, opts ...operations.Option) (*operations.ListPersonalAccessTokensResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -99,7 +108,7 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokens(ctx context.Context, opt
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "listPersonalAccessTokens",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -121,7 +130,7 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokens(ctx context.Context, opt
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -205,7 +214,7 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokens(ctx context.Context, opt
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -259,7 +268,7 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokens(ctx context.Context, opt
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -284,7 +293,7 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokens(ctx context.Context, opt
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -337,9 +346,16 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokens(ctx context.Context, opt
 // env var, not the full role-aware OAuth-app scope catalog — a
 // non-admin can request any scope in that set.
 //
+// **Session only.** The bearer token must be the user's interactive
+// session JWT. OAuth access tokens and personal access tokens
+// (`phpat_...`) are rejected with `403`, so a token that is already
+// issued cannot mint another with wider scopes or a longer life.
+//
 // The response's `accessToken` is shown **once**; only its SHA-256
 // hash is stored. It's prefixed `phpat_` (see the `bearerAuth`
 // security scheme).
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *PersonalAccessTokens) CreatePersonalAccessToken(ctx context.Context, request components.CreatePatRequest, opts ...operations.Option) (*operations.CreatePersonalAccessTokenResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -370,7 +386,7 @@ func (s *PersonalAccessTokens) CreatePersonalAccessToken(ctx context.Context, re
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "createPersonalAccessToken",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
@@ -399,7 +415,7 @@ func (s *PersonalAccessTokens) CreatePersonalAccessToken(ctx context.Context, re
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -483,7 +499,7 @@ func (s *PersonalAccessTokens) CreatePersonalAccessToken(ctx context.Context, re
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -530,6 +546,8 @@ func (s *PersonalAccessTokens) CreatePersonalAccessToken(ctx context.Context, re
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -539,7 +557,7 @@ func (s *PersonalAccessTokens) CreatePersonalAccessToken(ctx context.Context, re
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -564,7 +582,7 @@ func (s *PersonalAccessTokens) CreatePersonalAccessToken(ctx context.Context, re
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -609,6 +627,8 @@ func (s *PersonalAccessTokens) CreatePersonalAccessToken(ctx context.Context, re
 // `GET /oauth-clients/scopes`, this is **not** grouped by category and
 // **not** role-aware — every org member sees the same set, since PAT
 // scope selection isn't gated by admin status.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *PersonalAccessTokens) ListPersonalAccessTokenScopes(ctx context.Context, opts ...operations.Option) (*operations.ListPersonalAccessTokenScopesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -639,7 +659,7 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokenScopes(ctx context.Context
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "listPersonalAccessTokenScopes",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -661,7 +681,7 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokenScopes(ctx context.Context
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -745,7 +765,7 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokenScopes(ctx context.Context
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -799,7 +819,7 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokenScopes(ctx context.Context
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -824,7 +844,7 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokenScopes(ctx context.Context
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -870,6 +890,8 @@ func (s *PersonalAccessTokens) ListPersonalAccessTokenScopes(ctx context.Context
 // `pat-system:<orgId>` client. Revocation takes effect immediately: the
 // token's next verification attempt fails, including one already in
 // flight.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *PersonalAccessTokens) RevokePersonalAccessToken(ctx context.Context, tokenID string, body *components.RevokePatRequest, opts ...operations.Option) (*operations.RevokePersonalAccessTokenResponse, error) {
 	request := operations.RevokePersonalAccessTokenRequest{
 		TokenID: tokenID,
@@ -905,7 +927,7 @@ func (s *PersonalAccessTokens) RevokePersonalAccessToken(ctx context.Context, to
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "revokePersonalAccessToken",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "Body", "json", `request:"mediaType=application/json"`)
@@ -934,7 +956,7 @@ func (s *PersonalAccessTokens) RevokePersonalAccessToken(ctx context.Context, to
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -1018,7 +1040,7 @@ func (s *PersonalAccessTokens) RevokePersonalAccessToken(ctx context.Context, to
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "404", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1074,7 +1096,7 @@ func (s *PersonalAccessTokens) RevokePersonalAccessToken(ctx context.Context, to
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1099,7 +1121,7 @@ func (s *PersonalAccessTokens) RevokePersonalAccessToken(ctx context.Context, to
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1149,6 +1171,8 @@ func (s *PersonalAccessTokens) RevokePersonalAccessToken(ctx context.Context, to
 // Requires org-admin privileges (`userAdminCheck`) — note this returns
 // **`400`**, not `403`, for a non-admin caller (shared middleware
 // behavior across the codebase, not specific to this route).
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *PersonalAccessTokens) AdminListPersonalAccessTokens(ctx context.Context, page *int64, limit *int64, opts ...operations.Option) (*operations.AdminListPersonalAccessTokensResponse, error) {
 	request := operations.AdminListPersonalAccessTokensRequest{
 		Page:  page,
@@ -1184,7 +1208,7 @@ func (s *PersonalAccessTokens) AdminListPersonalAccessTokens(ctx context.Context
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "adminListPersonalAccessTokens",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -1210,7 +1234,7 @@ func (s *PersonalAccessTokens) AdminListPersonalAccessTokens(ctx context.Context
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -1294,7 +1318,7 @@ func (s *PersonalAccessTokens) AdminListPersonalAccessTokens(ctx context.Context
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1350,7 +1374,7 @@ func (s *PersonalAccessTokens) AdminListPersonalAccessTokens(ctx context.Context
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1375,7 +1399,7 @@ func (s *PersonalAccessTokens) AdminListPersonalAccessTokens(ctx context.Context
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1420,6 +1444,8 @@ func (s *PersonalAccessTokens) AdminListPersonalAccessTokens(ctx context.Context
 // `DELETE /personal-access-tokens/{tokenId}`. Requires org-admin
 // privileges (`userAdminCheck`); returns `400` (not `403`) for a
 // non-admin caller, same as `GET /personal-access-tokens/admin`.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *PersonalAccessTokens) AdminRevokePersonalAccessToken(ctx context.Context, tokenID string, body *components.RevokePatRequest, opts ...operations.Option) (*operations.AdminRevokePersonalAccessTokenResponse, error) {
 	request := operations.AdminRevokePersonalAccessTokenRequest{
 		TokenID: tokenID,
@@ -1455,7 +1481,7 @@ func (s *PersonalAccessTokens) AdminRevokePersonalAccessToken(ctx context.Contex
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "adminRevokePersonalAccessToken",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "Body", "json", `request:"mediaType=application/json"`)
@@ -1484,7 +1510,7 @@ func (s *PersonalAccessTokens) AdminRevokePersonalAccessToken(ctx context.Contex
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -1568,7 +1594,7 @@ func (s *PersonalAccessTokens) AdminRevokePersonalAccessToken(ctx context.Contex
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "429", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1626,7 +1652,7 @@ func (s *PersonalAccessTokens) AdminRevokePersonalAccessToken(ctx context.Contex
 
 			var out apierrors.ApplicationJSONErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1651,7 +1677,7 @@ func (s *PersonalAccessTokens) AdminRevokePersonalAccessToken(ctx context.Contex
 
 			var out apierrors.OAuthClientManagementRateLimitError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{

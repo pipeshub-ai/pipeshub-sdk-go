@@ -50,6 +50,8 @@ func newAgents(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks *hook
 //
 // The Python backend also understands `isDeleted`, but this gateway route
 // does not forward it, so it is not part of the public API contract here.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) ListAgents(ctx context.Context, request operations.ListAgentsRequest, opts ...operations.Option) (*operations.ListAgentsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -106,7 +108,7 @@ func (s *Agents) ListAgents(ctx context.Context, request operations.ListAgentsRe
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -190,7 +192,7 @@ func (s *Agents) ListAgents(ctx context.Context, request operations.ListAgentsRe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -246,7 +248,7 @@ func (s *Agents) ListAgents(ctx context.Context, request operations.ListAgentsRe
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -303,6 +305,8 @@ func (s *Agents) ListAgents(ctx context.Context, request operations.ListAgentsRe
 // - Customer support bot with product knowledge
 // - Code review assistant with repository access
 // - HR assistant with policy documents
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) CreateAgent(ctx context.Context, request components.AgentCreateRequest, opts ...operations.Option) (*operations.CreateAgentResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -362,7 +366,7 @@ func (s *Agents) CreateAgent(ctx context.Context, request components.AgentCreate
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -446,7 +450,7 @@ func (s *Agents) CreateAgent(ctx context.Context, request components.AgentCreate
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -525,6 +529,8 @@ func (s *Agents) CreateAgent(ctx context.Context, request components.AgentCreate
 // Unknown `agentKey`, lookup after soft-delete, and other AI-backend failures
 // that return 404 from the Python query service are surfaced by the Node
 // gateway as **HTTP 404** with an `ErrorResponse` body.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) GetAgent(ctx context.Context, agentKey string, opts ...operations.Option) (*operations.GetAgentResponse, error) {
 	request := operations.GetAgentRequest{
 		AgentKey: agentKey,
@@ -581,7 +587,7 @@ func (s *Agents) GetAgent(ctx context.Context, agentKey string, opts ...operatio
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -665,7 +671,7 @@ func (s *Agents) GetAgent(ctx context.Context, agentKey string, opts ...operatio
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -725,7 +731,7 @@ func (s *Agents) GetAgent(ctx context.Context, agentKey string, opts ...operatio
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -752,7 +758,7 @@ func (s *Agents) GetAgent(ctx context.Context, agentKey string, opts ...operatio
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -820,6 +826,8 @@ func (s *Agents) GetAgent(ctx context.Context, agentKey string, opts ...operatio
 //
 // Returns a lightweight success envelope only. Use
 // `GET /agents/{agentKey}` to read the persisted agent after an update.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) UpdateAgent(ctx context.Context, agentKey string, body components.AgentUpdateRequest, opts ...operations.Option) (*operations.UpdateAgentResponse, error) {
 	request := operations.UpdateAgentRequest{
 		AgentKey: agentKey,
@@ -884,7 +892,7 @@ func (s *Agents) UpdateAgent(ctx context.Context, agentKey string, body componen
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -968,7 +976,7 @@ func (s *Agents) UpdateAgent(ctx context.Context, agentKey string, body componen
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1028,7 +1036,7 @@ func (s *Agents) UpdateAgent(ctx context.Context, agentKey string, body componen
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1053,7 +1061,7 @@ func (s *Agents) UpdateAgent(ctx context.Context, agentKey string, body componen
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1109,6 +1117,8 @@ func (s *Agents) UpdateAgent(ctx context.Context, agentKey string, body componen
 // **Gateway not-found behavior:**
 // Unknown `agentKey`, deleting an already-deleted agent, and `GET /agents/{agentKey}`
 // after delete return **HTTP 404** with an `ErrorResponse` body.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) DeleteAgent(ctx context.Context, agentKey string, opts ...operations.Option) (*operations.DeleteAgentResponse, error) {
 	request := operations.DeleteAgentRequest{
 		AgentKey: agentKey,
@@ -1165,7 +1175,7 @@ func (s *Agents) DeleteAgent(ctx context.Context, agentKey string, opts ...opera
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1249,7 +1259,7 @@ func (s *Agents) DeleteAgent(ctx context.Context, agentKey string, opts ...opera
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1305,7 +1315,7 @@ func (s *Agents) DeleteAgent(ctx context.Context, agentKey string, opts ...opera
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1330,7 +1340,7 @@ func (s *Agents) DeleteAgent(ctx context.Context, agentKey string, opts ...opera
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1373,6 +1383,8 @@ func (s *Agents) DeleteAgent(ctx context.Context, agentKey string, opts ...opera
 // Returns archived agent conversations for the current user, grouped by
 // `agentKey`, with pagination over agent groups. Excludes conversations
 // whose agent was soft-deleted upstream.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) ListAgentArchivedConversationsGrouped(ctx context.Context, agentPage *int64, agentLimit *int64, opts ...operations.Option) (*operations.ListAgentArchivedConversationsGroupedResponse, error) {
 	request := operations.ListAgentArchivedConversationsGroupedRequest{
 		AgentPage:  agentPage,
@@ -1434,7 +1446,7 @@ func (s *Agents) ListAgentArchivedConversationsGrouped(ctx context.Context, agen
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1518,7 +1530,7 @@ func (s *Agents) ListAgentArchivedConversationsGrouped(ctx context.Context, agen
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1590,6 +1602,8 @@ func (s *Agents) ListAgentArchivedConversationsGrouped(ctx context.Context, agen
 
 // ListAgentConversationArchives - List archived conversations for an agent
 // Paginated list of archived conversations for the given agent key.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) ListAgentConversationArchives(ctx context.Context, request operations.ListAgentConversationArchivesRequest, opts ...operations.Option) (*operations.ListAgentConversationArchivesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1646,7 +1660,7 @@ func (s *Agents) ListAgentConversationArchives(ctx context.Context, request oper
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1730,7 +1744,7 @@ func (s *Agents) ListAgentConversationArchives(ctx context.Context, request oper
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1784,7 +1798,7 @@ func (s *Agents) ListAgentConversationArchives(ctx context.Context, request oper
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1829,6 +1843,8 @@ func (s *Agents) ListAgentConversationArchives(ctx context.Context, request oper
 // Multipart upload of PDF, JPEG, or PNG files for agent chat. Same limits as assistant
 // chat (`POST /conversations/attachments/upload`): up to 10 files, 5 MiB each. Proxies to
 // the AI backend. Optional `conversationId` associates uploads with an existing agent thread.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) UploadAgentConversationChatAttachments(ctx context.Context, agentKey string, body operations.UploadAgentConversationChatAttachmentsRequestBody, opts ...operations.Option) (*operations.UploadAgentConversationChatAttachmentsResponse, error) {
 	request := operations.UploadAgentConversationChatAttachmentsRequest{
 		AgentKey: agentKey,
@@ -1893,7 +1909,7 @@ func (s *Agents) UploadAgentConversationChatAttachments(ctx context.Context, age
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1977,7 +1993,7 @@ func (s *Agents) UploadAgentConversationChatAttachments(ctx context.Context, age
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2062,6 +2078,8 @@ func (s *Agents) UploadAgentConversationChatAttachments(ctx context.Context, age
 // On validation failure in the gateway (invalid / blank path params), the response is **400**
 // with a small JSON error object. Same fire-and-forget semantics as
 // `DELETE /conversations/attachments/{recordId}` on the client.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) DeleteAgentConversationChatAttachment(ctx context.Context, agentKey string, recordID string, opts ...operations.Option) (*operations.DeleteAgentConversationChatAttachmentResponse, error) {
 	request := operations.DeleteAgentConversationChatAttachmentRequest{
 		AgentKey: agentKey,
@@ -2119,7 +2137,7 @@ func (s *Agents) DeleteAgentConversationChatAttachment(ctx context.Context, agen
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -2203,7 +2221,7 @@ func (s *Agents) DeleteAgentConversationChatAttachment(ctx context.Context, agen
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2238,7 +2256,7 @@ func (s *Agents) DeleteAgentConversationChatAttachment(ctx context.Context, agen
 
 			var out apierrors.DeleteAgentConversationChatAttachmentBadRequestError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2285,6 +2303,8 @@ func (s *Agents) DeleteAgentConversationChatAttachment(ctx context.Context, agen
 //
 // AG-UI is the sole wire protocol. The request must include
 // `chatMode: quick`; see `AgentStreamSSEEvent` for the event vocabulary.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) StreamAgentConversation(ctx context.Context, agentKey string, body components.AgentStreamCreateConversationRequest, opts ...operations.Option) (*operations.StreamAgentConversationResponse, error) {
 	request := operations.StreamAgentConversationRequest{
 		AgentKey: agentKey,
@@ -2333,10 +2353,17 @@ func (s *Agents) StreamAgentConversation(ctx context.Context, agentKey string, b
 		timeout = s.sdkConfiguration.Timeout
 	}
 
+	var streamCancel context.CancelFunc
+
 	if timeout != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
+		streamCancel = cancel
+		defer func() {
+			if streamCancel != nil {
+				streamCancel()
+			}
+		}()
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
@@ -2349,7 +2376,7 @@ func (s *Agents) StreamAgentConversation(ctx context.Context, agentKey string, b
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -2433,7 +2460,7 @@ func (s *Agents) StreamAgentConversation(ctx context.Context, agentKey string, b
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2465,7 +2492,8 @@ func (s *Agents) StreamAgentConversation(ctx context.Context, agentKey string, b
 					return components.AgentStreamSSEEvent{}, err
 				}
 				return e, nil
-			}, "")
+			}, "", stream.WithDataRequired[components.AgentStreamSSEEvent](false), stream.WithCancel[components.AgentStreamSSEEvent](streamCancel))
+			streamCancel = nil
 			res.AgentStreamSSEEvent = out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -2509,6 +2537,8 @@ func (s *Agents) StreamAgentConversation(ctx context.Context, agentKey string, b
 // AG-UI is the sole wire protocol. The request must include
 // `chatMode: quick`; see `AgentMessageStreamSSEEvent` for the event
 // vocabulary.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) StreamAgentConversationMessage(ctx context.Context, agentKey string, conversationID string, body components.AgentAddMessageStreamRequest, opts ...operations.Option) (*operations.StreamAgentConversationMessageResponse, error) {
 	request := operations.StreamAgentConversationMessageRequest{
 		AgentKey:       agentKey,
@@ -2558,10 +2588,17 @@ func (s *Agents) StreamAgentConversationMessage(ctx context.Context, agentKey st
 		timeout = s.sdkConfiguration.Timeout
 	}
 
+	var streamCancel context.CancelFunc
+
 	if timeout != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
+		streamCancel = cancel
+		defer func() {
+			if streamCancel != nil {
+				streamCancel()
+			}
+		}()
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
@@ -2574,7 +2611,7 @@ func (s *Agents) StreamAgentConversationMessage(ctx context.Context, agentKey st
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -2658,7 +2695,7 @@ func (s *Agents) StreamAgentConversationMessage(ctx context.Context, agentKey st
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2690,7 +2727,8 @@ func (s *Agents) StreamAgentConversationMessage(ctx context.Context, agentKey st
 					return components.AgentMessageStreamSSEEvent{}, err
 				}
 				return e, nil
-			}, "")
+			}, "", stream.WithDataRequired[components.AgentMessageStreamSSEEvent](false), stream.WithCancel[components.AgentMessageStreamSSEEvent](streamCancel))
+			streamCancel = nil
 			res.AgentMessageStreamSSEEvent = out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -2766,6 +2804,8 @@ func (s *Agents) StreamAgentConversationMessage(ctx context.Context, agentKey st
 // responses before the stream starts. Valid-shape requests that fail
 // conversation lookup or regenerate rules are reported as
 // `RUN_ERROR` events after stream initialization.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) RegenerateAgentConversationMessage(ctx context.Context, agentKey string, conversationID string, messageID string, body components.AgentRegenerateRequest, opts ...operations.Option) (*operations.RegenerateAgentConversationMessageResponse, error) {
 	request := operations.RegenerateAgentConversationMessageRequest{
 		AgentKey:       agentKey,
@@ -2816,10 +2856,17 @@ func (s *Agents) RegenerateAgentConversationMessage(ctx context.Context, agentKe
 		timeout = s.sdkConfiguration.Timeout
 	}
 
+	var streamCancel context.CancelFunc
+
 	if timeout != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
+		streamCancel = cancel
+		defer func() {
+			if streamCancel != nil {
+				streamCancel()
+			}
+		}()
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
@@ -2832,7 +2879,7 @@ func (s *Agents) RegenerateAgentConversationMessage(ctx context.Context, agentKe
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -2916,7 +2963,7 @@ func (s *Agents) RegenerateAgentConversationMessage(ctx context.Context, agentKe
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2948,7 +2995,8 @@ func (s *Agents) RegenerateAgentConversationMessage(ctx context.Context, agentKe
 					return components.AgentRegenerateSSEEvent{}, err
 				}
 				return e, nil
-			}, "")
+			}, "", stream.WithDataRequired[components.AgentRegenerateSSEEvent](false), stream.WithCancel[components.AgentRegenerateSSEEvent](streamCancel))
+			streamCancel = nil
 			res.AgentRegenerateSSEEvent = out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -2985,11 +3033,255 @@ func (s *Agents) RegenerateAgentConversationMessage(ctx context.Context, agentKe
 
 }
 
+// CancelAgentConversationStream - Cancel an in-flight agent chat stream
+// Cooperatively stop a `POST /agents/{agentKey}/conversations/stream`
+// or `.../messages/stream` run that is still generating, using the
+// `runId` sent when that stream started.
+//
+// Same synchronous JSON ack contract as the assistant
+// `POST /conversations/{conversationId}/cancel` — both forward to the
+// same backend cancellation endpoint, since the run registry is keyed
+// by `runId` alone. `{ cancelled: false }` covers a `runId` that
+// already finished or was never registered.
+//
+// `runId` must belong to a run started on THIS `conversationId` — a
+// `runId` that exists but was registered under a different
+// conversation (even one owned by the same caller) is rejected with
+// `403`, same as a `runId` owned by a different user/org.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *Agents) CancelAgentConversationStream(ctx context.Context, agentKey string, conversationID string, body operations.CancelAgentConversationStreamRequestBody, opts ...operations.Option) (*operations.CancelAgentConversationStreamResponse, error) {
+	request := operations.CancelAgentConversationStreamRequest{
+		AgentKey:       agentKey,
+		ConversationID: conversationID,
+		Body:           body,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/agents/{agentKey}/conversations/{conversationId}/cancel", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "cancelAgentConversationStream",
+		OAuth2Scopes:     []string{"agent:execute"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
+	if err != nil {
+		return nil, err
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+	if reqContentType != "" {
+		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.CancelAgentConversationStreamResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out operations.CancelAgentConversationStreamResponseBody
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.Object = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
 // UpdateAgentConversationMessageFeedback - Submit feedback for an agent message
 // Append structured feedback to a bot-response message in an agent
 // conversation. Uses the same request body shape as
 // `updateMessageFeedback` (helpfulness, categories, comments). Feedback
 // can only be submitted on `bot_response` messages.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) UpdateAgentConversationMessageFeedback(ctx context.Context, agentKey string, conversationID string, messageID string, body components.MessageFeedbackSubmitRequest, opts ...operations.Option) (*operations.UpdateAgentConversationMessageFeedbackResponse, error) {
 	request := operations.UpdateAgentConversationMessageFeedbackRequest{
 		AgentKey:       agentKey,
@@ -3056,7 +3348,7 @@ func (s *Agents) UpdateAgentConversationMessageFeedback(ctx context.Context, age
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -3140,7 +3432,7 @@ func (s *Agents) UpdateAgentConversationMessageFeedback(ctx context.Context, age
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3216,8 +3508,353 @@ func (s *Agents) UpdateAgentConversationMessageFeedback(ctx context.Context, age
 
 }
 
+// AddAgentConversationMessage - Add message to agent conversation (non-streaming)
+// Ask a follow-up in an existing agent conversation and wait for the
+// complete answer. The JSON counterpart of
+// `POST /agents/{agentKey}/conversations/{conversationId}/messages/stream`.
+//
+// **How a turn runs**
+//
+//  1. The user's message is saved (in its own short transaction on a
+//     replica set).
+//  2. The AI backend runs the same agent-loop pipeline as the `/stream`
+//     route and returns only its final result. No transaction is held
+//     during this call, and the call is never retried.
+//  3. The answer, citations and status are saved exactly as the
+//     streaming route saves them, and the updated conversation is
+//     returned.
+//
+// Every failure after step 1 is persisted: the conversation ends with
+// status `Failed`, a `failReason`, and an `error` message, and the
+// response carries `X-Conversation-Id` so the caller can fetch it.
+// A 4xx from the AI backend (for example no model configured) keeps
+// its status and user-facing message; other failures return 500 with
+// a generic message.
+//
+// The response arrives only when the whole answer is ready, which can
+// take minutes for agent runs. Allow a generous client and proxy
+// timeout, or use the `/stream` variant for interactive clients.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *Agents) AddAgentConversationMessage(ctx context.Context, agentKey string, conversationID string, body components.AgentAddMessageRequest, opts ...operations.Option) (*operations.AddAgentConversationMessageResponse, error) {
+	request := operations.AddAgentConversationMessageRequest{
+		AgentKey:       agentKey,
+		ConversationID: conversationID,
+		Body:           body,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/agents/{agentKey}/conversations/{conversationId}/messages", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "addAgentConversationMessage",
+		OAuth2Scopes:     []string{"agent:execute"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
+	if err != nil {
+		return nil, err
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+	if reqContentType != "" {
+		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.AddAgentConversationMessageResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		res.Headers = httpRes.Header
+
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out components.AddMessageResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.AddMessageResponse = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 404:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 424:
+		res.Headers = httpRes.Header
+
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 413:
+		fallthrough
+	case httpRes.StatusCode == 422:
+		fallthrough
+	case httpRes.StatusCode == 429:
+		res.Headers = httpRes.Header
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode == 500:
+		res.Headers = httpRes.Header
+
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
 // ArchiveAgentConversation - Archive an agent conversation
 // Marks the conversation as archived for the authenticated owner.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) ArchiveAgentConversation(ctx context.Context, agentKey string, conversationID string, opts ...operations.Option) (*operations.ArchiveAgentConversationResponse, error) {
 	request := operations.ArchiveAgentConversationRequest{
 		AgentKey:       agentKey,
@@ -3275,7 +3912,7 @@ func (s *Agents) ArchiveAgentConversation(ctx context.Context, agentKey string, 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -3359,7 +3996,7 @@ func (s *Agents) ArchiveAgentConversation(ctx context.Context, agentKey string, 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3417,7 +4054,7 @@ func (s *Agents) ArchiveAgentConversation(ctx context.Context, agentKey string, 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -3458,6 +4095,8 @@ func (s *Agents) ArchiveAgentConversation(ctx context.Context, agentKey string, 
 
 // UnarchiveAgentConversation - Unarchive an agent conversation
 // Restores an archived agent conversation to the active list.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) UnarchiveAgentConversation(ctx context.Context, agentKey string, conversationID string, opts ...operations.Option) (*operations.UnarchiveAgentConversationResponse, error) {
 	request := operations.UnarchiveAgentConversationRequest{
 		AgentKey:       agentKey,
@@ -3515,7 +4154,7 @@ func (s *Agents) UnarchiveAgentConversation(ctx context.Context, agentKey string
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -3599,7 +4238,7 @@ func (s *Agents) UnarchiveAgentConversation(ctx context.Context, agentKey string
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3657,7 +4296,7 @@ func (s *Agents) UnarchiveAgentConversation(ctx context.Context, agentKey string
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -3706,6 +4345,8 @@ func (s *Agents) UnarchiveAgentConversation(ctx context.Context, agentKey string
 // the controller trims the incoming title before saving it. A whitespace-only
 // title can therefore still return HTTP 400 even if the raw string is
 // non-empty.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) UpdateAgentConversationTitle(ctx context.Context, agentKey string, conversationID string, body components.ConversationTitleUpdateRequest, opts ...operations.Option) (*operations.UpdateAgentConversationTitleResponse, error) {
 	request := operations.UpdateAgentConversationTitleRequest{
 		AgentKey:       agentKey,
@@ -3771,7 +4412,7 @@ func (s *Agents) UpdateAgentConversationTitle(ctx context.Context, agentKey stri
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -3855,7 +4496,7 @@ func (s *Agents) UpdateAgentConversationTitle(ctx context.Context, agentKey stri
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3913,7 +4554,7 @@ func (s *Agents) UpdateAgentConversationTitle(ctx context.Context, agentKey stri
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -3952,6 +4593,467 @@ func (s *Agents) UpdateAgentConversationTitle(ctx context.Context, agentKey stri
 
 }
 
+// SetAgentConversationProject - Link or unlink an agent conversation to a project
+// Agent-conversation equivalent of
+// `PUT /conversations/{conversationId}/project`. Set
+// (`projectId: <id>`) or clear (`projectId: null`) the project this
+// agent conversation belongs to. Initiator-only; linking requires at
+// least viewer access to the target project.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *Agents) SetAgentConversationProject(ctx context.Context, agentKey string, conversationID string, body operations.SetAgentConversationProjectRequestBody, opts ...operations.Option) (*operations.SetAgentConversationProjectResponse, error) {
+	request := operations.SetAgentConversationProjectRequest{
+		AgentKey:       agentKey,
+		ConversationID: conversationID,
+		Body:           body,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/agents/{agentKey}/conversations/{conversationId}/project", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "setAgentConversationProject",
+		OAuth2Scopes:     []string{"agent:write"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
+	if err != nil {
+		return nil, err
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "PUT", opURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+	if reqContentType != "" {
+		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.SetAgentConversationProjectResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out operations.SetAgentConversationProjectResponseBody
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.Object = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
+// SetAgentConversationProjectVisibility - Override an agent conversation's project visibility
+// Agent-conversation equivalent of
+// `PATCH /conversations/{conversationId}/project-visibility`.
+// Initiator-only; requires the conversation to already be linked to a
+// project.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *Agents) SetAgentConversationProjectVisibility(ctx context.Context, agentKey string, conversationID string, body operations.SetAgentConversationProjectVisibilityRequestBody, opts ...operations.Option) (*operations.SetAgentConversationProjectVisibilityResponse, error) {
+	request := operations.SetAgentConversationProjectVisibilityRequest{
+		AgentKey:       agentKey,
+		ConversationID: conversationID,
+		Body:           body,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/agents/{agentKey}/conversations/{conversationId}/project-visibility", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "setAgentConversationProjectVisibility",
+		OAuth2Scopes:     []string{"agent:write"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
+	if err != nil {
+		return nil, err
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "PATCH", opURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+	if reqContentType != "" {
+		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.SetAgentConversationProjectVisibilityResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out operations.SetAgentConversationProjectVisibilityResponseBody
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.Object = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
 // DeleteAgentConversationByID - Delete an agent conversation
 // Soft-deletes an agent conversation owned by the authenticated user.
 //
@@ -3964,6 +5066,8 @@ func (s *Agents) UpdateAgentConversationTitle(ctx context.Context, agentKey stri
 // - deleting a nonexistent conversation returns success with `null`
 // - deleting through a different `agentKey` returns success with `null`
 // - deleting an already deleted conversation returns success with `null`
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) DeleteAgentConversationByID(ctx context.Context, agentKey string, conversationID string, opts ...operations.Option) (*operations.DeleteAgentConversationByIDResponse, error) {
 	request := operations.DeleteAgentConversationByIDRequest{
 		AgentKey:       agentKey,
@@ -4021,7 +5125,7 @@ func (s *Agents) DeleteAgentConversationByID(ctx context.Context, agentKey strin
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -4105,7 +5209,7 @@ func (s *Agents) DeleteAgentConversationByID(ctx context.Context, agentKey strin
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4161,7 +5265,7 @@ func (s *Agents) DeleteAgentConversationByID(ctx context.Context, agentKey strin
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -4186,7 +5290,7 @@ func (s *Agents) DeleteAgentConversationByID(ctx context.Context, agentKey strin
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -4236,6 +5340,8 @@ func (s *Agents) DeleteAgentConversationByID(ctx context.Context, agentKey strin
 //
 // - `page`: Page number (default: 1)
 // - `limit`: Messages per page (default: 20, max: 100)
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) GetAgentConversationByID(ctx context.Context, request operations.GetAgentConversationByIDRequest, opts ...operations.Option) (*operations.GetAgentConversationByIDResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4292,7 +5398,7 @@ func (s *Agents) GetAgentConversationByID(ctx context.Context, request operation
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -4376,7 +5482,7 @@ func (s *Agents) GetAgentConversationByID(ctx context.Context, request operation
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4451,6 +5557,8 @@ func (s *Agents) GetAgentConversationByID(ctx context.Context, request operation
 // ListAgentConversations - List agent conversations
 // Paginated list of conversations for the agent (owned and shared-with-me),
 // excluding archived threads.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *Agents) ListAgentConversations(ctx context.Context, request operations.ListAgentConversationsRequest, opts ...operations.Option) (*operations.ListAgentConversationsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4507,7 +5615,7 @@ func (s *Agents) ListAgentConversations(ctx context.Context, request operations.
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -4591,7 +5699,7 @@ func (s *Agents) ListAgentConversations(ctx context.Context, request operations.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4647,7 +5755,7 @@ func (s *Agents) ListAgentConversations(ctx context.Context, request operations.
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -4662,6 +5770,345 @@ func (s *Agents) ListAgentConversations(ctx context.Context, request operations.
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
+// CreateAgentConversation - Create agent conversation (non-streaming)
+// Start a conversation with an agent and wait for the complete answer.
+// The JSON counterpart of `POST /agents/{agentKey}/conversations/stream`.
+//
+// **How a turn runs**
+//
+//  1. The user's message is saved (in its own short transaction on a
+//     replica set).
+//  2. The AI backend runs the same agent-loop pipeline as the `/stream`
+//     route and returns only its final result. No transaction is held
+//     during this call, and the call is never retried.
+//  3. The answer, citations and status are saved exactly as the
+//     streaming route saves them, and the updated conversation is
+//     returned.
+//
+// Every failure after step 1 is persisted: the conversation ends with
+// status `Failed`, a `failReason`, and an `error` message, and the
+// response carries `X-Conversation-Id` so the caller can fetch it.
+// A 4xx from the AI backend (for example no model configured) keeps
+// its status and user-facing message; other failures return 500 with
+// a generic message.
+//
+// The response arrives only when the whole answer is ready, which can
+// take minutes for agent runs. Allow a generous client and proxy
+// timeout, or use the `/stream` variant for interactive clients.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *Agents) CreateAgentConversation(ctx context.Context, agentKey string, body components.AgentCreateConversationRequest, opts ...operations.Option) (*operations.CreateAgentConversationResponse, error) {
+	request := operations.CreateAgentConversationRequest{
+		AgentKey: agentKey,
+		Body:     body,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/agents/{agentKey}/conversations", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "createAgentConversation",
+		OAuth2Scopes:     []string{"agent:execute"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
+	if err != nil {
+		return nil, err
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+	if reqContentType != "" {
+		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.CreateAgentConversationResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 201:
+		res.Headers = httpRes.Header
+
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out components.CreateAgentConversationResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.CreateAgentConversationResponse = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 424:
+		res.Headers = httpRes.Header
+
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 413:
+		fallthrough
+	case httpRes.StatusCode == 422:
+		fallthrough
+	case httpRes.StatusCode == 429:
+		res.Headers = httpRes.Header
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode == 500:
+		res.Headers = httpRes.Header
+
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {

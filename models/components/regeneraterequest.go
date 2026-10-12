@@ -99,6 +99,11 @@ type RegenerateRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Client-generated identifier for this regeneration run. Send it
+	// here to enable `POST .../cancel {runId}` while it is still
+	// generating.
+	//
+	RunID *string `json:"runId,omitzero"`
 }
 
 func (r RegenerateRequest) MarshalJSON() ([]byte, error) {
@@ -180,4 +185,11 @@ func (r *RegenerateRequest) GetAgentCapabilities() *AgentCapabilities {
 		return nil
 	}
 	return r.AgentCapabilities
+}
+
+func (r *RegenerateRequest) GetRunID() *string {
+	if r == nil {
+		return nil
+	}
+	return r.RunID
 }

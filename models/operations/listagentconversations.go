@@ -9,20 +9,20 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
-// IsArchived - Optional archived flag applied to the `sharedWithMeConversations`
+// ListAgentConversationsIsArchived - Optional archived flag applied to the `sharedWithMeConversations`
 // branch before the route-level non-archived guard is enforced.
 // Accepted values are `true` and `false`.
-type IsArchived string
+type ListAgentConversationsIsArchived string
 
 const (
-	IsArchivedTrue  IsArchived = "true"
-	IsArchivedFalse IsArchived = "false"
+	ListAgentConversationsIsArchivedTrue  ListAgentConversationsIsArchived = "true"
+	ListAgentConversationsIsArchivedFalse ListAgentConversationsIsArchived = "false"
 )
 
-func (e IsArchived) ToPointer() *IsArchived {
+func (e ListAgentConversationsIsArchived) ToPointer() *ListAgentConversationsIsArchived {
 	return &e
 }
-func (e *IsArchived) UnmarshalJSON(data []byte) error {
+func (e *ListAgentConversationsIsArchived) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -31,10 +31,10 @@ func (e *IsArchived) UnmarshalJSON(data []byte) error {
 	case "true":
 		fallthrough
 	case "false":
-		*e = IsArchived(v)
+		*e = ListAgentConversationsIsArchived(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for IsArchived: %v", v)
+		return fmt.Errorf("invalid value for ListAgentConversationsIsArchived: %v", v)
 	}
 }
 
@@ -82,7 +82,12 @@ type ListAgentConversationsRequest struct {
 	// branch before the route-level non-archived guard is enforced.
 	// Accepted values are `true` and `false`.
 	//
-	IsArchived *IsArchived `queryParam:"style=form,explode=true,name=isArchived"`
+	IsArchived *ListAgentConversationsIsArchived `queryParam:"style=form,explode=true,name=isArchived"`
+	// Restrict results to a single project. Pass a project's `id`, or
+	// the literal string `unassigned` to list agent conversations with
+	// no `projectId`.
+	//
+	ProjectID *string `queryParam:"style=form,explode=true,name=projectId"`
 }
 
 func (l ListAgentConversationsRequest) MarshalJSON() ([]byte, error) {
@@ -159,11 +164,18 @@ func (l *ListAgentConversationsRequest) GetStatus() *string {
 	return l.Status
 }
 
-func (l *ListAgentConversationsRequest) GetIsArchived() *IsArchived {
+func (l *ListAgentConversationsRequest) GetIsArchived() *ListAgentConversationsIsArchived {
 	if l == nil {
 		return nil
 	}
 	return l.IsArchived
+}
+
+func (l *ListAgentConversationsRequest) GetProjectID() *string {
+	if l == nil {
+		return nil
+	}
+	return l.ProjectID
 }
 
 type ListAgentConversationsResponse struct {

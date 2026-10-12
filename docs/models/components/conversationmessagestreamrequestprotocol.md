@@ -7,6 +7,16 @@ Kept in the schema for backward compatibility with callers that
 already send it.
 
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.ConversationMessageStreamRequestProtocolAgui
+```
+
 
 ## Values
 

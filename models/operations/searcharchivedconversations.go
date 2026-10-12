@@ -57,6 +57,7 @@ const (
 	SearchArchivedConversationsStatusInprogress SearchArchivedConversationsStatus = "Inprogress"
 	SearchArchivedConversationsStatusComplete   SearchArchivedConversationsStatus = "Complete"
 	SearchArchivedConversationsStatusFailed     SearchArchivedConversationsStatus = "Failed"
+	SearchArchivedConversationsStatusStopped    SearchArchivedConversationsStatus = "Stopped"
 )
 
 func (e SearchArchivedConversationsStatus) ToPointer() *SearchArchivedConversationsStatus {
@@ -67,7 +68,7 @@ func (e SearchArchivedConversationsStatus) ToPointer() *SearchArchivedConversati
 func (e *SearchArchivedConversationsStatus) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "None", "Inprogress", "Complete", "Failed":
+		case "None", "Inprogress", "Complete", "Failed", "Stopped":
 			return true
 		}
 	}
@@ -242,6 +243,32 @@ func (e *SearchArchivedConversationsAccessLevel) IsExact() bool {
 	return false
 }
 
+// SearchArchivedConversationsProjectVisibility - Only meaningful when `projectId` is set. `private` (default)
+// keeps the conversation visible to its owner only; `project`
+// exposes it to every member of the linked project. See
+// `PATCH /conversations/{conversationId}/project-visibility`.
+type SearchArchivedConversationsProjectVisibility string
+
+const (
+	SearchArchivedConversationsProjectVisibilityPrivate SearchArchivedConversationsProjectVisibility = "private"
+	SearchArchivedConversationsProjectVisibilityProject SearchArchivedConversationsProjectVisibility = "project"
+)
+
+func (e SearchArchivedConversationsProjectVisibility) ToPointer() *SearchArchivedConversationsProjectVisibility {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *SearchArchivedConversationsProjectVisibility) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "private", "project":
+			return true
+		}
+	}
+	return false
+}
+
 // SearchArchivedConversationsSource - Origin collection of the conversation
 type SearchArchivedConversationsSource string
 
@@ -295,6 +322,21 @@ type SearchArchivedConversationsConversation struct {
 	UpdatedAt          *time.Time                                     `json:"updatedAt,omitzero"`
 	IsOwner            *bool                                          `json:"isOwner,omitzero"`
 	AccessLevel        *SearchArchivedConversationsAccessLevel        `json:"accessLevel,omitzero"`
+	// The project this conversation is linked to, if any. Set via
+	// `PUT /conversations/{conversationId}/project` or at creation
+	// time; absent on conversations that were never linked.
+	//
+	ProjectID optionalnullable.OptionalNullable[string] `json:"projectId,omitzero"`
+	// Only meaningful when `projectId` is set. `private` (default)
+	// keeps the conversation visible to its owner only; `project`
+	// exposes it to every member of the linked project. See
+	// `PATCH /conversations/{conversationId}/project-visibility`.
+	//
+	ProjectVisibility optionalnullable.OptionalNullable[SearchArchivedConversationsProjectVisibility] `json:"projectVisibility,omitzero"`
+	// Present on conversations the caller received via share. Identifies the
+	// conversation initiator (the only user who can share a chat).
+	//
+	SharedBy *components.ConversationSharedBy `json:"sharedBy,omitzero"`
 	// Origin collection of the conversation
 	Source *SearchArchivedConversationsSource `json:"source,omitzero"`
 	// Agent identifier — present only when `source` is `agent`
@@ -466,6 +508,27 @@ func (s *SearchArchivedConversationsConversation) GetAccessLevel() *SearchArchiv
 		return nil
 	}
 	return s.AccessLevel
+}
+
+func (s *SearchArchivedConversationsConversation) GetProjectID() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.ProjectID
+}
+
+func (s *SearchArchivedConversationsConversation) GetProjectVisibility() optionalnullable.OptionalNullable[SearchArchivedConversationsProjectVisibility] {
+	if s == nil {
+		return nil
+	}
+	return s.ProjectVisibility
+}
+
+func (s *SearchArchivedConversationsConversation) GetSharedBy() *components.ConversationSharedBy {
+	if s == nil {
+		return nil
+	}
+	return s.SharedBy
 }
 
 func (s *SearchArchivedConversationsConversation) GetSource() *SearchArchivedConversationsSource {

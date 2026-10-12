@@ -11,6 +11,6 @@ For **client_credentials**, machine JWTs may use `userId === client_id`; the Nod
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `ClientID`         | *string*           | :heavy_check_mark: | N/A                |
-| `ClientSecret`     | *string*           | :heavy_check_mark: | N/A                |
-| `TokenURL`         | *string*           | :heavy_check_mark: | N/A                |
+| `ClientID`         | `string`           | :heavy_check_mark: | N/A                |
+| `ClientSecret`     | `string`           | :heavy_check_mark: | N/A                |
+| `TokenURL`         | `string`           | :heavy_check_mark: | N/A                |

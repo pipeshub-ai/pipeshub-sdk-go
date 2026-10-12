@@ -90,7 +90,7 @@ func (s *UserAccount) InitAuth(ctx context.Context, request *components.InitAuth
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "initAuth",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   nil,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "Request", "json", `request:"mediaType=application/json"`)
@@ -199,7 +199,7 @@ func (s *UserAccount) InitAuth(ctx context.Context, request *components.InitAuth
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -255,7 +255,7 @@ func (s *UserAccount) InitAuth(ctx context.Context, request *components.InitAuth
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -280,7 +280,7 @@ func (s *UserAccount) InitAuth(ctx context.Context, request *components.InitAuth
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -325,13 +325,14 @@ func (s *UserAccount) InitAuth(ctx context.Context, request *components.InitAuth
 //
 // **Credential Formats by Method:**
 //
-// - `password`: `{ "credentials": { "password": "your-password" } }`
-// - `otp`: `{ "credentials": { "otp": "123456" } }` (6-digit code, valid for 10 minutes)
-// - `google`: `{ "credentials": "google-id-token-string" }`
-// - `microsoft`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
-// - `azureAd`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
-// - `oauth`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
-// - `samlSso`: Handled via redirect flow (use `/saml/signIn` instead)
+//   - `password`: `{ "credentials": { "password": "your-password" } }`
+//   - `otp`: `{ "credentials": { "otp": "123456" } }` (6-digit code, valid for 10 minutes)
+//   - `google`: `{ "credentials": "google-id-token-string" }`
+//   - `microsoft`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
+//   - `azureAd`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
+//   - `oauth`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
+//   - `samlSso`: not accepted here; this endpoint answers `400`. SAML sign-in runs as a browser
+//     redirect: send the browser to `/saml/signIn` instead
 //
 // **Multi-Step Response:**
 //
@@ -345,8 +346,12 @@ func (s *UserAccount) InitAuth(ctx context.Context, request *components.InitAuth
 //
 // **Security:**
 //
-// - Account locks after 5 consecutive failed attempts
-// - CAPTCHA may be required if enabled (pass `cf-turnstile-response`)
+//   - Account locks for 24 hours after 5 consecutive failed attempts, and the owner is
+//     sent an email saying so. While it is locked, sign-in is refused with the same answer
+//     as a wrong password or code, even when the password or code is right
+//   - CAPTCHA may be required if enabled (pass `cf-turnstile-response`)
+//   - An email with no account gets the same status and message as a real account given
+//     a wrong password (`400`) or a wrong, missing or expired sign-in code (`401`)
 func (s *UserAccount) Authenticate(ctx context.Context, xSessionToken string, body components.AuthenticateRequest, opts ...operations.Option) (*operations.AuthenticateResponse, error) {
 	request := operations.AuthenticateRequest{
 		XSessionToken: xSessionToken,
@@ -382,7 +387,7 @@ func (s *UserAccount) Authenticate(ctx context.Context, xSessionToken string, bo
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "authenticate",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   nil,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
@@ -493,7 +498,7 @@ func (s *UserAccount) Authenticate(ctx context.Context, xSessionToken string, bo
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "410", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -542,8 +547,6 @@ func (s *UserAccount) Authenticate(ctx context.Context, xSessionToken string, bo
 	case httpRes.StatusCode == 401:
 		fallthrough
 	case httpRes.StatusCode == 404:
-		fallthrough
-	case httpRes.StatusCode == 410:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -553,7 +556,7 @@ func (s *UserAccount) Authenticate(ctx context.Context, xSessionToken string, bo
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -578,7 +581,7 @@ func (s *UserAccount) Authenticate(ctx context.Context, xSessionToken string, bo
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -771,7 +774,7 @@ func (s *UserAccount) RefreshToken(ctx context.Context, security operations.Refr
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -829,7 +832,7 @@ func (s *UserAccount) RefreshToken(ctx context.Context, security operations.Refr
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -854,7 +857,7 @@ func (s *UserAccount) RefreshToken(ctx context.Context, security operations.Refr
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -899,6 +902,8 @@ func (s *UserAccount) RefreshToken(ctx context.Context, security operations.Refr
 // **Overview:**
 //
 // Allows a logged-in user to change their password by providing the current password and a new password.
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *UserAccount) ResetPassword(ctx context.Context, request operations.ResetPasswordRequest, opts ...operations.Option) (*operations.ResetPasswordResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -929,7 +934,7 @@ func (s *UserAccount) ResetPassword(ctx context.Context, request operations.Rese
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "resetPassword",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
@@ -958,7 +963,7 @@ func (s *UserAccount) ResetPassword(ctx context.Context, request operations.Rese
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -1042,7 +1047,7 @@ func (s *UserAccount) ResetPassword(ctx context.Context, request operations.Rese
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1100,7 +1105,7 @@ func (s *UserAccount) ResetPassword(ctx context.Context, request operations.Rese
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1125,7 +1130,7 @@ func (s *UserAccount) ResetPassword(ctx context.Context, request operations.Rese
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{

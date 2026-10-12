@@ -7,6 +7,7 @@ import (
 	"errors"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"time"
 )
 
 type RecordVersionType string
@@ -59,6 +60,7 @@ func (u RecordVersion) IsUnknown() bool {
 }
 
 func (u *RecordVersion) UnmarshalJSON(data []byte) error {
+	*u = RecordVersion{}
 
 	var candidates []utils.UnionCandidate
 
@@ -186,6 +188,7 @@ func (u PointID) IsUnknown() bool {
 }
 
 func (u *PointID) UnmarshalJSON(data []byte) error {
+	*u = PointID{}
 
 	var candidates []utils.UnionCandidate
 
@@ -295,6 +298,7 @@ type SemanticSearchHitMetadata struct {
 	WebURL            optionalnullable.OptionalNullable[string]                      `json:"webUrl,omitzero"`
 	PreviewRenderable optionalnullable.OptionalNullable[bool]                        `json:"previewRenderable,omitzero"`
 	HideWeburl        optionalnullable.OptionalNullable[bool]                        `json:"hideWeburl,omitzero"`
+	UpdatedAt         optionalnullable.OptionalNullable[time.Time]                   `json:"updatedAt,omitzero"`
 	Categories        optionalnullable.OptionalNullable[[]string]                    `json:"categories,omitzero"`
 	Departments       optionalnullable.OptionalNullable[[]string]                    `json:"departments,omitzero"`
 	Topics            optionalnullable.OptionalNullable[[]string]                    `json:"topics,omitzero"`
@@ -490,6 +494,13 @@ func (s *SemanticSearchHitMetadata) GetHideWeburl() optionalnullable.OptionalNul
 		return nil
 	}
 	return s.HideWeburl
+}
+
+func (s *SemanticSearchHitMetadata) GetUpdatedAt() optionalnullable.OptionalNullable[time.Time] {
+	if s == nil {
+		return nil
+	}
+	return s.UpdatedAt
 }
 
 func (s *SemanticSearchHitMetadata) GetCategories() optionalnullable.OptionalNullable[[]string] {

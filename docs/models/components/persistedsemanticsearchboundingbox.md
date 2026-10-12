@@ -9,6 +9,6 @@ Bounding box subdocument embedded in persisted citation metadata.
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `ID`               | *string*           | :heavy_check_mark: | N/A                |
-| `X`                | *float64*          | :heavy_check_mark: | N/A                |
-| `Y`                | *float64*          | :heavy_check_mark: | N/A                |
+| `ID`               | `string`           | :heavy_check_mark: | N/A                |
+| `X`                | `float64`          | :heavy_check_mark: | N/A                |
+| `Y`                | `float64`          | :heavy_check_mark: | N/A                |

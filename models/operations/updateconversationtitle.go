@@ -43,375 +43,12 @@ func (u *UpdateConversationTitleRequest) GetBody() UpdateConversationTitleReques
 	return u.Body
 }
 
-type UpdateConversationTitleMessageType string
-
-const (
-	UpdateConversationTitleMessageTypeUserQuery   UpdateConversationTitleMessageType = "user_query"
-	UpdateConversationTitleMessageTypeBotResponse UpdateConversationTitleMessageType = "bot_response"
-	UpdateConversationTitleMessageTypeError       UpdateConversationTitleMessageType = "error"
-	UpdateConversationTitleMessageTypeFeedback    UpdateConversationTitleMessageType = "feedback"
-	UpdateConversationTitleMessageTypeSystem      UpdateConversationTitleMessageType = "system"
-	UpdateConversationTitleMessageTypeToolCall    UpdateConversationTitleMessageType = "tool_call"
-)
-
-func (e UpdateConversationTitleMessageType) ToPointer() *UpdateConversationTitleMessageType {
-	return &e
-}
-
-// IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *UpdateConversationTitleMessageType) IsExact() bool {
-	if e != nil {
-		switch *e {
-		case "user_query", "bot_response", "error", "feedback", "system", "tool_call":
-			return true
-		}
-	}
-	return false
-}
-
-type UpdateConversationTitleContentFormat string
-
-const (
-	UpdateConversationTitleContentFormatMarkdown UpdateConversationTitleContentFormat = "MARKDOWN"
-	UpdateConversationTitleContentFormatJSON     UpdateConversationTitleContentFormat = "JSON"
-	UpdateConversationTitleContentFormatHTML     UpdateConversationTitleContentFormat = "HTML"
-)
-
-func (e UpdateConversationTitleContentFormat) ToPointer() *UpdateConversationTitleContentFormat {
-	return &e
-}
-
-// IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *UpdateConversationTitleContentFormat) IsExact() bool {
-	if e != nil {
-		switch *e {
-		case "MARKDOWN", "JSON", "HTML":
-			return true
-		}
-	}
-	return false
-}
-
-type UpdateConversationTitleReferenceDatum struct {
-	// Display name shown to the user.
-	Name *string `json:"name,omitzero"`
-	// Technical identifier (numeric ID, UUID, etc.).
-	ID *string `json:"id,omitzero"`
-	// Item type (e.g. `project`, `issue`, `file`, `notebook`, `page`).
-	Type *string `json:"type,omitzero"`
-	// Source application (e.g. `jira`, `confluence`,
-	// `sharepoint`, `slack`, `drive`, `gmail`).
-	//
-	App *string `json:"app,omitzero"`
-	// URL to open the item in a browser.
-	WebURL *string `json:"webUrl,omitzero"`
-	// App-specific fields keyed by name (e.g. `key` for a Jira
-	// project, `siteId` for a SharePoint document).
-	//
-	Metadata map[string]string `json:"metadata,omitzero"`
-}
-
-func (u UpdateConversationTitleReferenceDatum) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(u, "", false)
-}
-
-func (u *UpdateConversationTitleReferenceDatum) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u *UpdateConversationTitleReferenceDatum) GetName() *string {
-	if u == nil {
-		return nil
-	}
-	return u.Name
-}
-
-func (u *UpdateConversationTitleReferenceDatum) GetID() *string {
-	if u == nil {
-		return nil
-	}
-	return u.ID
-}
-
-func (u *UpdateConversationTitleReferenceDatum) GetType() *string {
-	if u == nil {
-		return nil
-	}
-	return u.Type
-}
-
-func (u *UpdateConversationTitleReferenceDatum) GetApp() *string {
-	if u == nil {
-		return nil
-	}
-	return u.App
-}
-
-func (u *UpdateConversationTitleReferenceDatum) GetWebURL() *string {
-	if u == nil {
-		return nil
-	}
-	return u.WebURL
-}
-
-func (u *UpdateConversationTitleReferenceDatum) GetMetadata() map[string]string {
-	if u == nil {
-		return nil
-	}
-	return u.Metadata
-}
-
-type UpdateConversationTitleAppliedFilters struct {
-	Apps []components.AppliedFilterNode `json:"apps,omitzero"`
-	Kb   []components.AppliedFilterNode `json:"kb,omitzero"`
-}
-
-func (u UpdateConversationTitleAppliedFilters) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(u, "", false)
-}
-
-func (u *UpdateConversationTitleAppliedFilters) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u *UpdateConversationTitleAppliedFilters) GetApps() []components.AppliedFilterNode {
-	if u == nil {
-		return nil
-	}
-	return u.Apps
-}
-
-func (u *UpdateConversationTitleAppliedFilters) GetKb() []components.AppliedFilterNode {
-	if u == nil {
-		return nil
-	}
-	return u.Kb
-}
-
-type UpdateConversationTitleMetadata struct {
-	ProcessingTimeMs *float64 `json:"processingTimeMs,omitzero"`
-	ModelVersion     *string  `json:"modelVersion,omitzero"`
-	AiTransactionID  *string  `json:"aiTransactionId,omitzero"`
-	Reason           *string  `json:"reason,omitzero"`
-}
-
-func (u *UpdateConversationTitleMetadata) GetProcessingTimeMs() *float64 {
-	if u == nil {
-		return nil
-	}
-	return u.ProcessingTimeMs
-}
-
-func (u *UpdateConversationTitleMetadata) GetModelVersion() *string {
-	if u == nil {
-		return nil
-	}
-	return u.ModelVersion
-}
-
-func (u *UpdateConversationTitleMetadata) GetAiTransactionID() *string {
-	if u == nil {
-		return nil
-	}
-	return u.AiTransactionID
-}
-
-func (u *UpdateConversationTitleMetadata) GetReason() *string {
-	if u == nil {
-		return nil
-	}
-	return u.Reason
-}
-
-type UpdateConversationTitleMessage struct {
-	ID            string                                `json:"_id"`
-	MessageType   UpdateConversationTitleMessageType    `json:"messageType"`
-	Content       string                                `json:"content"`
-	ContentFormat *UpdateConversationTitleContentFormat `default:"MARKDOWN" json:"contentFormat"`
-	// AI confidence in the answer. Present only on
-	// `bot_response` messages, and only when the
-	// model emitted a trailing confidence block.
-	//
-	// This field is now optional and nullable; it was previously always present and non-nullable. Treat a missing or `null` value as "no confidence reported" and guard before using it. Change effective in SDK v1.3.0 (v1.2.0 and earlier always populated it).
-	//
-	Confidence optionalnullable.OptionalNullable[string] `json:"confidence,omitzero"`
-	// References to source documents used in the
-	// response, stored as raw citation pointers
-	// (not populated on this endpoint).
-	//
-	Citations         []components.CitationReference `json:"citations"`
-	FollowUpQuestions []components.FollowUpQuestion  `json:"followUpQuestions"`
-	Feedback          []components.MessageFeedback   `json:"feedback"`
-	// Reference IDs surfaced from tool responses,
-	// used for follow-up queries.
-	//
-	ReferenceData []UpdateConversationTitleReferenceDatum `json:"referenceData"`
-	// AI model configuration recorded against a conversation or message.
-	ModelInfo      *components.ConversationModelInfo      `json:"modelInfo,omitzero"`
-	AppliedFilters *UpdateConversationTitleAppliedFilters `json:"appliedFilters,omitzero"`
-	// Files uploaded for this message turn (see
-	// `POST /conversations/attachments/upload`).
-	//
-	Attachments []components.ChatAttachmentRef `json:"attachments,omitzero"`
-	// Tool call results invoked during this message turn.
-	Tools []components.MessageToolCall `json:"tools,omitzero"`
-	// Persisted chain-of-thought for this turn.
-	Reasoning []components.MessageReasoningTurn `json:"reasoning,omitzero"`
-	// Ordered agent-activity transcript for this turn.
-	Parts     []components.MessagePart         `json:"parts,omitzero"`
-	Metadata  *UpdateConversationTitleMetadata `json:"metadata,omitzero"`
-	CreatedAt time.Time                        `json:"createdAt"`
-	UpdatedAt time.Time                        `json:"updatedAt"`
-}
-
-func (u UpdateConversationTitleMessage) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(u, "", false)
-}
-
-func (u *UpdateConversationTitleMessage) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u *UpdateConversationTitleMessage) GetID() string {
-	if u == nil {
-		return ""
-	}
-	return u.ID
-}
-
-func (u *UpdateConversationTitleMessage) GetMessageType() UpdateConversationTitleMessageType {
-	if u == nil {
-		return UpdateConversationTitleMessageType("")
-	}
-	return u.MessageType
-}
-
-func (u *UpdateConversationTitleMessage) GetContent() string {
-	if u == nil {
-		return ""
-	}
-	return u.Content
-}
-
-func (u *UpdateConversationTitleMessage) GetContentFormat() *UpdateConversationTitleContentFormat {
-	if u == nil {
-		return nil
-	}
-	return u.ContentFormat
-}
-
-func (u *UpdateConversationTitleMessage) GetConfidence() optionalnullable.OptionalNullable[string] {
-	if u == nil {
-		return nil
-	}
-	return u.Confidence
-}
-
-func (u *UpdateConversationTitleMessage) GetCitations() []components.CitationReference {
-	if u == nil {
-		return []components.CitationReference{}
-	}
-	return u.Citations
-}
-
-func (u *UpdateConversationTitleMessage) GetFollowUpQuestions() []components.FollowUpQuestion {
-	if u == nil {
-		return []components.FollowUpQuestion{}
-	}
-	return u.FollowUpQuestions
-}
-
-func (u *UpdateConversationTitleMessage) GetFeedback() []components.MessageFeedback {
-	if u == nil {
-		return []components.MessageFeedback{}
-	}
-	return u.Feedback
-}
-
-func (u *UpdateConversationTitleMessage) GetReferenceData() []UpdateConversationTitleReferenceDatum {
-	if u == nil {
-		return []UpdateConversationTitleReferenceDatum{}
-	}
-	return u.ReferenceData
-}
-
-func (u *UpdateConversationTitleMessage) GetModelInfo() *components.ConversationModelInfo {
-	if u == nil {
-		return nil
-	}
-	return u.ModelInfo
-}
-
-func (u *UpdateConversationTitleMessage) GetAppliedFilters() *UpdateConversationTitleAppliedFilters {
-	if u == nil {
-		return nil
-	}
-	return u.AppliedFilters
-}
-
-func (u *UpdateConversationTitleMessage) GetAttachments() []components.ChatAttachmentRef {
-	if u == nil {
-		return nil
-	}
-	return u.Attachments
-}
-
-func (u *UpdateConversationTitleMessage) GetTools() []components.MessageToolCall {
-	if u == nil {
-		return nil
-	}
-	return u.Tools
-}
-
-func (u *UpdateConversationTitleMessage) GetReasoning() []components.MessageReasoningTurn {
-	if u == nil {
-		return nil
-	}
-	return u.Reasoning
-}
-
-func (u *UpdateConversationTitleMessage) GetParts() []components.MessagePart {
-	if u == nil {
-		return nil
-	}
-	return u.Parts
-}
-
-func (u *UpdateConversationTitleMessage) GetMetadata() *UpdateConversationTitleMetadata {
-	if u == nil {
-		return nil
-	}
-	return u.Metadata
-}
-
-func (u *UpdateConversationTitleMessage) GetCreatedAt() time.Time {
-	if u == nil {
-		return time.Time{}
-	}
-	return u.CreatedAt
-}
-
-func (u *UpdateConversationTitleMessage) GetUpdatedAt() time.Time {
-	if u == nil {
-		return time.Time{}
-	}
-	return u.UpdatedAt
-}
-
 // UpdateConversationTitleStatus - Current status of the conversation:
 // - `None` — no activity yet
 // - `Inprogress` — AI is processing
 // - `Complete` — response ready
 // - `Failed` — error occurred
+// - `Stopped` — cancelled, or the client disconnected mid-answer
 type UpdateConversationTitleStatus string
 
 const (
@@ -419,6 +56,7 @@ const (
 	UpdateConversationTitleStatusInprogress UpdateConversationTitleStatus = "Inprogress"
 	UpdateConversationTitleStatusComplete   UpdateConversationTitleStatus = "Complete"
 	UpdateConversationTitleStatusFailed     UpdateConversationTitleStatus = "Failed"
+	UpdateConversationTitleStatusStopped    UpdateConversationTitleStatus = "Stopped"
 )
 
 func (e UpdateConversationTitleStatus) ToPointer() *UpdateConversationTitleStatus {
@@ -429,7 +67,7 @@ func (e UpdateConversationTitleStatus) ToPointer() *UpdateConversationTitleStatu
 func (e *UpdateConversationTitleStatus) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "None", "Inprogress", "Complete", "Failed":
+		case "None", "Inprogress", "Complete", "Failed", "Stopped":
 			return true
 		}
 	}
@@ -566,8 +204,13 @@ func (u *UpdateConversationTitleConversationError) GetMetadata() map[string]any 
 	return u.Metadata
 }
 
-// UpdateConversationTitleConversation - The full conversation document after the title update,
-// returned as stored in MongoDB.
+// UpdateConversationTitleConversation - The conversation document after the title update, as
+// stored in the `chatSessions` collection.
+//
+// Carries no `messages`: they live in `chatSessionMessages`
+// (see `chat.session.schema.ts`) and this route neither
+// reads nor joins them. Fetch the conversation by id to
+// get its messages.
 type UpdateConversationTitleConversation struct {
 	// Unique conversation identifier
 	ID string `json:"_id"`
@@ -582,13 +225,12 @@ type UpdateConversationTitleConversation struct {
 	Title *string `json:"title,omitzero"`
 	// User who started the conversation
 	Initiator string `json:"initiator"`
-	// All messages stored on this conversation.
-	Messages []UpdateConversationTitleMessage `json:"messages"`
 	// Current status of the conversation:
 	// - `None` — no activity yet
 	// - `Inprogress` — AI is processing
 	// - `Complete` — response ready
 	// - `Failed` — error occurred
+	// - `Stopped` — cancelled, or the client disconnected mid-answer
 	//
 	Status *UpdateConversationTitleStatus `json:"status,omitzero"`
 	// Error description, populated only when `status`
@@ -674,13 +316,6 @@ func (u *UpdateConversationTitleConversation) GetInitiator() string {
 		return ""
 	}
 	return u.Initiator
-}
-
-func (u *UpdateConversationTitleConversation) GetMessages() []UpdateConversationTitleMessage {
-	if u == nil {
-		return []UpdateConversationTitleMessage{}
-	}
-	return u.Messages
 }
 
 func (u *UpdateConversationTitleConversation) GetStatus() *UpdateConversationTitleStatus {
@@ -840,8 +475,13 @@ func (u *UpdateConversationTitleMeta) GetDuration() int64 {
 
 // UpdateConversationTitleResponseBody - Title updated successfully
 type UpdateConversationTitleResponseBody struct {
-	// The full conversation document after the title update,
-	// returned as stored in MongoDB.
+	// The conversation document after the title update, as
+	// stored in the `chatSessions` collection.
+	//
+	// Carries no `messages`: they live in `chatSessionMessages`
+	// (see `chat.session.schema.ts`) and this route neither
+	// reads nor joins them. Fetch the conversation by id to
+	// get its messages.
 	//
 	Conversation UpdateConversationTitleConversation `json:"conversation"`
 	Meta         UpdateConversationTitleMeta         `json:"meta"`

@@ -95,7 +95,14 @@ func CreateAgentCreateModelEntryUnionAgentCreateModelEntry(agentCreateModelEntry
 	}
 }
 
-func (u *AgentCreateModelEntryUnion) UnmarshalJSON(data []byte) error {
+func (u *AgentCreateModelEntryUnion) UnmarshalJSON(data []byte) (err error) {
+	previous := *u
+	*u = AgentCreateModelEntryUnion{}
+	defer func() {
+		if err != nil {
+			*u = previous
+		}
+	}()
 
 	var candidates []utils.UnionCandidate
 

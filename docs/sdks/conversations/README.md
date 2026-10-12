@@ -6,18 +6,156 @@ AI-powered conversational chat management with citations and follow-up questions
 
 ### Available Operations
 
+* [CreateConversation](#createconversation) - Create conversation (non-streaming)
 * [StreamChat](#streamchat) - Create conversation with streaming response
 * [GetAllConversations](#getallconversations) - List all conversations
 * [GetArchivedConversations](#getarchivedconversations) - List archived conversations
 * [SearchArchivedConversations](#searcharchivedconversations) - Search archived conversations
 * [GetConversationByID](#getconversationbyid) - Get conversation by ID
 * [DeleteConversationByID](#deleteconversationbyid) - Delete conversation
+* [AddMessage](#addmessage) - Add message (non-streaming)
 * [AddMessageStream](#addmessagestream) - Add message to a conversation with streaming response
 * [UpdateConversationTitle](#updateconversationtitle) - Update conversation title
 * [ArchiveConversation](#archiveconversation) - Archive conversation
 * [UnarchiveConversation](#unarchiveconversation) - Unarchive conversation
 * [RegenerateAnswer](#regenerateanswer) - Regenerate AI response
+* [CancelConversationStream](#cancelconversationstream) - Cancel an in-flight chat stream
 * [UpdateMessageFeedback](#updatemessagefeedback) - Submit feedback on AI response
+* [SetConversationProject](#setconversationproject) - Link or unlink a conversation to a project
+* [SetConversationProjectVisibility](#setconversationprojectvisibility) - Override a conversation's project visibility
+* [GetProjectConversations](#getprojectconversations) - List a project's conversations
+
+## CreateConversation
+
+Start a new assistant conversation and wait for the complete answer.
+The JSON counterpart of `POST /conversations/stream`, for API, SDK
+and automation callers that do not consume SSE.
+
+**How a turn runs**
+
+1. The user's message is saved (in its own short transaction on a
+   replica set).
+2. The AI backend runs the same agent-loop pipeline as the `/stream`
+   route and returns only its final result. No transaction is held
+   during this call, and the call is never retried.
+3. The answer, citations and status are saved exactly as the
+   streaming route saves them, and the updated conversation is
+   returned.
+
+Every failure after step 1 is persisted: the conversation ends with
+status `Failed`, a `failReason`, and an `error` message, and the
+response carries `X-Conversation-Id` so the caller can fetch it.
+A 4xx from the AI backend (for example no model configured) keeps
+its status and user-facing message; other failures return 500 with
+a generic message.
+
+The response arrives only when the whole answer is ready, which can
+take minutes for agent runs. Allow a generous client and proxy
+timeout, or use the `/stream` variant for interactive clients.
+
+**Modes**
+
+`chatMode: agent` (or `agent:<mode>`) runs the universal agent and
+honours `tools` / `agentCapabilities`; `internal_search` and
+`web_search` run the search assistant and ignore `tools`. Omitted,
+it defaults to internal search.
+
+
+### Example Usage: filtered
+
+<!-- UsageSnippet language="go" operationID="createConversation" method="post" path="/conversations/create" example="filtered" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.CreateConversation(ctx, components.CreateConversationRequest{
+        Query: "Summarize the Q4 sales report",
+        Filters: &components.Filters{
+            Kb: []string{
+                "550e8400-e29b-41d4-a716-446655440000",
+            },
+        },
+        ModelKey: pipeshub.Pointer("gpt-4-turbo"),
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.CreateConversationResponse != nil {
+        // handle response
+    }
+}
+```
+### Example Usage: simple
+
+<!-- UsageSnippet language="go" operationID="createConversation" method="post" path="/conversations/create" example="simple" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.CreateConversation(ctx, components.CreateConversationRequest{
+        Query: "What is our company's vacation policy?",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.CreateConversationResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                    | Type                                                                                         | Required                                                                                     | Description                                                                                  |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                        | [context.Context](https://pkg.go.dev/context#Context)                                        | :heavy_check_mark:                                                                           | The context to use for the request.                                                          |
+| `request`                                                                                    | [components.CreateConversationRequest](../../models/components/createconversationrequest.md) | :heavy_check_mark:                                                                           | The request object to use for the request.                                                   |
+| `opts`                                                                                       | [][operations.Option](../../models/operations/option.md)                                     | :heavy_minus_sign:                                                                           | The options for this request.                                                                |
+
+### Response
+
+**[*operations.CreateConversationResponse](../../models/operations/createconversationresponse.md), error**
+
+### Errors
+
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400                     | application/json        |
+| apierrors.ErrorResponse | 424                     | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## StreamChat
 
@@ -344,9 +482,9 @@ func main() {
 | Parameter                                                                             | Type                                                                                  | Required                                                                              | Description                                                                           |
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `ctx`                                                                                 | [context.Context](https://pkg.go.dev/context#Context)                                 | :heavy_check_mark:                                                                    | The context to use for the request.                                                   |
-| `search`                                                                              | *string*                                                                              | :heavy_check_mark:                                                                    | Search term to match against conversation titles and message content (max 1000 chars) |
-| `page`                                                                                | **int64*                                                                              | :heavy_minus_sign:                                                                    | Page number (1-indexed)                                                               |
-| `limit`                                                                               | **int64*                                                                              | :heavy_minus_sign:                                                                    | Items per page                                                                        |
+| `search`                                                                              | `string`                                                                              | :heavy_check_mark:                                                                    | Search term to match against conversation titles and message content (max 1000 chars) |
+| `page`                                                                                | `*int64`                                                                              | :heavy_minus_sign:                                                                    | Page number (1-indexed)                                                               |
+| `limit`                                                                               | `*int64`                                                                              | :heavy_minus_sign:                                                                    | Items per page                                                                        |
 | `opts`                                                                                | [][operations.Option](../../models/operations/option.md)                              | :heavy_minus_sign:                                                                    | The options for this request.                                                         |
 
 ### Response
@@ -491,7 +629,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `conversationID`                                         | *string*                                                 | :heavy_check_mark:                                       | Unique conversation identifier                           |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | Unique conversation identifier                           |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -503,6 +641,101 @@ func main() {
 | Error Type         | Status Code        | Content Type       |
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## AddMessage
+
+Ask a follow-up in an existing assistant conversation and wait for
+the complete answer. The JSON counterpart of
+`POST /conversations/{conversationId}/messages/stream`. Earlier turns
+are sent to the model as history; project context comes from the
+conversation, never from the request.
+
+**How a turn runs**
+
+1. The user's message is saved (in its own short transaction on a
+   replica set).
+2. The AI backend runs the same agent-loop pipeline as the `/stream`
+   route and returns only its final result. No transaction is held
+   during this call, and the call is never retried.
+3. The answer, citations and status are saved exactly as the
+   streaming route saves them, and the updated conversation is
+   returned.
+
+Every failure after step 1 is persisted: the conversation ends with
+status `Failed`, a `failReason`, and an `error` message, and the
+response carries `X-Conversation-Id` so the caller can fetch it.
+A 4xx from the AI backend (for example no model configured) keeps
+its status and user-facing message; other failures return 500 with
+a generic message.
+
+The response arrives only when the whole answer is ready, which can
+take minutes for agent runs. Allow a generous client and proxy
+timeout, or use the `/stream` variant for interactive clients.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="addMessage" method="post" path="/conversations/{conversationId}/messages" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.AddMessage(ctx, "<value>", components.AddMessageRequest{
+        Query: "Can you elaborate on the revenue trends?",
+        Timezone: pipeshub.Pointer("America/New_York"),
+        CurrentTime: types.MustNewTimeFromString("2026-04-12T16:00:00+05:30"),
+        Tools: []string{
+            "jira.create_issue",
+            "confluence.search_content",
+        },
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.AddMessageResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                    | Type                                                                         | Required                                                                     | Description                                                                  |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `ctx`                                                                        | [context.Context](https://pkg.go.dev/context#Context)                        | :heavy_check_mark:                                                           | The context to use for the request.                                          |
+| `conversationID`                                                             | `string`                                                                     | :heavy_check_mark:                                                           | N/A                                                                          |
+| `body`                                                                       | [components.AddMessageRequest](../../models/components/addmessagerequest.md) | :heavy_check_mark:                                                           | The follow-up question, with optional scope and model overrides.             |
+| `opts`                                                                       | [][operations.Option](../../models/operations/option.md)                     | :heavy_minus_sign:                                                           | The options for this request.                                                |
+
+### Response
+
+**[*operations.AddMessageResponse](../../models/operations/addmessageresponse.md), error**
+
+### Errors
+
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 404                | application/json        |
+| apierrors.ErrorResponse | 424                     | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## AddMessageStream
 
@@ -573,7 +806,7 @@ func main() {
 | Parameter                                                                                                                     | Type                                                                                                                          | Required                                                                                                                      | Description                                                                                                                   |
 | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `ctx`                                                                                                                         | [context.Context](https://pkg.go.dev/context#Context)                                                                         | :heavy_check_mark:                                                                                                            | The context to use for the request.                                                                                           |
-| `conversationID`                                                                                                              | *string*                                                                                                                      | :heavy_check_mark:                                                                                                            | Identifier of the conversation to append the message to. The<br/>conversation must belong to the caller and must not be deleted.<br/> |
+| `conversationID`                                                                                                              | `string`                                                                                                                      | :heavy_check_mark:                                                                                                            | Identifier of the conversation to append the message to. The<br/>conversation must belong to the caller and must not be deleted.<br/> |
 | `body`                                                                                                                        | [components.ConversationMessageStreamRequest](../../models/components/conversationmessagestreamrequest.md)                    | :heavy_check_mark:                                                                                                            | Request payload                                                                                                               |
 | `opts`                                                                                                                        | [][operations.Option](../../models/operations/option.md)                                                                      | :heavy_minus_sign:                                                                                                            | The options for this request.                                                                                                 |
 
@@ -648,7 +881,7 @@ func main() {
 | Parameter                                                                                                      | Type                                                                                                           | Required                                                                                                       | Description                                                                                                    |
 | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `ctx`                                                                                                          | [context.Context](https://pkg.go.dev/context#Context)                                                          | :heavy_check_mark:                                                                                             | The context to use for the request.                                                                            |
-| `conversationID`                                                                                               | *string*                                                                                                       | :heavy_check_mark:                                                                                             | Unique conversation identifier                                                                                 |
+| `conversationID`                                                                                               | `string`                                                                                                       | :heavy_check_mark:                                                                                             | Unique conversation identifier                                                                                 |
 | `body`                                                                                                         | [operations.UpdateConversationTitleRequestBody](../../models/operations/updateconversationtitlerequestbody.md) | :heavy_check_mark:                                                                                             | Request payload                                                                                                |
 | `opts`                                                                                                         | [][operations.Option](../../models/operations/option.md)                                                       | :heavy_minus_sign:                                                                                             | The options for this request.                                                                                  |
 
@@ -720,7 +953,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `conversationID`                                         | *string*                                                 | :heavy_check_mark:                                       | Conversation identifier                                  |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | Conversation identifier                                  |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -780,7 +1013,7 @@ func main() {
 | Parameter                                                | Type                                                     | Required                                                 | Description                                              |
 | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `conversationID`                                         | *string*                                                 | :heavy_check_mark:                                       | Conversation identifier                                  |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | Conversation identifier                                  |
 | `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
 
 ### Response
@@ -883,14 +1116,90 @@ func main() {
 | Parameter                                                                     | Type                                                                          | Required                                                                      | Description                                                                   |
 | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `ctx`                                                                         | [context.Context](https://pkg.go.dev/context#Context)                         | :heavy_check_mark:                                                            | The context to use for the request.                                           |
-| `conversationID`                                                              | *string*                                                                      | :heavy_check_mark:                                                            | N/A                                                                           |
-| `messageID`                                                                   | *string*                                                                      | :heavy_check_mark:                                                            | ID of the message to regenerate response for                                  |
+| `conversationID`                                                              | `string`                                                                      | :heavy_check_mark:                                                            | N/A                                                                           |
+| `messageID`                                                                   | `string`                                                                      | :heavy_check_mark:                                                            | ID of the message to regenerate response for                                  |
 | `body`                                                                        | [*components.RegenerateRequest](../../models/components/regeneraterequest.md) | :heavy_minus_sign:                                                            | Request payload                                                               |
 | `opts`                                                                        | [][operations.Option](../../models/operations/option.md)                      | :heavy_minus_sign:                                                            | The options for this request.                                                 |
 
 ### Response
 
 **[*operations.RegenerateAnswerResponse](../../models/operations/regenerateanswerresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## CancelConversationStream
+
+Cooperatively stop a `POST /conversations/stream` or
+`POST /conversations/{conversationId}/messages/stream` run that is
+still generating, using the `runId` sent when that stream started.
+
+This is a synchronous JSON ack, not another SSE stream. The
+cancelled run's own stream (if still connected) receives a terminal
+frame with a `stopped` status and whatever partial answer had
+already generated; nothing further is delivered here.
+
+`{ cancelled: false }` — not an error — covers a `runId` that
+already finished or was never registered; the caller only needs to
+know the stream is not running anymore, not why.
+
+`runId` must belong to a run started on THIS `conversationId` — a
+`runId` that exists but was registered under a different
+conversation (even one owned by the same caller) is rejected with
+`403`, same as a `runId` owned by a different user/org.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="cancelConversationStream" method="post" path="/conversations/{conversationId}/cancel" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.CancelConversationStream(ctx, "<value>", operations.CancelConversationStreamRequestBody{
+        RunID: "62326da7-dd7e-4ecc-9f64-2af864c12ca2",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Object != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                        | Type                                                                                                             | Required                                                                                                         | Description                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                                            | :heavy_check_mark:                                                                                               | The context to use for the request.                                                                              |
+| `conversationID`                                                                                                 | `string`                                                                                                         | :heavy_check_mark:                                                                                               | N/A                                                                                                              |
+| `body`                                                                                                           | [operations.CancelConversationStreamRequestBody](../../models/operations/cancelconversationstreamrequestbody.md) | :heavy_check_mark:                                                                                               | N/A                                                                                                              |
+| `opts`                                                                                                           | [][operations.Option](../../models/operations/option.md)                                                         | :heavy_minus_sign:                                                                                               | The options for this request.                                                                                    |
+
+### Response
+
+**[*operations.CancelConversationStreamResponse](../../models/operations/cancelconversationstreamresponse.md), error**
 
 ### Errors
 
@@ -959,14 +1268,219 @@ func main() {
 | Parameter                                                                                          | Type                                                                                               | Required                                                                                           | Description                                                                                        |
 | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `ctx`                                                                                              | [context.Context](https://pkg.go.dev/context#Context)                                              | :heavy_check_mark:                                                                                 | The context to use for the request.                                                                |
-| `conversationID`                                                                                   | *string*                                                                                           | :heavy_check_mark:                                                                                 | Unique conversation identifier.                                                                    |
-| `messageID`                                                                                        | *string*                                                                                           | :heavy_check_mark:                                                                                 | Identifier of the bot-response message being rated.                                                |
+| `conversationID`                                                                                   | `string`                                                                                           | :heavy_check_mark:                                                                                 | Unique conversation identifier.                                                                    |
+| `messageID`                                                                                        | `string`                                                                                           | :heavy_check_mark:                                                                                 | Identifier of the bot-response message being rated.                                                |
 | `body`                                                                                             | [components.MessageFeedbackSubmitRequest](../../models/components/messagefeedbacksubmitrequest.md) | :heavy_check_mark:                                                                                 | Request payload                                                                                    |
 | `opts`                                                                                             | [][operations.Option](../../models/operations/option.md)                                           | :heavy_minus_sign:                                                                                 | The options for this request.                                                                      |
 
 ### Response
 
 **[*operations.UpdateMessageFeedbackResponse](../../models/operations/updatemessagefeedbackresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## SetConversationProject
+
+Set (`projectId: <id>`) or clear (`projectId: null`) the project this
+conversation belongs to. Initiator-only.
+
+**Access:**
+
+The caller must be the conversation's initiator. Linking to a
+non-null `projectId` also requires at least viewer access to that
+project (`404` if not visible to the caller — never `403`, to avoid
+leaking project existence across an org boundary).
+
+**Visibility on link:**
+
+When linking, `projectVisibility` defaults from the project's
+`chatSharing` setting (`members` → `project`, otherwise `private`)
+unless the conversation was already `project`-visible, in which case
+that is preserved. Use
+`PATCH /conversations/{conversationId}/project-visibility` to
+override it explicitly. Unlinking (`projectId: null`) always clears
+both `projectId` and `projectVisibility`.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="setConversationProject" method="put" path="/conversations/{conversationId}/project" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.SetConversationProject(ctx, "<value>", operations.SetConversationProjectRequestBody{
+        ProjectID: pipeshub.Pointer("<value>"),
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Object != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                    | Type                                                                                                         | Required                                                                                                     | Description                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `ctx`                                                                                                        | [context.Context](https://pkg.go.dev/context#Context)                                                        | :heavy_check_mark:                                                                                           | The context to use for the request.                                                                          |
+| `conversationID`                                                                                             | `string`                                                                                                     | :heavy_check_mark:                                                                                           | Unique conversation identifier                                                                               |
+| `body`                                                                                                       | [operations.SetConversationProjectRequestBody](../../models/operations/setconversationprojectrequestbody.md) | :heavy_check_mark:                                                                                           | N/A                                                                                                          |
+| `opts`                                                                                                       | [][operations.Option](../../models/operations/option.md)                                                     | :heavy_minus_sign:                                                                                           | The options for this request.                                                                                |
+
+### Response
+
+**[*operations.SetConversationProjectResponse](../../models/operations/setconversationprojectresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## SetConversationProjectVisibility
+
+Explicitly set whether a project-linked conversation is visible to
+other members of that project (`project`) or only to its owner
+(`private`). Initiator-only. Requires the conversation to already be
+linked to a project via
+`PUT /conversations/{conversationId}/project`.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="setConversationProjectVisibility" method="patch" path="/conversations/{conversationId}/project-visibility" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.SetConversationProjectVisibility(ctx, "<value>", operations.SetConversationProjectVisibilityRequestBody{
+        Visibility: operations.SetConversationProjectVisibilityVisibilityProject,
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Object != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                                                                                        | Type                                                                                                                             | Required                                                                                                                         | Description                                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                                                            | :heavy_check_mark:                                                                                                               | The context to use for the request.                                                                                              |
+| `conversationID`                                                                                                                 | `string`                                                                                                                         | :heavy_check_mark:                                                                                                               | Unique conversation identifier                                                                                                   |
+| `body`                                                                                                                           | [operations.SetConversationProjectVisibilityRequestBody](../../models/operations/setconversationprojectvisibilityrequestbody.md) | :heavy_check_mark:                                                                                                               | N/A                                                                                                                              |
+| `opts`                                                                                                                           | [][operations.Option](../../models/operations/option.md)                                                                         | :heavy_minus_sign:                                                                                                               | The options for this request.                                                                                                    |
+
+### Response
+
+**[*operations.SetConversationProjectVisibilityResponse](../../models/operations/setconversationprojectvisibilityresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## GetProjectConversations
+
+Requires viewer access to the project. Returns both chat and agent
+sessions (`chatSessions`, discriminated by `sessionType`/`agentKey`)
+that the caller may see: rows they own, plus rows with
+`projectVisibility: project`. Access to the project is asserted
+first, so a private conversation belonging to a *different* project
+member never leaks through this endpoint.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="getProjectConversations" method="get" path="/projects/{projectId}/conversations" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.GetProjectConversations(ctx, "<value>", pipeshub.Pointer[int64](1), pipeshub.Pointer[int64](20))
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Object != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `projectID`                                              | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `page`                                                   | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `limit`                                                  | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.GetProjectConversationsResponse](../../models/operations/getprojectconversationsresponse.md), error**
 
 ### Errors
 

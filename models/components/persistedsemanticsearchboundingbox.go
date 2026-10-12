@@ -2,12 +2,27 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 // PersistedSemanticSearchBoundingBox - Bounding box subdocument embedded in persisted citation metadata.
 // `boundingBoxSchema` does not set `_id: false`, so Mongoose auto-injects an `_id`.
 type PersistedSemanticSearchBoundingBox struct {
 	ID string  `json:"_id"`
 	X  float64 `json:"x"`
 	Y  float64 `json:"y"`
+}
+
+func (p PersistedSemanticSearchBoundingBox) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(p, "", false)
+}
+
+func (p *PersistedSemanticSearchBoundingBox) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &p, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *PersistedSemanticSearchBoundingBox) GetID() string {

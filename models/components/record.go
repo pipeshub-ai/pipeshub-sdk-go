@@ -261,6 +261,8 @@ type Record struct {
 	SourceLastModifiedTimestamp *int64 `json:"sourceLastModifiedTimestamp,omitzero"`
 	// Epoch ms when parse/index processing began for the current attempt; null when idle
 	ProcessingStartedAt optionalnullable.OptionalNullable[int64] `json:"processingStartedAt,omitzero"`
+	// Epoch ms the platform last queued this record for indexing; absent until first queued. Platform-owned, unlike updatedAtTimestamp
+	QueuedAtTimestamp optionalnullable.OptionalNullable[int64] `json:"queuedAtTimestamp,omitzero"`
 	// Parse-phase status (ahead of indexing/extraction):
 	// - NOT_STARTED: Awaiting parsing
 	// - QUEUED: In parsing queue
@@ -444,6 +446,13 @@ func (r *Record) GetProcessingStartedAt() optionalnullable.OptionalNullable[int6
 		return nil
 	}
 	return r.ProcessingStartedAt
+}
+
+func (r *Record) GetQueuedAtTimestamp() optionalnullable.OptionalNullable[int64] {
+	if r == nil {
+		return nil
+	}
+	return r.QueuedAtTimestamp
 }
 
 func (r *Record) GetParsingStatus() *ParsingStatus {

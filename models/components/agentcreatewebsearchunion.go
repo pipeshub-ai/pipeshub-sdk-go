@@ -61,8 +61,8 @@ const (
 	AgentCreateWebSearchUnionTypeAgentCreateWebSearch AgentCreateWebSearchUnionType = "AgentCreateWebSearch"
 )
 
-// AgentCreateWebSearchUnion - Web-search attachment for an agent. Accepts either a provider string
-// or an object with at least a `provider` field.
+// AgentCreateWebSearchUnion - Web-search attachment for an agent. Accepts a provider string, an object
+// with at least a `provider` field, or `null`.
 type AgentCreateWebSearchUnion struct {
 	Str                  *string               `queryParam:"inline" union:"member"`
 	AgentCreateWebSearch *AgentCreateWebSearch `queryParam:"inline" union:"member"`
@@ -88,7 +88,14 @@ func CreateAgentCreateWebSearchUnionAgentCreateWebSearch(agentCreateWebSearch Ag
 	}
 }
 
-func (u *AgentCreateWebSearchUnion) UnmarshalJSON(data []byte) error {
+func (u *AgentCreateWebSearchUnion) UnmarshalJSON(data []byte) (err error) {
+	previous := *u
+	*u = AgentCreateWebSearchUnion{}
+	defer func() {
+		if err != nil {
+			*u = previous
+		}
+	}()
 
 	var candidates []utils.UnionCandidate
 

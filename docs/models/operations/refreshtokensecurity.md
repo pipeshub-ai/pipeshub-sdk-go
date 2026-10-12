@@ -5,4 +5,4 @@
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `ScopedToken`      | *string*           | :heavy_check_mark: | N/A                |
+| `ScopedToken`      | `string`           | :heavy_check_mark: | N/A                |

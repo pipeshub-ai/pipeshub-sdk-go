@@ -7,5 +7,5 @@ Present when KB filters were applied to the search request.
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `Kb`               | []*string*         | :heavy_check_mark: | N/A                |
-| `KbCount`          | *int64*            | :heavy_check_mark: | N/A                |
+| `Kb`               | []`string`         | :heavy_check_mark: | N/A                |
+| `KbCount`          | `int64`            | :heavy_check_mark: | N/A                |

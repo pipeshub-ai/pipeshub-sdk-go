@@ -18,4 +18,4 @@ no extractable text (e.g. image-only or not-yet-parsed records).
 
 | Field                                                           | Type                                                            | Required                                                        | Description                                                     |
 | --------------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------- |
-| `Content`                                                       | *string*                                                        | :heavy_check_mark:                                              | The record's full parsed content as a single plain-text string. |
+| `Content`                                                       | `string`                                                        | :heavy_check_mark:                                              | The record's full parsed content as a single plain-text string. |

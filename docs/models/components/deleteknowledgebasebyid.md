@@ -7,5 +7,5 @@ Response returned by DELETE /knowledgeBase/{kbId} (deleteKnowledgeBase).
 
 | Field                               | Type                                | Required                            | Description                         | Example                             |
 | ----------------------------------- | ----------------------------------- | ----------------------------------- | ----------------------------------- | ----------------------------------- |
-| `Success`                           | *bool*                              | :heavy_check_mark:                  | N/A                                 | true                                |
-| `Message`                           | *string*                            | :heavy_check_mark:                  | N/A                                 | Knowledge base deleted successfully |
+| `Success`                           | `bool`                              | :heavy_check_mark:                  | N/A                                 | true                                |
+| `Message`                           | `string`                            | :heavy_check_mark:                  | N/A                                 | Knowledge base deleted successfully |

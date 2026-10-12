@@ -54,6 +54,10 @@ func (e *InternalServerErrorErrorCode) IsExact() bool {
 }
 
 type GetSearchByIDInternalServerErrorError struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable error code.
 	//
 	// - `HTTP_INTERNAL_SERVER_ERROR` — explicit
@@ -67,6 +71,13 @@ type GetSearchByIDInternalServerErrorError struct {
 	Code InternalServerErrorErrorCode `json:"code"`
 	// Human-readable description of the failure.
 	Message string `json:"message"`
+}
+
+func (g *GetSearchByIDInternalServerErrorError) GetRequestID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.RequestID
 }
 
 func (g *GetSearchByIDInternalServerErrorError) GetCode() InternalServerErrorErrorCode {
@@ -110,6 +121,10 @@ func (e *GetSearchByIDNotFoundCode) UnmarshalJSON(data []byte) error {
 }
 
 type GetSearchByIDNotFoundError struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable error code. `HTTP_NOT_FOUND`
 	// is emitted when the addressed resource does
 	// not exist.
@@ -117,6 +132,13 @@ type GetSearchByIDNotFoundError struct {
 	Code GetSearchByIDNotFoundCode `json:"code"`
 	// Human-readable description of the failure.
 	Message string `json:"message"`
+}
+
+func (g *GetSearchByIDNotFoundError) GetRequestID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.RequestID
 }
 
 func (g *GetSearchByIDNotFoundError) GetCode() GetSearchByIDNotFoundCode {
@@ -160,6 +182,10 @@ func (e *GetSearchByIDForbiddenCode) UnmarshalJSON(data []byte) error {
 }
 
 type GetSearchByIDErrorHTTPForbidden struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable error code. `HTTP_FORBIDDEN`
 	// is emitted when the bearer token is valid but
 	// lacks the required scope.
@@ -167,6 +193,13 @@ type GetSearchByIDErrorHTTPForbidden struct {
 	Code GetSearchByIDForbiddenCode `json:"code"`
 	// Human-readable description of the failure.
 	Message string `json:"message"`
+}
+
+func (g *GetSearchByIDErrorHTTPForbidden) GetRequestID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.RequestID
 }
 
 func (g *GetSearchByIDErrorHTTPForbidden) GetCode() GetSearchByIDForbiddenCode {
@@ -210,6 +243,10 @@ func (e *GetSearchByIDUnauthorizedCode) UnmarshalJSON(data []byte) error {
 }
 
 type GetSearchByIDErrorHTTPUnauthorized struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable error code. `HTTP_UNAUTHORIZED`
 	// is emitted when the bearer token is missing,
 	// invalid, or expired.
@@ -217,6 +254,13 @@ type GetSearchByIDErrorHTTPUnauthorized struct {
 	Code GetSearchByIDUnauthorizedCode `json:"code"`
 	// Human-readable description of the failure.
 	Message string `json:"message"`
+}
+
+func (g *GetSearchByIDErrorHTTPUnauthorized) GetRequestID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.RequestID
 }
 
 func (g *GetSearchByIDErrorHTTPUnauthorized) GetCode() GetSearchByIDUnauthorizedCode {
@@ -260,6 +304,10 @@ func (e *GetSearchByIDCodeValidationError) UnmarshalJSON(data []byte) error {
 }
 
 type GetSearchByIDErrorValidationError struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable error code. `VALIDATION_ERROR`
 	// is emitted when the request fails Zod
 	// validation.
@@ -267,6 +315,13 @@ type GetSearchByIDErrorValidationError struct {
 	Code GetSearchByIDCodeValidationError `json:"code"`
 	// Human-readable description of the failure.
 	Message string `json:"message"`
+}
+
+func (g *GetSearchByIDErrorValidationError) GetRequestID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.RequestID
 }
 
 func (g *GetSearchByIDErrorValidationError) GetCode() GetSearchByIDCodeValidationError {

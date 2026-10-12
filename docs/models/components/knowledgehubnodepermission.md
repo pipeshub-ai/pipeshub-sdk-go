@@ -7,6 +7,6 @@ Per-item permission when `include=permissions` is requested; otherwise `null`.
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `Role`             | *string*           | :heavy_check_mark: | N/A                |
-| `CanEdit`          | *bool*             | :heavy_check_mark: | N/A                |
-| `CanDelete`        | *bool*             | :heavy_check_mark: | N/A                |
+| `Role`             | `string`           | :heavy_check_mark: | N/A                |
+| `CanEdit`          | `bool`             | :heavy_check_mark: | N/A                |
+| `CanDelete`        | `bool`             | :heavy_check_mark: | N/A                |

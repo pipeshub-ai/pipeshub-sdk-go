@@ -13,7 +13,7 @@ import (
 	"enterprise_search/auth"
 )
 
-const knowledgeBaseName = "SDK-test"
+const defaultKnowledgeBaseName = "SDK-test"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -33,29 +33,19 @@ func main() {
 
 	ctx := context.Background()
 
-	name := knowledgeBaseName
-
-	orgRes, err := client.Organizations.GetCurrentOrganization(ctx)
-	if err != nil {
-		log.Fatalf("get current organization: %v", err)
+	name := os.Getenv("PIPESHUB_KB_NAME")
+	if name == "" {
+		name = defaultKnowledgeBaseName
 	}
-	if orgRes == nil || orgRes.Organization == nil || orgRes.Organization.ID == nil || *orgRes.Organization.ID == "" {
-		log.Fatal("get current organization: missing organization id")
-	}
-	parentID := "knowledgeBase_" + *orgRes.Organization.ID
 
-	kbsRes, err := client.KnowledgeHub.GetKnowledgeHubChildNodes(ctx, operations.GetKnowledgeHubChildNodesRequest{
-		ParentType: operations.ParentTypeApp,
-		ParentID:   parentID,
+	kbsRes, err := client.KnowledgeBase.ListKnowledgeBases(ctx, operations.ListKnowledgeBasesRequest{
+		Search: &name,
 	})
 	if err != nil {
 		log.Fatalf("list knowledge bases: %v", err)
 	}
-	if kbsRes == nil || kbsRes.KnowledgeHubNodesResponse == nil {
-		log.Fatal("list knowledge bases: empty response")
-	}
 	var kbID string
-	for _, kb := range kbsRes.KnowledgeHubNodesResponse.GetItems() {
+	for _, kb := range kbsRes.GetAllKnowledgeBaseResponseSchema.GetKnowledgeBases() {
 		if kb.Name == name {
 			kbID = kb.ID
 			break
@@ -72,13 +62,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("search: %v", err)
 	}
-	if res == nil || res.SemanticSearchExecuteResponse == nil || res.SemanticSearchExecuteResponse.SearchResponse == nil {
+	if res == nil || res.SemanticSearchExecuteResponse == nil {
 		log.Fatal("search: empty response")
 	}
 
-	for i, searchResult := range res.SemanticSearchExecuteResponse.SearchResponse.SearchResults {
-		name, _ := searchResult.Metadata.RecordName.GetOrZero()
-		id, _ := searchResult.Metadata.RecordID.GetOrZero()
+	results := res.SemanticSearchExecuteResponse.SearchResponse.SearchResults
+	if len(results) == 0 {
+		log.Fatalf("search: no results — is anything indexed in %q?", name)
+	}
+
+	for i, searchResult := range results {
+		// Metadata is optional on a hit; the generated getters are nil-safe,
+		// direct field access is not.
+		name, _ := searchResult.Metadata.GetRecordName().GetOrZero()
+		id, _ := searchResult.Metadata.GetRecordID().GetOrZero()
 		chunk, _ := searchResult.Content.GetOrZero()
 		fmt.Printf("─── Result %d ──────────────────────────────────────────────\n", i+1)
 		fmt.Printf("  Record:  %s\n", name)

@@ -1,0 +1,9 @@
+# UpsertProjectMembersResponse
+
+
+## Fields
+
+| Field                                                                                                       | Type                                                                                                        | Required                                                                                                    | Description                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                  | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                          | :heavy_check_mark:                                                                                          | N/A                                                                                                         |
+| `Object`                                                                                                    | [*operations.UpsertProjectMembersResponseBody](../../models/operations/upsertprojectmembersresponsebody.md) | :heavy_minus_sign:                                                                                          | Updated member list                                                                                         |

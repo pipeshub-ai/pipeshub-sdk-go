@@ -7,5 +7,5 @@ Normalized bounding region for a chunk (when available).
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `X`                | **float64*         | :heavy_minus_sign: | N/A                |
-| `Y`                | **float64*         | :heavy_minus_sign: | N/A                |
+| `X`                | `*float64`         | :heavy_minus_sign: | N/A                |
+| `Y`                | `*float64`         | :heavy_minus_sign: | N/A                |

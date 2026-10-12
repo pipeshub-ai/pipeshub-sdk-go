@@ -161,7 +161,13 @@ type GetRecordByIDResponseSchemaRecord struct {
 	ExternalParentID    optionalnullable.OptionalNullable[string] `json:"externalParentId,omitzero"`
 	ExternalRevisionID  optionalnullable.OptionalNullable[string] `json:"externalRevisionId,omitzero"`
 	RecordGroupID       optionalnullable.OptionalNullable[string] `json:"recordGroupId,omitzero"`
-	ConnectorID         string                                    `json:"connectorId"`
+	// Internal identifier of the top-most record group in this record's
+	// chain. A group with no parent is its own root, so this is null
+	// only for records written before the field existed, or by
+	// connectors that do not set it.
+	//
+	RootRecordGroupID optionalnullable.OptionalNullable[string] `json:"rootRecordGroupId,omitzero"`
+	ConnectorID       string                                    `json:"connectorId"`
 	// Name of the source connector. Mirrors the values of the backend
 	// `Connectors` enum (`backend/python/app/config/constants/arangodb.py`);
 	// records store the enum value (e.g. Google Drive is `DRIVE`,
@@ -214,6 +220,7 @@ type GetRecordByIDResponseSchemaRecord struct {
 	LastIndexTimestamp          *int64                                    `json:"lastIndexTimestamp,omitzero"`
 	LastExtractionTimestamp     *int64                                    `json:"lastExtractionTimestamp,omitzero"`
 	ProcessingStartedAt         optionalnullable.OptionalNullable[int64]  `json:"processingStartedAt,omitzero"`
+	QueuedAtTimestamp           optionalnullable.OptionalNullable[int64]  `json:"queuedAtTimestamp,omitzero"`
 	ParsingStatus               optionalnullable.OptionalNullable[string] `json:"parsingStatus,omitzero"`
 	IndexingStatus              string                                    `json:"indexingStatus"`
 	ExtractionStatus            string                                    `json:"extractionStatus"`
@@ -304,6 +311,13 @@ func (g *GetRecordByIDResponseSchemaRecord) GetRecordGroupID() optionalnullable.
 		return nil
 	}
 	return g.RecordGroupID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetRootRecordGroupID() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.RootRecordGroupID
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetConnectorID() string {
@@ -402,6 +416,13 @@ func (g *GetRecordByIDResponseSchemaRecord) GetProcessingStartedAt() optionalnul
 		return nil
 	}
 	return g.ProcessingStartedAt
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetQueuedAtTimestamp() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.QueuedAtTimestamp
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetParsingStatus() optionalnullable.OptionalNullable[string] {
@@ -689,6 +710,9 @@ func (s *Subcategories1) GetName() string {
 	return s.Name
 }
 
+// #region class-body-subcategories1
+// #endregion class-body-subcategories1
+
 type Subcategories2 struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
@@ -708,6 +732,9 @@ func (s *Subcategories2) GetName() string {
 	return s.Name
 }
 
+// #region class-body-subcategories2
+// #endregion class-body-subcategories2
+
 type Subcategories3 struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
@@ -726,6 +753,9 @@ func (s *Subcategories3) GetName() string {
 	}
 	return s.Name
 }
+
+// #region class-body-subcategories3
+// #endregion class-body-subcategories3
 
 type Department struct {
 	ID   string `json:"id"`

@@ -7,4 +7,4 @@ Search history deleted successfully.
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `Message`          | *string*           | :heavy_check_mark: | N/A                |
+| `Message`          | `string`           | :heavy_check_mark: | N/A                |

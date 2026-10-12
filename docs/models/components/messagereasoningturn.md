@@ -9,6 +9,6 @@ persistence is enabled; the array is empty otherwise.
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `MessageID`        | **string*          | :heavy_minus_sign: | N/A                |
-| `TurnIndex`        | **float64*         | :heavy_minus_sign: | N/A                |
-| `Content`          | *string*           | :heavy_check_mark: | N/A                |
+| `MessageID`        | `*string`          | :heavy_minus_sign: | N/A                |
+| `TurnIndex`        | `*float64`         | :heavy_minus_sign: | N/A                |
+| `Content`          | `string`           | :heavy_check_mark: | N/A                |

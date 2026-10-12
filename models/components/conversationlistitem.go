@@ -15,6 +15,7 @@ const (
 	ConversationListItemStatusInprogress ConversationListItemStatus = "Inprogress"
 	ConversationListItemStatusComplete   ConversationListItemStatus = "Complete"
 	ConversationListItemStatusFailed     ConversationListItemStatus = "Failed"
+	ConversationListItemStatusStopped    ConversationListItemStatus = "Stopped"
 )
 
 func (e ConversationListItemStatus) ToPointer() *ConversationListItemStatus {
@@ -25,14 +26,14 @@ func (e ConversationListItemStatus) ToPointer() *ConversationListItemStatus {
 func (e *ConversationListItemStatus) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "None", "Inprogress", "Complete", "Failed":
+		case "None", "Inprogress", "Complete", "Failed", "Stopped":
 			return true
 		}
 	}
 	return false
 }
 
-type ModelInfo struct {
+type ConversationListItemModelInfo struct {
 	ModelKey          *string `json:"modelKey,omitzero"`
 	ModelName         *string `json:"modelName,omitzero"`
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
@@ -40,39 +41,39 @@ type ModelInfo struct {
 	ChatMode          *string `json:"chatMode,omitzero"`
 }
 
-func (m *ModelInfo) GetModelKey() *string {
-	if m == nil {
+func (c *ConversationListItemModelInfo) GetModelKey() *string {
+	if c == nil {
 		return nil
 	}
-	return m.ModelKey
+	return c.ModelKey
 }
 
-func (m *ModelInfo) GetModelName() *string {
-	if m == nil {
+func (c *ConversationListItemModelInfo) GetModelName() *string {
+	if c == nil {
 		return nil
 	}
-	return m.ModelName
+	return c.ModelName
 }
 
-func (m *ModelInfo) GetModelFriendlyName() *string {
-	if m == nil {
+func (c *ConversationListItemModelInfo) GetModelFriendlyName() *string {
+	if c == nil {
 		return nil
 	}
-	return m.ModelFriendlyName
+	return c.ModelFriendlyName
 }
 
-func (m *ModelInfo) GetModelProvider() *string {
-	if m == nil {
+func (c *ConversationListItemModelInfo) GetModelProvider() *string {
+	if c == nil {
 		return nil
 	}
-	return m.ModelProvider
+	return c.ModelProvider
 }
 
-func (m *ModelInfo) GetChatMode() *string {
-	if m == nil {
+func (c *ConversationListItemModelInfo) GetChatMode() *string {
+	if c == nil {
 		return nil
 	}
-	return m.ChatMode
+	return c.ChatMode
 }
 
 type ConversationListItemSharedWithAccessLevel string
@@ -200,6 +201,32 @@ func (e *ConversationListItemAccessLevel) IsExact() bool {
 	return false
 }
 
+// ConversationListItemProjectVisibility - Only meaningful when `projectId` is set. `private` (default)
+// keeps the conversation visible to its owner only; `project`
+// exposes it to every member of the linked project. See
+// `PATCH /conversations/{conversationId}/project-visibility`.
+type ConversationListItemProjectVisibility string
+
+const (
+	ConversationListItemProjectVisibilityPrivate ConversationListItemProjectVisibility = "private"
+	ConversationListItemProjectVisibilityProject ConversationListItemProjectVisibility = "project"
+)
+
+func (e ConversationListItemProjectVisibility) ToPointer() *ConversationListItemProjectVisibility {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ConversationListItemProjectVisibility) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "private", "project":
+			return true
+		}
+	}
+	return false
+}
+
 // ConversationListItem - Conversation summary returned by list endpoints. Identical to
 // `Conversation` but omits `messages` to keep list payloads small.
 // Fetch a single conversation to retrieve its messages.
@@ -211,7 +238,7 @@ type ConversationListItem struct {
 	Initiator  *string                          `json:"initiator,omitzero"`
 	Status     *ConversationListItemStatus      `json:"status,omitzero"`
 	FailReason *string                          `json:"failReason,omitzero"`
-	ModelInfo  *ModelInfo                       `json:"modelInfo,omitzero"`
+	ModelInfo  *ConversationListItemModelInfo   `json:"modelInfo,omitzero"`
 	IsShared   *bool                            `json:"isShared,omitzero"`
 	ShareLink  *string                          `json:"shareLink,omitzero"`
 	SharedWith []ConversationListItemSharedWith `json:"sharedWith,omitzero"`
@@ -230,6 +257,21 @@ type ConversationListItem struct {
 	UpdatedAt          *time.Time                                `json:"updatedAt,omitzero"`
 	IsOwner            *bool                                     `json:"isOwner,omitzero"`
 	AccessLevel        *ConversationListItemAccessLevel          `json:"accessLevel,omitzero"`
+	// The project this conversation is linked to, if any. Set via
+	// `PUT /conversations/{conversationId}/project` or at creation
+	// time; absent on conversations that were never linked.
+	//
+	ProjectID optionalnullable.OptionalNullable[string] `json:"projectId,omitzero"`
+	// Only meaningful when `projectId` is set. `private` (default)
+	// keeps the conversation visible to its owner only; `project`
+	// exposes it to every member of the linked project. See
+	// `PATCH /conversations/{conversationId}/project-visibility`.
+	//
+	ProjectVisibility optionalnullable.OptionalNullable[ConversationListItemProjectVisibility] `json:"projectVisibility,omitzero"`
+	// Present on conversations the caller received via share. Identifies the
+	// conversation initiator (the only user who can share a chat).
+	//
+	SharedBy *ConversationSharedBy `json:"sharedBy,omitzero"`
 }
 
 func (c ConversationListItem) MarshalJSON() ([]byte, error) {
@@ -292,7 +334,7 @@ func (c *ConversationListItem) GetFailReason() *string {
 	return c.FailReason
 }
 
-func (c *ConversationListItem) GetModelInfo() *ModelInfo {
+func (c *ConversationListItem) GetModelInfo() *ConversationListItemModelInfo {
 	if c == nil {
 		return nil
 	}
@@ -395,4 +437,25 @@ func (c *ConversationListItem) GetAccessLevel() *ConversationListItemAccessLevel
 		return nil
 	}
 	return c.AccessLevel
+}
+
+func (c *ConversationListItem) GetProjectID() optionalnullable.OptionalNullable[string] {
+	if c == nil {
+		return nil
+	}
+	return c.ProjectID
+}
+
+func (c *ConversationListItem) GetProjectVisibility() optionalnullable.OptionalNullable[ConversationListItemProjectVisibility] {
+	if c == nil {
+		return nil
+	}
+	return c.ProjectVisibility
+}
+
+func (c *ConversationListItem) GetSharedBy() *ConversationSharedBy {
+	if c == nil {
+		return nil
+	}
+	return c.SharedBy
 }

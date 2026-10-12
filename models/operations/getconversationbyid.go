@@ -256,6 +256,7 @@ const (
 	GetConversationByIDStatusInprogress GetConversationByIDStatus = "Inprogress"
 	GetConversationByIDStatusComplete   GetConversationByIDStatus = "Complete"
 	GetConversationByIDStatusFailed     GetConversationByIDStatus = "Failed"
+	GetConversationByIDStatusStopped    GetConversationByIDStatus = "Stopped"
 )
 
 func (e GetConversationByIDStatus) ToPointer() *GetConversationByIDStatus {
@@ -266,30 +267,30 @@ func (e GetConversationByIDStatus) ToPointer() *GetConversationByIDStatus {
 func (e *GetConversationByIDStatus) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "None", "Inprogress", "Complete", "Failed":
+		case "None", "Inprogress", "Complete", "Failed", "Stopped":
 			return true
 		}
 	}
 	return false
 }
 
-type GetConversationByIDMessageMessageType string
+type MessageMessageType string
 
 const (
-	GetConversationByIDMessageMessageTypeUserQuery   GetConversationByIDMessageMessageType = "user_query"
-	GetConversationByIDMessageMessageTypeBotResponse GetConversationByIDMessageMessageType = "bot_response"
-	GetConversationByIDMessageMessageTypeError       GetConversationByIDMessageMessageType = "error"
-	GetConversationByIDMessageMessageTypeFeedback    GetConversationByIDMessageMessageType = "feedback"
-	GetConversationByIDMessageMessageTypeSystem      GetConversationByIDMessageMessageType = "system"
-	GetConversationByIDMessageMessageTypeToolCall    GetConversationByIDMessageMessageType = "tool_call"
+	MessageMessageTypeUserQuery   MessageMessageType = "user_query"
+	MessageMessageTypeBotResponse MessageMessageType = "bot_response"
+	MessageMessageTypeError       MessageMessageType = "error"
+	MessageMessageTypeFeedback    MessageMessageType = "feedback"
+	MessageMessageTypeSystem      MessageMessageType = "system"
+	MessageMessageTypeToolCall    MessageMessageType = "tool_call"
 )
 
-func (e GetConversationByIDMessageMessageType) ToPointer() *GetConversationByIDMessageMessageType {
+func (e MessageMessageType) ToPointer() *MessageMessageType {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *GetConversationByIDMessageMessageType) IsExact() bool {
+func (e *MessageMessageType) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "user_query", "bot_response", "error", "feedback", "system", "tool_call":
@@ -299,20 +300,20 @@ func (e *GetConversationByIDMessageMessageType) IsExact() bool {
 	return false
 }
 
-type GetConversationByIDContentFormat string
+type ContentFormat string
 
 const (
-	GetConversationByIDContentFormatMarkdown GetConversationByIDContentFormat = "MARKDOWN"
-	GetConversationByIDContentFormatJSON     GetConversationByIDContentFormat = "JSON"
-	GetConversationByIDContentFormatHTML     GetConversationByIDContentFormat = "HTML"
+	ContentFormatMarkdown ContentFormat = "MARKDOWN"
+	ContentFormatJSON     ContentFormat = "JSON"
+	ContentFormatHTML     ContentFormat = "HTML"
 )
 
-func (e GetConversationByIDContentFormat) ToPointer() *GetConversationByIDContentFormat {
+func (e ContentFormat) ToPointer() *ContentFormat {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *GetConversationByIDContentFormat) IsExact() bool {
+func (e *ContentFormat) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "MARKDOWN", "JSON", "HTML":
@@ -384,7 +385,7 @@ func (c *Citation) GetCitationData() *components.Citation {
 	return c.CitationData
 }
 
-type GetConversationByIDReferenceDatum struct {
+type ReferenceDatum struct {
 	// Display name shown to the user.
 	Name *string `json:"name,omitzero"`
 	// Technical identifier (numeric ID, UUID, etc.).
@@ -403,87 +404,87 @@ type GetConversationByIDReferenceDatum struct {
 	Metadata map[string]string `json:"metadata,omitzero"`
 }
 
-func (g GetConversationByIDReferenceDatum) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(g, "", false)
+func (r ReferenceDatum) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(r, "", false)
 }
 
-func (g *GetConversationByIDReferenceDatum) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+func (r *ReferenceDatum) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &r, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *GetConversationByIDReferenceDatum) GetName() *string {
-	if g == nil {
+func (r *ReferenceDatum) GetName() *string {
+	if r == nil {
 		return nil
 	}
-	return g.Name
+	return r.Name
 }
 
-func (g *GetConversationByIDReferenceDatum) GetID() *string {
-	if g == nil {
+func (r *ReferenceDatum) GetID() *string {
+	if r == nil {
 		return nil
 	}
-	return g.ID
+	return r.ID
 }
 
-func (g *GetConversationByIDReferenceDatum) GetType() *string {
-	if g == nil {
+func (r *ReferenceDatum) GetType() *string {
+	if r == nil {
 		return nil
 	}
-	return g.Type
+	return r.Type
 }
 
-func (g *GetConversationByIDReferenceDatum) GetApp() *string {
-	if g == nil {
+func (r *ReferenceDatum) GetApp() *string {
+	if r == nil {
 		return nil
 	}
-	return g.App
+	return r.App
 }
 
-func (g *GetConversationByIDReferenceDatum) GetWebURL() *string {
-	if g == nil {
+func (r *ReferenceDatum) GetWebURL() *string {
+	if r == nil {
 		return nil
 	}
-	return g.WebURL
+	return r.WebURL
 }
 
-func (g *GetConversationByIDReferenceDatum) GetMetadata() map[string]string {
-	if g == nil {
+func (r *ReferenceDatum) GetMetadata() map[string]string {
+	if r == nil {
 		return nil
 	}
-	return g.Metadata
+	return r.Metadata
 }
 
-type GetConversationByIDAppliedFilters struct {
+type AppliedFilters struct {
 	Apps []components.AppliedFilterNode `json:"apps,omitzero"`
 	Kb   []components.AppliedFilterNode `json:"kb,omitzero"`
 }
 
-func (g GetConversationByIDAppliedFilters) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(g, "", false)
+func (a AppliedFilters) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
 }
 
-func (g *GetConversationByIDAppliedFilters) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+func (a *AppliedFilters) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *GetConversationByIDAppliedFilters) GetApps() []components.AppliedFilterNode {
-	if g == nil {
+func (a *AppliedFilters) GetApps() []components.AppliedFilterNode {
+	if a == nil {
 		return nil
 	}
-	return g.Apps
+	return a.Apps
 }
 
-func (g *GetConversationByIDAppliedFilters) GetKb() []components.AppliedFilterNode {
-	if g == nil {
+func (a *AppliedFilters) GetKb() []components.AppliedFilterNode {
+	if a == nil {
 		return nil
 	}
-	return g.Kb
+	return a.Kb
 }
 
 type GetConversationByIDMetadata struct {
@@ -513,11 +514,11 @@ func (g *GetConversationByIDMetadata) GetAiTransactionID() *string {
 	return g.AiTransactionID
 }
 
-type GetConversationByIDMessage struct {
-	ID            *string                                `json:"_id,omitzero"`
-	MessageType   *GetConversationByIDMessageMessageType `json:"messageType,omitzero"`
-	Content       *string                                `json:"content,omitzero"`
-	ContentFormat *GetConversationByIDContentFormat      `json:"contentFormat,omitzero"`
+type Message struct {
+	ID            *string             `json:"_id,omitzero"`
+	MessageType   *MessageMessageType `json:"messageType,omitzero"`
+	Content       *string             `json:"content,omitzero"`
+	ContentFormat *ContentFormat      `json:"contentFormat,omitzero"`
 	// AI confidence in the answer. Present only on `bot_response` messages, and only when the model emitted a trailing confidence block.
 	//
 	// This field is now optional and nullable; it was previously always present and non-nullable. Treat a missing or `null` value as "no confidence reported" and guard before using it. Change effective in SDK v1.2.0 (v1.1.0 and earlier always populated it).
@@ -528,10 +529,10 @@ type GetConversationByIDMessage struct {
 	FollowUpQuestions []components.FollowUpQuestion `json:"followUpQuestions,omitzero"`
 	Feedback          []components.MessageFeedback  `json:"feedback,omitzero"`
 	// Reference IDs surfaced from tool responses, used for follow-up queries
-	ReferenceData []GetConversationByIDReferenceDatum `json:"referenceData,omitzero"`
+	ReferenceData []ReferenceDatum `json:"referenceData,omitzero"`
 	// AI model configuration recorded against a conversation or message.
-	ModelInfo      *components.ConversationModelInfo  `json:"modelInfo,omitzero"`
-	AppliedFilters *GetConversationByIDAppliedFilters `json:"appliedFilters,omitzero"`
+	ModelInfo      *components.ConversationModelInfo `json:"modelInfo,omitzero"`
+	AppliedFilters *AppliedFilters                   `json:"appliedFilters,omitzero"`
 	// Files uploaded for this message turn (see
 	// `POST /conversations/attachments/upload`).
 	//
@@ -547,141 +548,141 @@ type GetConversationByIDMessage struct {
 	UpdatedAt *time.Time                   `json:"updatedAt,omitzero"`
 }
 
-func (g GetConversationByIDMessage) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(g, "", false)
+func (m Message) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(m, "", false)
 }
 
-func (g *GetConversationByIDMessage) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+func (m *Message) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &m, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *GetConversationByIDMessage) GetID() *string {
-	if g == nil {
+func (m *Message) GetID() *string {
+	if m == nil {
 		return nil
 	}
-	return g.ID
+	return m.ID
 }
 
-func (g *GetConversationByIDMessage) GetMessageType() *GetConversationByIDMessageMessageType {
-	if g == nil {
+func (m *Message) GetMessageType() *MessageMessageType {
+	if m == nil {
 		return nil
 	}
-	return g.MessageType
+	return m.MessageType
 }
 
-func (g *GetConversationByIDMessage) GetContent() *string {
-	if g == nil {
+func (m *Message) GetContent() *string {
+	if m == nil {
 		return nil
 	}
-	return g.Content
+	return m.Content
 }
 
-func (g *GetConversationByIDMessage) GetContentFormat() *GetConversationByIDContentFormat {
-	if g == nil {
+func (m *Message) GetContentFormat() *ContentFormat {
+	if m == nil {
 		return nil
 	}
-	return g.ContentFormat
+	return m.ContentFormat
 }
 
-func (g *GetConversationByIDMessage) GetConfidence() optionalnullable.OptionalNullable[Confidence] {
-	if g == nil {
+func (m *Message) GetConfidence() optionalnullable.OptionalNullable[Confidence] {
+	if m == nil {
 		return nil
 	}
-	return g.Confidence
+	return m.Confidence
 }
 
-func (g *GetConversationByIDMessage) GetCitations() []Citation {
-	if g == nil {
+func (m *Message) GetCitations() []Citation {
+	if m == nil {
 		return nil
 	}
-	return g.Citations
+	return m.Citations
 }
 
-func (g *GetConversationByIDMessage) GetFollowUpQuestions() []components.FollowUpQuestion {
-	if g == nil {
+func (m *Message) GetFollowUpQuestions() []components.FollowUpQuestion {
+	if m == nil {
 		return nil
 	}
-	return g.FollowUpQuestions
+	return m.FollowUpQuestions
 }
 
-func (g *GetConversationByIDMessage) GetFeedback() []components.MessageFeedback {
-	if g == nil {
+func (m *Message) GetFeedback() []components.MessageFeedback {
+	if m == nil {
 		return nil
 	}
-	return g.Feedback
+	return m.Feedback
 }
 
-func (g *GetConversationByIDMessage) GetReferenceData() []GetConversationByIDReferenceDatum {
-	if g == nil {
+func (m *Message) GetReferenceData() []ReferenceDatum {
+	if m == nil {
 		return nil
 	}
-	return g.ReferenceData
+	return m.ReferenceData
 }
 
-func (g *GetConversationByIDMessage) GetModelInfo() *components.ConversationModelInfo {
-	if g == nil {
+func (m *Message) GetModelInfo() *components.ConversationModelInfo {
+	if m == nil {
 		return nil
 	}
-	return g.ModelInfo
+	return m.ModelInfo
 }
 
-func (g *GetConversationByIDMessage) GetAppliedFilters() *GetConversationByIDAppliedFilters {
-	if g == nil {
+func (m *Message) GetAppliedFilters() *AppliedFilters {
+	if m == nil {
 		return nil
 	}
-	return g.AppliedFilters
+	return m.AppliedFilters
 }
 
-func (g *GetConversationByIDMessage) GetAttachments() []components.ChatAttachmentRef {
-	if g == nil {
+func (m *Message) GetAttachments() []components.ChatAttachmentRef {
+	if m == nil {
 		return nil
 	}
-	return g.Attachments
+	return m.Attachments
 }
 
-func (g *GetConversationByIDMessage) GetTools() []components.MessageToolCall {
-	if g == nil {
+func (m *Message) GetTools() []components.MessageToolCall {
+	if m == nil {
 		return nil
 	}
-	return g.Tools
+	return m.Tools
 }
 
-func (g *GetConversationByIDMessage) GetReasoning() []components.MessageReasoningTurn {
-	if g == nil {
+func (m *Message) GetReasoning() []components.MessageReasoningTurn {
+	if m == nil {
 		return nil
 	}
-	return g.Reasoning
+	return m.Reasoning
 }
 
-func (g *GetConversationByIDMessage) GetParts() []components.MessagePart {
-	if g == nil {
+func (m *Message) GetParts() []components.MessagePart {
+	if m == nil {
 		return nil
 	}
-	return g.Parts
+	return m.Parts
 }
 
-func (g *GetConversationByIDMessage) GetMetadata() *GetConversationByIDMetadata {
-	if g == nil {
+func (m *Message) GetMetadata() *GetConversationByIDMetadata {
+	if m == nil {
 		return nil
 	}
-	return g.Metadata
+	return m.Metadata
 }
 
-func (g *GetConversationByIDMessage) GetCreatedAt() *time.Time {
-	if g == nil {
+func (m *Message) GetCreatedAt() *time.Time {
+	if m == nil {
 		return nil
 	}
-	return g.CreatedAt
+	return m.CreatedAt
 }
 
-func (g *GetConversationByIDMessage) GetUpdatedAt() *time.Time {
-	if g == nil {
+func (m *Message) GetUpdatedAt() *time.Time {
+	if m == nil {
 		return nil
 	}
-	return g.UpdatedAt
+	return m.UpdatedAt
 }
 
 type MessageRange struct {
@@ -834,7 +835,7 @@ type GetConversationByIDConversation struct {
 	// Populated only when `status` is `Failed`
 	FailReason *string `json:"failReason,omitzero"`
 	// Page of messages, sliced by `pagination` and ordered by `sortingMessages`
-	Messages []GetConversationByIDMessage `json:"messages,omitzero"`
+	Messages []Message `json:"messages,omitzero"`
 	// AI model configuration recorded against a conversation or message.
 	ModelInfo *components.ConversationModelInfo `json:"modelInfo,omitzero"`
 	// Pagination over the conversation's messages. Messages are paginated backwards
@@ -843,6 +844,10 @@ type GetConversationByIDConversation struct {
 	//
 	Pagination *ConversationPagination `json:"pagination,omitzero"`
 	Access     *Access                 `json:"access,omitzero"`
+	// Present on conversations the caller received via share. Identifies the
+	// conversation initiator (the only user who can share a chat).
+	//
+	SharedBy *components.ConversationSharedBy `json:"sharedBy,omitzero"`
 }
 
 func (g GetConversationByIDConversation) MarshalJSON() ([]byte, error) {
@@ -912,7 +917,7 @@ func (g *GetConversationByIDConversation) GetFailReason() *string {
 	return g.FailReason
 }
 
-func (g *GetConversationByIDConversation) GetMessages() []GetConversationByIDMessage {
+func (g *GetConversationByIDConversation) GetMessages() []Message {
 	if g == nil {
 		return nil
 	}
@@ -938,6 +943,13 @@ func (g *GetConversationByIDConversation) GetAccess() *Access {
 		return nil
 	}
 	return g.Access
+}
+
+func (g *GetConversationByIDConversation) GetSharedBy() *components.ConversationSharedBy {
+	if g == nil {
+		return nil
+	}
+	return g.SharedBy
 }
 
 type GetConversationByIDApplied struct {

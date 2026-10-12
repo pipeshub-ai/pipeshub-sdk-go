@@ -7,4 +7,4 @@ Credentials for password authentication
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `Password`         | *string*           | :heavy_check_mark: | User password      |
+| `Password`         | `string`           | :heavy_check_mark: | User password      |

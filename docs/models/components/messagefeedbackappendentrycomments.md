@@ -7,5 +7,5 @@ Echoed free-text comments from the request.
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `Positive`         | **string*          | :heavy_minus_sign: | N/A                |
-| `Negative`         | **string*          | :heavy_minus_sign: | N/A                |
+| `Positive`         | `*string`          | :heavy_minus_sign: | N/A                |
+| `Negative`         | `*string`          | :heavy_minus_sign: | N/A                |

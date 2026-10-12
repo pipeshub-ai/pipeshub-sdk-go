@@ -1,5 +1,18 @@
 # ConversationListItemStatus
 
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.ConversationListItemStatusNone
+
+// Open enum: custom values can be created with a direct type cast
+custom := components.ConversationListItemStatus("custom_value")
+```
+
 
 ## Values
 
@@ -9,3 +22,4 @@
 | `ConversationListItemStatusInprogress` | Inprogress                             |
 | `ConversationListItemStatusComplete`   | Complete                               |
 | `ConversationListItemStatusFailed`     | Failed                                 |
+| `ConversationListItemStatusStopped`    | Stopped                                |

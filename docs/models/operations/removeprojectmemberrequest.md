@@ -1,0 +1,10 @@
+# RemoveProjectMemberRequest
+
+
+## Fields
+
+| Field                                                                                 | Type                                                                                  | Required                                                                              | Description                                                                           |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `ProjectID`                                                                           | `string`                                                                              | :heavy_check_mark:                                                                    | N/A                                                                                   |
+| `MemberUserID`                                                                        | `string`                                                                              | :heavy_check_mark:                                                                    | N/A                                                                                   |
+| `PrincipalType`                                                                       | [*operations.PrincipalType](../../models/operations/principaltype.md)                 | :heavy_minus_sign:                                                                    | Whether `memberUserId` identifies a user or a team.<br/>Defaults to `user` when omitted.<br/> |

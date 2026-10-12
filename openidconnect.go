@@ -59,6 +59,8 @@ func newOpenIDConnect(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hook
 //
 // **Authentication:**
 // Pass the access token as a Bearer token: `Authorization: Bearer {access_token}`
+//
+// If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *OpenIDConnect) OauthUserInfo(ctx context.Context, opts ...operations.Option) (*operations.OauthUserInfoResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -89,7 +91,7 @@ func (s *OpenIDConnect) OauthUserInfo(ctx context.Context, opts ...operations.Op
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "oauthUserInfo",
-		OAuth2Scopes:     []string{},
+		OAuth2Scopes:     nil,
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 
@@ -111,7 +113,7 @@ func (s *OpenIDConnect) OauthUserInfo(ctx context.Context, opts ...operations.Op
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth"); err != nil {
 		return nil, err
 	}
 
@@ -195,7 +197,7 @@ func (s *OpenIDConnect) OauthUserInfo(ctx context.Context, opts ...operations.Op
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err

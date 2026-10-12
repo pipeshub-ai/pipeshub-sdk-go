@@ -57,6 +57,8 @@ func newKnowledgeBase(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hook
 // **Creator Permissions:**
 //
 // The user creating the KB automatically becomes the OWNER with full administrative rights.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) CreateKnowledgeBase(ctx context.Context, request operations.CreateKnowledgeBaseRequest, opts ...operations.Option) (*operations.CreateKnowledgeBaseResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -116,7 +118,7 @@ func (s *KnowledgeBase) CreateKnowledgeBase(ctx context.Context, request operati
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -200,7 +202,7 @@ func (s *KnowledgeBase) CreateKnowledgeBase(ctx context.Context, request operati
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -260,7 +262,7 @@ func (s *KnowledgeBase) CreateKnowledgeBase(ctx context.Context, request operati
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -287,7 +289,7 @@ func (s *KnowledgeBase) CreateKnowledgeBase(ctx context.Context, request operati
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -352,6 +354,8 @@ func (s *KnowledgeBase) CreateKnowledgeBase(ctx context.Context, request operati
 // **Query parameters:**
 //
 // Only `page`, `limit`, `search`, `permissions`, `sortBy`, and `sortOrder` are allowed; unknown query keys are rejected.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) ListKnowledgeBases(ctx context.Context, request operations.ListKnowledgeBasesRequest, opts ...operations.Option) (*operations.ListKnowledgeBasesResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -408,7 +412,7 @@ func (s *KnowledgeBase) ListKnowledgeBases(ctx context.Context, request operatio
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -492,7 +496,7 @@ func (s *KnowledgeBase) ListKnowledgeBases(ctx context.Context, request operatio
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -552,7 +556,7 @@ func (s *KnowledgeBase) ListKnowledgeBases(ctx context.Context, request operatio
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -579,7 +583,7 @@ func (s *KnowledgeBase) ListKnowledgeBases(ctx context.Context, request operatio
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -628,6 +632,8 @@ func (s *KnowledgeBase) ListKnowledgeBases(ctx context.Context, request operatio
 // **Access Control:**
 //
 // User must have at least READER permission to view KB details.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) GetKnowledgeBase(ctx context.Context, kbID string, opts ...operations.Option) (*operations.GetKnowledgeBaseResponse, error) {
 	request := operations.GetKnowledgeBaseRequest{
 		KbID: kbID,
@@ -684,7 +690,7 @@ func (s *KnowledgeBase) GetKnowledgeBase(ctx context.Context, kbID string, opts 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -768,7 +774,7 @@ func (s *KnowledgeBase) GetKnowledgeBase(ctx context.Context, kbID string, opts 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -826,7 +832,7 @@ func (s *KnowledgeBase) GetKnowledgeBase(ctx context.Context, kbID string, opts 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -853,7 +859,7 @@ func (s *KnowledgeBase) GetKnowledgeBase(ctx context.Context, kbID string, opts 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -904,6 +910,8 @@ func (s *KnowledgeBase) GetKnowledgeBase(ctx context.Context, kbID string, opts 
 // - `kbId` path parameter must be a valid UUID (`updateKBSchema`)
 // - When provided, `kbName` must be 1–255 characters
 // - XSS and format-specifier checks are applied to `kbName` in the gateway controller
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) UpdateKnowledgeBase(ctx context.Context, kbID string, body operations.UpdateKnowledgeBaseRequestBody, opts ...operations.Option) (*operations.UpdateKnowledgeBaseResponse, error) {
 	request := operations.UpdateKnowledgeBaseRequest{
 		KbID: kbID,
@@ -968,7 +976,7 @@ func (s *KnowledgeBase) UpdateKnowledgeBase(ctx context.Context, kbID string, bo
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1052,7 +1060,7 @@ func (s *KnowledgeBase) UpdateKnowledgeBase(ctx context.Context, kbID string, bo
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1112,7 +1120,7 @@ func (s *KnowledgeBase) UpdateKnowledgeBase(ctx context.Context, kbID string, bo
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1139,7 +1147,7 @@ func (s *KnowledgeBase) UpdateKnowledgeBase(ctx context.Context, kbID string, bo
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1193,6 +1201,8 @@ func (s *KnowledgeBase) UpdateKnowledgeBase(ctx context.Context, kbID string, bo
 // - Associated storage files
 //
 // **Warning:** This action is irreversible. Consider exporting data before deletion.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) DeleteKnowledgeBase(ctx context.Context, kbID string, opts ...operations.Option) (*operations.DeleteKnowledgeBaseResponse, error) {
 	request := operations.DeleteKnowledgeBaseRequest{
 		KbID: kbID,
@@ -1249,7 +1259,7 @@ func (s *KnowledgeBase) DeleteKnowledgeBase(ctx context.Context, kbID string, op
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1333,7 +1343,7 @@ func (s *KnowledgeBase) DeleteKnowledgeBase(ctx context.Context, kbID string, op
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1391,7 +1401,7 @@ func (s *KnowledgeBase) DeleteKnowledgeBase(ctx context.Context, kbID string, op
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1418,7 +1428,7 @@ func (s *KnowledgeBase) DeleteKnowledgeBase(ctx context.Context, kbID string, op
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1467,6 +1477,8 @@ func (s *KnowledgeBase) DeleteKnowledgeBase(ctx context.Context, kbID string, op
 // **File conversion:**
 //
 // Use the optional `convertTo` parameter to request file format conversion (e.g., PDF to text). Supported conversions include PPT to PDF and PPTX to PDF.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) GetRecordByID(ctx context.Context, recordID string, convertTo *string, opts ...operations.Option) (*operations.GetRecordByIDResponse, error) {
 	request := operations.GetRecordByIDRequest{
 		RecordID:  recordID,
@@ -1528,7 +1540,7 @@ func (s *KnowledgeBase) GetRecordByID(ctx context.Context, recordID string, conv
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1612,7 +1624,7 @@ func (s *KnowledgeBase) GetRecordByID(ctx context.Context, recordID string, conv
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1672,7 +1684,7 @@ func (s *KnowledgeBase) GetRecordByID(ctx context.Context, recordID string, conv
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1699,7 +1711,7 @@ func (s *KnowledgeBase) GetRecordByID(ctx context.Context, recordID string, conv
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1758,6 +1770,8 @@ func (s *KnowledgeBase) GetRecordByID(ctx context.Context, recordID string, conv
 // - Updates `updatedAtTimestamp`
 // - Increments version if file content changed
 // - Triggers re-indexing for content changes
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body *operations.UpdateRecordRequestBody, opts ...operations.Option) (*operations.UpdateRecordResponse, error) {
 	request := operations.UpdateRecordRequest{
 		RecordID: recordID,
@@ -1822,7 +1836,7 @@ func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body 
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -1906,7 +1920,7 @@ func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1966,7 +1980,7 @@ func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -1993,7 +2007,7 @@ func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2046,6 +2060,8 @@ func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body 
 // - Indexed content and embeddings
 //
 // **Warning:** This action is irreversible.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) DeleteRecord(ctx context.Context, recordID string, opts ...operations.Option) (*operations.DeleteRecordResponse, error) {
 	request := operations.DeleteRecordRequest{
 		RecordID: recordID,
@@ -2102,7 +2118,7 @@ func (s *KnowledgeBase) DeleteRecord(ctx context.Context, recordID string, opts 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -2186,7 +2202,7 @@ func (s *KnowledgeBase) DeleteRecord(ctx context.Context, recordID string, opts 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2246,7 +2262,7 @@ func (s *KnowledgeBase) DeleteRecord(ctx context.Context, recordID string, opts 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2273,7 +2289,7 @@ func (s *KnowledgeBase) DeleteRecord(ctx context.Context, recordID string, opts 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2328,6 +2344,8 @@ func (s *KnowledgeBase) DeleteRecord(ctx context.Context, recordID string, opts 
 // **Format conversion:**
 //
 // Use the `convertTo` parameter to convert between formats (e.g. DOCX to PDF).
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string, convertTo *string, opts ...operations.Option) (*operations.StreamRecordBufferResponse, error) {
 	request := operations.StreamRecordBufferRequest{
 		RecordID:  recordID,
@@ -2372,10 +2390,17 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 		timeout = s.sdkConfiguration.Timeout
 	}
 
+	var streamCancel context.CancelFunc
+
 	if timeout != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
+		streamCancel = cancel
+		defer func() {
+			if streamCancel != nil {
+				streamCancel()
+			}
+		}()
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", opURL, nil)
@@ -2389,7 +2414,7 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -2473,7 +2498,7 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "409", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2499,6 +2524,8 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 	case httpRes.StatusCode == 200:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `*/*`):
+			httpRes.Body = utils.BodyWithCancel(httpRes.Body, streamCancel)
+			streamCancel = nil
 			res.ResponseStream = httpRes.Body
 
 			return res, nil
@@ -2521,7 +2548,7 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2546,7 +2573,7 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 
 			var out apierrors.Forbidden
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2573,7 +2600,7 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 
 			var out apierrors.StreamRecordErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2598,7 +2625,7 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 
 			var out apierrors.StreamRecordErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2658,6 +2685,8 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 // - Duplicate names rejected within the same parent (`409`)
 //
 // **Response:** Returns `id` and `name` for the created folder.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) CreateFolder(ctx context.Context, kbID string, body operations.CreateFolderRequestBody, folderID *string, opts ...operations.Option) (*operations.CreateFolderResponse, error) {
 	request := operations.CreateFolderRequest{
 		KbID:     kbID,
@@ -2727,7 +2756,7 @@ func (s *KnowledgeBase) CreateFolder(ctx context.Context, kbID string, body oper
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -2811,7 +2840,7 @@ func (s *KnowledgeBase) CreateFolder(ctx context.Context, kbID string, body oper
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "409", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2873,7 +2902,7 @@ func (s *KnowledgeBase) CreateFolder(ctx context.Context, kbID string, body oper
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2900,7 +2929,7 @@ func (s *KnowledgeBase) CreateFolder(ctx context.Context, kbID string, body oper
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -2943,6 +2972,8 @@ func (s *KnowledgeBase) CreateFolder(ctx context.Context, kbID string, body oper
 // Rename a folder.
 //
 // **Required permission:** WRITER or higher
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) UpdateFolder(ctx context.Context, kbID string, folderID string, body operations.UpdateFolderRequestBody, opts ...operations.Option) (*operations.UpdateFolderResponse, error) {
 	request := operations.UpdateFolderRequest{
 		KbID:     kbID,
@@ -3008,7 +3039,7 @@ func (s *KnowledgeBase) UpdateFolder(ctx context.Context, kbID string, folderID 
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -3092,7 +3123,7 @@ func (s *KnowledgeBase) UpdateFolder(ctx context.Context, kbID string, folderID 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "409", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3154,7 +3185,7 @@ func (s *KnowledgeBase) UpdateFolder(ctx context.Context, kbID string, folderID 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -3181,7 +3212,7 @@ func (s *KnowledgeBase) UpdateFolder(ctx context.Context, kbID string, folderID 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -3230,6 +3261,8 @@ func (s *KnowledgeBase) UpdateFolder(ctx context.Context, kbID string, folderID 
 // All subfolders and records within will be permanently deleted.
 //
 // **Warning:** This action is irreversible.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) DeleteFolder(ctx context.Context, kbID string, folderID string, opts ...operations.Option) (*operations.DeleteFolderResponse, error) {
 	request := operations.DeleteFolderRequest{
 		KbID:     kbID,
@@ -3287,7 +3320,7 @@ func (s *KnowledgeBase) DeleteFolder(ctx context.Context, kbID string, folderID 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -3371,7 +3404,7 @@ func (s *KnowledgeBase) DeleteFolder(ctx context.Context, kbID string, folderID 
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3431,7 +3464,7 @@ func (s *KnowledgeBase) DeleteFolder(ctx context.Context, kbID string, folderID 
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -3504,6 +3537,8 @@ func (s *KnowledgeBase) DeleteFolder(ctx context.Context, kbID string, folderID 
 // (including files rejected up front for size/type), followed by a final
 // `done` summary, then closes. See the
 // `UploadStreamSSEEvent` schema for the event/payload contract.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body operations.UploadRecordsRequestBody, folderID *string, opts ...operations.Option) (*operations.UploadRecordsResponse, error) {
 	request := operations.UploadRecordsRequest{
 		KbID:     kbID,
@@ -3553,10 +3588,17 @@ func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body ope
 		timeout = s.sdkConfiguration.Timeout
 	}
 
+	var streamCancel context.CancelFunc
+
 	if timeout != nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
+		streamCancel = cancel
+		defer func() {
+			if streamCancel != nil {
+				streamCancel()
+			}
+		}()
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
@@ -3573,7 +3615,7 @@ func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body ope
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -3657,7 +3699,7 @@ func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body ope
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "413", "429", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3689,7 +3731,8 @@ func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body ope
 					return components.UploadStreamSSEEvent{}, err
 				}
 				return e, nil
-			}, "")
+			}, "", stream.WithDataRequired[components.UploadStreamSSEEvent](false), stream.WithCancel[components.UploadStreamSSEEvent](streamCancel))
+			streamCancel = nil
 			res.UploadStreamSSEEvent = out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -3718,7 +3761,32 @@ func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body ope
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
 				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -3739,8 +3807,6 @@ func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body ope
 			return nil, err
 		}
 		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
-	case httpRes.StatusCode == 500:
-		fallthrough
 	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
 		rawBody, err := utils.ConsumeRawBody(httpRes)
 		if err != nil {
@@ -3764,6 +3830,8 @@ func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body ope
 //
 // **Use case:** Call this before uploads to validate file sizes on the client
 // side and display appropriate limits to users.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) GetUploadLimits(ctx context.Context, opts ...operations.Option) (*operations.GetUploadLimitsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3816,7 +3884,7 @@ func (s *KnowledgeBase) GetUploadLimits(ctx context.Context, opts ...operations.
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -3900,7 +3968,7 @@ func (s *KnowledgeBase) GetUploadLimits(ctx context.Context, opts ...operations.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3954,7 +4022,7 @@ func (s *KnowledgeBase) GetUploadLimits(ctx context.Context, opts ...operations.
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -4008,6 +4076,8 @@ func (s *KnowledgeBase) GetUploadLimits(ctx context.Context, opts ...operations.
 //
 // Optional `statusFilters` array limits reindex to records in matching indexing states
 // (e.g. `FAILED`, `AUTO_INDEX_OFF`).
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) ReindexRecord(ctx context.Context, recordID string, body *components.ReindexRecordRequestBody, opts ...operations.Option) (*operations.ReindexRecordResponse, error) {
 	request := operations.ReindexRecordRequest{
 		RecordID: recordID,
@@ -4072,7 +4142,7 @@ func (s *KnowledgeBase) ReindexRecord(ctx context.Context, recordID string, body
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -4156,7 +4226,7 @@ func (s *KnowledgeBase) ReindexRecord(ctx context.Context, recordID string, body
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "409", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4218,7 +4288,7 @@ func (s *KnowledgeBase) ReindexRecord(ctx context.Context, recordID string, body
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -4245,7 +4315,7 @@ func (s *KnowledgeBase) ReindexRecord(ctx context.Context, recordID string, body
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -4294,6 +4364,8 @@ func (s *KnowledgeBase) ReindexRecord(ctx context.Context, recordID string, body
 // **Status filters:**
 //
 // Optional `statusFilters` limit which child records are queued (e.g. failed-only or manual-indexing).
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) ReindexRecordGroup(ctx context.Context, recordGroupID string, body *components.ReindexRecordGroupRequestBody, opts ...operations.Option) (*operations.ReindexRecordGroupResponse, error) {
 	request := operations.ReindexRecordGroupRequest{
 		RecordGroupID: recordGroupID,
@@ -4358,7 +4430,7 @@ func (s *KnowledgeBase) ReindexRecordGroup(ctx context.Context, recordGroupID st
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -4442,7 +4514,7 @@ func (s *KnowledgeBase) ReindexRecordGroup(ctx context.Context, recordGroupID st
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "409", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4504,7 +4576,7 @@ func (s *KnowledgeBase) ReindexRecordGroup(ctx context.Context, recordGroupID st
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -4531,7 +4603,7 @@ func (s *KnowledgeBase) ReindexRecordGroup(ctx context.Context, recordGroupID st
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -4576,6 +4648,8 @@ func (s *KnowledgeBase) ReindexRecordGroup(ctx context.Context, recordGroupID st
 // Set `newParentId` to a folder ID to move the record into that folder, or `null` to move it to the knowledge base root.
 //
 // **Required Permission:** OWNER or WRITER
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) MoveRecord(ctx context.Context, kbID string, recordID string, body components.KnowledgeBaseMoveRecordRequestBody, opts ...operations.Option) (*operations.MoveRecordResponse, error) {
 	request := operations.MoveRecordRequest{
 		KbID:     kbID,
@@ -4641,7 +4715,7 @@ func (s *KnowledgeBase) MoveRecord(ctx context.Context, kbID string, recordID st
 		req.Header.Set("Content-Type", reqContentType)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -4725,7 +4799,7 @@ func (s *KnowledgeBase) MoveRecord(ctx context.Context, kbID string, recordID st
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "503", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -4785,7 +4859,7 @@ func (s *KnowledgeBase) MoveRecord(ctx context.Context, kbID string, recordID st
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -4812,7 +4886,7 @@ func (s *KnowledgeBase) MoveRecord(ctx context.Context, kbID string, recordID st
 
 			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -4894,6 +4968,8 @@ func (s *KnowledgeBase) MoveRecord(ctx context.Context, kbID string, recordID st
 // must be present; regular JWT bearer tokens pass through without scope
 // enforcement.
 //
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+//
 // Deprecated: Use the Knowledge Base API instead. This grouping will be removed in a future release.
 func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request operations.GetKnowledgeHubRootNodesRequest, opts ...operations.Option) (*operations.GetKnowledgeHubRootNodesResponse, error) {
 	o := operations.Options{}
@@ -4951,7 +5027,7 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -5035,7 +5111,7 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5089,7 +5165,7 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 
 			var out apierrors.GetKnowledgeHubRootNodesBadRequestError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -5114,7 +5190,7 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 
 			var out apierrors.GetKnowledgeHubRootNodesUnauthorizedError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -5139,7 +5215,7 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 
 			var out apierrors.GetKnowledgeHubRootNodesForbiddenError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -5164,7 +5240,7 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 
 			var out apierrors.GetKnowledgeHubRootNodesInternalServerError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -5240,6 +5316,8 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 // must be present; regular JWT bearer tokens pass through without scope
 // enforcement.
 //
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+//
 // Deprecated: Use the Knowledge Base API instead. This grouping will be removed in a future release.
 func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request operations.GetKnowledgeHubChildNodesRequest, opts ...operations.Option) (*operations.GetKnowledgeHubChildNodesResponse, error) {
 	o := operations.Options{}
@@ -5297,7 +5375,7 @@ func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request o
 		return nil, fmt.Errorf("error populating query params: %w", err)
 	}
 
-	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security); err != nil {
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
 	}
 
@@ -5381,7 +5459,7 @@ func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request o
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"400", "401", "403", "404", "4XX", "500", "5XX"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -5435,7 +5513,7 @@ func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request o
 
 			var out apierrors.GetKnowledgeHubChildNodesBadRequestError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -5460,7 +5538,7 @@ func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request o
 
 			var out apierrors.GetKnowledgeHubRootNodesUnauthorizedError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -5485,7 +5563,7 @@ func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request o
 
 			var out apierrors.GetKnowledgeHubRootNodesForbiddenError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -5510,7 +5588,7 @@ func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request o
 
 			var out apierrors.GetKnowledgeHubChildNodesNotFoundError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
@@ -5535,7 +5613,7 @@ func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request o
 
 			var out apierrors.GetKnowledgeHubRootNodesInternalServerError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
 
 			out.HTTPMeta = components.HTTPMetadata{
