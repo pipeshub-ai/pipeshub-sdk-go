@@ -1,6 +1,6 @@
 # PipesHub Go SDK examples
 
-38 runnable Go programs that authenticate against a PipesHub instance and exercise semantic search, conversations, the agent loop, agent CRUD, and knowledge base management.
+85 runnable Go programs that authenticate against a PipesHub instance and exercise semantic search, conversations, the agent loop, agent CRUD, connectors and knowledge base management.
 
 The Go module is named `enterprise_search` (which is why imports read `enterprise_search/auth`), but it lives in this `examples/` directory. Each program is its own package in its own directory, so `go build ./...` and `go vet ./...` cover the whole tree.
 
@@ -21,16 +21,38 @@ go mod tidy
 
 Every program takes the `.env` path as its first argument.
 
+### Authentication
+
+The programs added in SDK 1.7.1 (`KB/kb/get_upload_limits`, `KB/records/get_record_by_id`, `KB/records/reindex_record_group`, `KB/trash/*`, the non-streaming `conversation/*` programs) and `connectors/*` authenticate with **OAuth2 client credentials**, each building the client inline. Create an OAuth app with the `client_credentials` grant and the scopes the examples use, then set `PIPESHUB_CLIENT_ID` and `PIPESHUB_CLIENT_SECRET`. The SDK fetches the access token from `PIPESHUB_TOKEN_URL` or, when that is unset, `${PIPESHUB_BASE_URL}/api/v1/oauth2/token`, and fetches a new one when it expires. The SDK's built-in default token URL is relative, so the programs always pass an absolute one.
+
+```go
+// What those programs pass to pipeshub.WithSecurity
+components.Security{Oauth2: &components.SchemeOauth2{
+	ClientID:     os.Getenv("PIPESHUB_CLIENT_ID"),
+	ClientSecret: os.Getenv("PIPESHUB_CLIENT_SECRET"),
+	TokenURL:     "http://localhost:3000/api/v1/oauth2/token",
+}}
+```
+
+The older programs use `auth.NewClient`: `PIPESHUB_BEARER_AUTH` when it is set, otherwise the same email and password login.
+
+
 | Variable | Needed by |
 | --- | --- |
 | `PIPESHUB_BASE_URL` | all — the examples append `/api/v1` themselves |
-| `PIPESHUB_BEARER_AUTH` | optional; a raw JWT access token. When set, it is used directly and the email/password login is skipped |
-| `PIPESHUB_TEST_USER_EMAIL`, `PIPESHUB_TEST_USER_PASSWORD` | all, unless `PIPESHUB_BEARER_AUTH` is set |
+| `PIPESHUB_CLIENT_ID`, `PIPESHUB_CLIENT_SECRET` | the 1.7.1 programs (see [Authentication](#authentication)); OAuth2 client credentials |
+| `PIPESHUB_TOKEN_URL` | optional; OAuth2 token endpoint (default `${PIPESHUB_BASE_URL}/api/v1/oauth2/token`) |
+| `PIPESHUB_TEST_USER_EMAIL`, `PIPESHUB_TEST_USER_PASSWORD` | the older programs unless `PIPESHUB_BEARER_AUTH` is set |
+| `PIPESHUB_BEARER_AUTH` | optional, older programs only; a JWT access token used instead of the email and password login |
 | `PIPESHUB_AGENT_KEY` | all `agent_conversation/*` except `create_and_add_message` |
 | `KB_ID`, `CONNECTOR_ID` | optional knowledge filters for `agent_conversation/*` |
-| `PIPESHUB_KB_NAME`, `PIPESHUB_CONNECTOR_NAME` | optional lookup-name overrides (default `SDK-test`, `ABC News RSS` / `abc news`) |
+| `PIPESHUB_KB_NAME`, `PIPESHUB_CONNECTOR_NAME` | optional lookup-name overrides (default `SDK-test`, `ABC News RSS` / `abc news`). `KB/records/reindex_record_group` falls back to the first connector |
 | `PIPESHUB_AGENT_MODEL_KEY` | optional; used when an example creates an agent |
-| `PIPESHUB_UPLOAD_PATH` | optional; file for `KB/*/upload_records` (falls back to a built-in sample) |
+| `PIPESHUB_UPLOAD_PATH` | optional; file for `KB/*/upload_records`, `KB/records/get_record_by_id` and `KB/trash/*` (falls back to a built-in sample) |
+| `PIPESHUB_CONVERSATION_ID`, `PIPESHUB_MESSAGE_ID`, `PIPESHUB_RUN_ID` | the single-operation `conversation/*` programs |
+| `PIPESHUB_KB_ID`, `PIPESHUB_RECORD_ID`, `PIPESHUB_RECORD_GROUP_ID` | the single-operation `KB/*` programs |
+| `PIPESHUB_CONNECTOR_ID`, `PIPESHUB_CONNECTOR_TYPE` (e.g. `RSS`), `PIPESHUB_FILTER_KEY` | the `connectors/*` programs |
+| `PIPESHUB_OAUTH_CONFIG_ID`, `PIPESHUB_OAUTH_CODE`, `PIPESHUB_OAUTH_STATE` | the OAuth programs in `connectors/*` |
 
 ## Run
 
@@ -76,6 +98,53 @@ Suggested order — each step only needs what the ones before it produced.
 | `./conversation/connector` | `StreamChat` scoped by `Filters.Apps` | a connector named `ABC News RSS` | yes |
 | `./semantic_search/knowledgebase` | `Search` scoped by `Filters.Kb` | a KB named `SDK-test` | no |
 | `./semantic_search/connector` | `Search` scoped by `Filters.Apps` | a connector named `abc news` | no |
+| `./conversation/create_conversation` | `CreateConversation` (non-streaming) | — | yes |
+| `./conversation/add_message` | `AddMessage` (non-streaming follow-up) | `PIPESHUB_CONVERSATION_ID` | yes |
+| `./conversation/get_all_conversations` | paginated `GetAllConversations` | — | yes |
+| `./conversation/get_conversation_by_id` | `GetConversationByID` | `PIPESHUB_CONVERSATION_ID` | yes |
+| `./conversation/update_conversation_title` | `UpdateConversationTitle` | `PIPESHUB_CONVERSATION_ID` | yes |
+| `./conversation/get_archived_conversations` | `GetArchivedConversations` | — | yes |
+| `./conversation/search_archived_conversations` | `SearchArchivedConversations` | — | yes |
+| `./conversation/update_message_feedback` | `UpdateMessageFeedback` | `PIPESHUB_CONVERSATION_ID`, `PIPESHUB_MESSAGE_ID` | yes |
+| `./conversation/delete_conversation` | `DeleteConversationByID` | `PIPESHUB_CONVERSATION_ID` | yes |
+| `./conversation/cancel_conversation_stream` | `StreamChat` with a `runId`, then `CancelConversationStream` | `PIPESHUB_CONVERSATION_ID`, `PIPESHUB_RUN_ID` | yes |
+| `./KB/kb/get_upload_limits` | `GetUploadLimits` | — | no |
+| `./KB/records/get_record_by_id` | `GetRecordByID` | `PIPESHUB_RECORD_ID` | no |
+| `./KB/records/reindex_record_group` | `ReindexRecordGroup` on a connector record group | `PIPESHUB_RECORD_GROUP_ID` | no |
+| `./KB/trash/list_trash` | `ListTrash` | `PIPESHUB_KB_ID`; trash enabled (see below) | no |
+| `./KB/trash/restore_record` | `RestoreRecord` | `PIPESHUB_RECORD_ID`; trash enabled (see below) | no |
+| `./KB/trash/restore_records` | `RestoreRecords` | `PIPESHUB_RECORD_ID`; trash enabled (see below) | no |
+| `./conversation/archive_conversation` | Archive a conversation. | `PIPESHUB_CONVERSATION_ID` | no |
+| `./conversation/unarchive_conversation` | Unarchive a conversation. | `PIPESHUB_CONVERSATION_ID` | no |
+| `./connectors/create_connector_instance` | Create an RSS connector instance (team scope, manual sync) for one feed. | — | no |
+| `./connectors/create_oauth_config` | Create an OAuth app config for a connector type. | `PIPESHUB_CONNECTOR_TYPE` | no |
+| `./connectors/delete_connector_instance` | Delete a connector instance and its records. | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/delete_oauth_config` | Delete an OAuth app config. | `PIPESHUB_CONNECTOR_TYPE`, `PIPESHUB_OAUTH_CONFIG_ID` | no |
+| `./connectors/get_connector_config` | Read a connector instance's auth, sync and filter config. | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/get_connector_egress_ips` | List the IP addresses PipesHub connects from (for allow-lists). | — | no |
+| `./connectors/get_connector_filters` | Read a connector instance's saved filters. | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/get_connector_instance` | Fetch one connector instance. | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/get_connector_registry` | List the connector types available on the instance. | — | no |
+| `./connectors/get_connector_schema` | Get a connector type's config schema (auth, sync and filter fields). | `PIPESHUB_CONNECTOR_TYPE` | no |
+| `./connectors/get_connector_stats` | Get indexing statistics for a connector instance. | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/get_filter_field_options` | List the values you can pick for one filter field (a channel, space, folder...). | `PIPESHUB_CONNECTOR_ID`, `PIPESHUB_FILTER_KEY` | no |
+| `./connectors/get_oauth_authorization_url` | Get the provider consent URL for an OAuth connector instance. | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/get_oauth_config` | Fetch one OAuth app config (secrets are masked). | `PIPESHUB_CONNECTOR_TYPE`, `PIPESHUB_OAUTH_CONFIG_ID` | no |
+| `./connectors/get_oauth_connector_type` | Get the OAuth config fields for one connector type. | `PIPESHUB_CONNECTOR_TYPE` | no |
+| `./connectors/get_oauth_registry` | List the connector types that support OAuth app configs. | — | no |
+| `./connectors/handle_oauth_callback` | Finish the OAuth flow with the code and state the provider redirected back with. | `PIPESHUB_OAUTH_CODE`, `PIPESHUB_OAUTH_STATE` | no |
+| `./connectors/list_connector_instances` | List the team connector instances. | — | no |
+| `./connectors/list_oauth_configs` | List all OAuth app configs. | — | no |
+| `./connectors/list_oauth_configs_by_type` | List the OAuth app configs of one connector type. | `PIPESHUB_CONNECTOR_TYPE` | no |
+| `./connectors/resync_connector` | Start a full resync of a connector instance. | `PIPESHUB_CONNECTOR_ID`, `PIPESHUB_CONNECTOR_TYPE` | no |
+| `./connectors/save_connector_filters` | Save a connector instance's filters (keys come from its schema). | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/stop_connector_sync` | Stop a running sync on a connector instance. | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/test_connector_connection` | Test a connector's connection with the auth config of an existing instance. | `PIPESHUB_CONNECTOR_TYPE`, `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/toggle_connector` | Flip a connector's sync on or off (turning it on starts a sync). | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/update_connector_auth_config` | Point a connector at an OAuth app config. | `PIPESHUB_CONNECTOR_ID`, `PIPESHUB_OAUTH_CONFIG_ID` | no |
+| `./connectors/update_connector_config` | Change a connector's sync strategy; auth and filters stay as they are. | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/update_connector_filters_sync_config` | Change a connector's sync strategy (filters can go in the same call). | `PIPESHUB_CONNECTOR_ID` | no |
+| `./connectors/update_oauth_config` | Rename an OAuth app config. | `PIPESHUB_CONNECTOR_TYPE`, `PIPESHUB_OAUTH_CONFIG_ID` | no |
 
 ```bash
 go run ./st_examples/search .env
@@ -85,6 +154,13 @@ go run ./agent/delete .env <agent-key>
 ```
 
 Edit the `query` string in any `main.go` to change the question.
+
+The programs added in 1.7.1 and for connectors are quick-start snippets: each makes one call, takes the ids it needs from environment variables (see `.env.example`) and prints the response. Create the conversation, record or connector first and put its id in your `.env`.
+
+A few need something on the instance first:
+
+- **`KB/trash/*`** need the workspace Labs setting **"Move Deleted Records to the Trash"** (`ENABLE_SOFT_DELETE`). With it off, a deleted record is gone for good, `ListTrash` stays empty and restoring fails.
+- **`KB/records/reindex_record_group`** needs a connector record group. A knowledge base, or a folder in one, is not a record group here and returns `404`; use `KB/records/reindex_record` for KB content. The record group is found through the knowledge-hub calls, which the SDK marks deprecated but which are still the only way to browse a connector's record groups.
 
 ## Understanding the stream (AG-UI)
 
@@ -145,11 +221,15 @@ So pass `nil`, never an empty-but-non-nil `Filters`, when you mean "no opinion".
 examples/
 ├── go.mod  .env.example
 ├── agui/agui.go                        shared AG-UI SSE decoder
-├── auth/login.go                       shared NewClient (InitAuth → Authenticate)
+├── auth/login.go                       shared NewOAuthClient, NewSessionClient, NewClient (older programs)
+├── connectors/                         one program per connector / OAuth app config operation
 ├── KB/
-│   ├── kb/                             create, get, list, update, delete, upload_records
+│   ├── kb/                             create, get, list, update, delete, upload_records,
+│   │                                   get_upload_limits
 │   ├── folder/                         create, update, delete, upload_records
-│   └── records/                        update, move, delete, reindex, stream_record_buffer
+│   ├── records/                        update, move, delete, reindex, stream_record_buffer,
+│   │                                   get_record_by_id, reindex_record_group
+│   └── trash/                          list_trash, restore_record, restore_records
 ├── agent/{create,list_and_get,update,delete}/
 ├── agent_conversation/                 9 programs, agent-scoped conversations
 ├── conversation/
@@ -157,14 +237,15 @@ examples/
 │   ├── agent/                          chatMode=agent, tools, capabilities
 │   ├── agui_trace/                     every frame, by category
 │   ├── knowledgebase/  connector/      Filters.Kb / Filters.Apps
-│   └── web_search/
+│   ├── web_search/
+│   └── create_conversation/ …          one program per non-streaming / management operation
 ├── semantic_search/{knowledgebase,connector}/
 └── st_examples/{chat,search}/
 ```
 
 ## Notes
 
-- `go.mod` requires the published SDK, `github.com/pipeshub-ai/pipeshub-sdk-go v1.7.0`. `go mod tidy` downloads it.
+- `go.mod` requires `github.com/pipeshub-ai/pipeshub-sdk-go v1.8.0`. `go mod tidy` downloads it.
 - Every `KB/*` program creates a fresh knowledge base named `Internal documents`, so it never touches your data. Repeated runs leave extra copies behind; delete them in the UI when you are done.
 - One `main()` per directory — that is what keeps `go build ./...` and `go vet ./...` working across the tree.
 - Troubleshooting: `401` means bad credentials; `500` on a conversation means no AI model provider is configured; an empty answer means nothing is indexed in the knowledge sources you scoped to.
