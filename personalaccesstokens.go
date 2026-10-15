@@ -1168,9 +1168,9 @@ func (s *PersonalAccessTokens) RevokePersonalAccessToken(ctx context.Context, to
 // compromised laptop, where only the token's own creator could
 // otherwise see or revoke it.
 //
-// Requires org-admin privileges (`userAdminCheck`) — note this returns
-// **`400`**, not `403`, for a non-admin caller (shared middleware
-// behavior across the codebase, not specific to this route).
+// Requires org-admin privileges (`userAdminCheck`): a non-admin caller
+// gets `403` (`ForbiddenError`, message
+// "You need admin access to do this. Ask an admin in your organisation.").
 //
 // If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *PersonalAccessTokens) AdminListPersonalAccessTokens(ctx context.Context, page *int64, limit *int64, opts ...operations.Option) (*operations.AdminListPersonalAccessTokensResponse, error) {
@@ -1365,6 +1365,8 @@ func (s *PersonalAccessTokens) AdminListPersonalAccessTokens(ctx context.Context
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -1442,8 +1444,8 @@ func (s *PersonalAccessTokens) AdminListPersonalAccessTokens(ctx context.Context
 // Revokes a token by id, scoped to the org's PAT client but **not** to
 // a specific owning user — the admin counterpart to
 // `DELETE /personal-access-tokens/{tokenId}`. Requires org-admin
-// privileges (`userAdminCheck`); returns `400` (not `403`) for a
-// non-admin caller, same as `GET /personal-access-tokens/admin`.
+// privileges (`userAdminCheck`); a non-admin caller gets `403`
+// (`ForbiddenError`), same as `GET /personal-access-tokens/admin`.
 //
 // If set, this operation will use [Security.BearerAuth] from the global security.
 func (s *PersonalAccessTokens) AdminRevokePersonalAccessToken(ctx context.Context, tokenID string, body *components.RevokePatRequest, opts ...operations.Option) (*operations.AdminRevokePersonalAccessTokenResponse, error) {
@@ -1641,6 +1643,8 @@ func (s *PersonalAccessTokens) AdminRevokePersonalAccessToken(ctx context.Contex
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
 		fallthrough
 	case httpRes.StatusCode == 404:
 		switch {

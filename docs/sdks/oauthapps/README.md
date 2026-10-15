@@ -251,7 +251,7 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 401                                           | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 401, 403                                      | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 

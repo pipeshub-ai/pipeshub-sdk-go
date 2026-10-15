@@ -86,11 +86,12 @@ func main() {
 
 ### Errors
 
-| Error Type              | Status Code             | Content Type            |
-| ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400                     | application/json        |
-| apierrors.ErrorResponse | 500                     | application/json        |
-| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+| Error Type                       | Status Code                      | Content Type                     |
+| -------------------------------- | -------------------------------- | -------------------------------- |
+| apierrors.ErrorResponse          | 400                              | application/json                 |
+| apierrors.RateLimitErrorResponse | 429                              | application/json                 |
+| apierrors.ErrorResponse          | 500                              | application/json                 |
+| apierrors.APIError               | 4XX, 5XX                         | \*/\*                            |
 
 ## Authenticate
 
@@ -186,11 +187,12 @@ func main() {
 
 ### Errors
 
-| Error Type              | Status Code             | Content Type            |
-| ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
-| apierrors.ErrorResponse | 500                     | application/json        |
-| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+| Error Type                       | Status Code                      | Content Type                     |
+| -------------------------------- | -------------------------------- | -------------------------------- |
+| apierrors.ErrorResponse          | 400, 401, 404                    | application/json                 |
+| apierrors.RateLimitErrorResponse | 429                              | application/json                 |
+| apierrors.ErrorResponse          | 500                              | application/json                 |
+| apierrors.APIError               | 4XX, 5XX                         | \*/\*                            |
 
 ## RefreshToken
 
@@ -324,8 +326,9 @@ func main() {
 
 ### Errors
 
-| Error Type              | Status Code             | Content Type            |
-| ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
-| apierrors.ErrorResponse | 500                     | application/json        |
-| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+| Error Type                       | Status Code                      | Content Type                     |
+| -------------------------------- | -------------------------------- | -------------------------------- |
+| apierrors.ErrorResponse          | 400, 401, 404                    | application/json                 |
+| apierrors.RateLimitErrorResponse | 429                              | application/json                 |
+| apierrors.ErrorResponse          | 500                              | application/json                 |
+| apierrors.APIError               | 4XX, 5XX                         | \*/\*                            |

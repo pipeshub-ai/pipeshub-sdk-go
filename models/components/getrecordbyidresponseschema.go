@@ -167,7 +167,12 @@ type GetRecordByIDResponseSchemaRecord struct {
 	// connectors that do not set it.
 	//
 	RootRecordGroupID optionalnullable.OptionalNullable[string] `json:"rootRecordGroupId,omitzero"`
-	ConnectorID       string                                    `json:"connectorId"`
+	// User id of whoever uploaded the file to the knowledge base.
+	// Absent for connector records and for files uploaded before the
+	// field existed.
+	//
+	UploadedBy  optionalnullable.OptionalNullable[string] `json:"uploadedBy,omitzero"`
+	ConnectorID string                                    `json:"connectorId"`
 	// Name of the source connector. Mirrors the values of the backend
 	// `Connectors` enum (`backend/python/app/config/constants/arangodb.py`);
 	// records store the enum value (e.g. Google Drive is `DRIVE`,
@@ -318,6 +323,13 @@ func (g *GetRecordByIDResponseSchemaRecord) GetRootRecordGroupID() optionalnulla
 		return nil
 	}
 	return g.RootRecordGroupID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetUploadedBy() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.UploadedBy
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetConnectorID() string {

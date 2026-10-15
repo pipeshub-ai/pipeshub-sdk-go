@@ -9,6 +9,32 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
+// ModelDefaultReasoningEffort - The model's own reasoning effort, read from its stored configuration. It applies only when the chat request sets no `reasoningEffort` and the agent has no `defaultReasoningEffort`. Omitted when nothing valid is stored; `none` is a legacy value that runs as `low`.
+type ModelDefaultReasoningEffort string
+
+const (
+	ModelDefaultReasoningEffortNone   ModelDefaultReasoningEffort = "none"
+	ModelDefaultReasoningEffortLow    ModelDefaultReasoningEffort = "low"
+	ModelDefaultReasoningEffortMedium ModelDefaultReasoningEffort = "medium"
+	ModelDefaultReasoningEffortHigh   ModelDefaultReasoningEffort = "high"
+	ModelDefaultReasoningEffortMax    ModelDefaultReasoningEffort = "max"
+)
+
+func (e ModelDefaultReasoningEffort) ToPointer() *ModelDefaultReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ModelDefaultReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
+
 type Model struct {
 	ModelKey     *string `json:"modelKey,omitzero"`
 	ModelName    *string `json:"modelName,omitzero"`
@@ -21,6 +47,8 @@ type Model struct {
 	//
 	ModelType         *string `json:"modelType,omitzero"`
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
+	// The model's own reasoning effort, read from its stored configuration. It applies only when the chat request sets no `reasoningEffort` and the agent has no `defaultReasoningEffort`. Omitted when nothing valid is stored; `none` is a legacy value that runs as `low`.
+	DefaultReasoningEffort *ModelDefaultReasoningEffort `json:"defaultReasoningEffort,omitzero"`
 }
 
 func (m Model) MarshalJSON() ([]byte, error) {
@@ -88,6 +116,13 @@ func (m *Model) GetModelFriendlyName() *string {
 		return nil
 	}
 	return m.ModelFriendlyName
+}
+
+func (m *Model) GetDefaultReasoningEffort() *ModelDefaultReasoningEffort {
+	if m == nil {
+		return nil
+	}
+	return m.DefaultReasoningEffort
 }
 
 type ModelUnionType string

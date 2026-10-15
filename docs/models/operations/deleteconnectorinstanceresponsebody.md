@@ -1,0 +1,13 @@
+# DeleteConnectorInstanceResponseBody
+
+Deletion started
+
+
+## Fields
+
+| Field                                                                                                | Type                                                                                                 | Required                                                                                             | Description                                                                                          |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `Success`                                                                                            | `bool`                                                                                               | :heavy_check_mark:                                                                                   | N/A                                                                                                  |
+| `Message`                                                                                            | `string`                                                                                             | :heavy_check_mark:                                                                                   | N/A                                                                                                  |
+| `ConnectorID`                                                                                        | `string`                                                                                             | :heavy_check_mark:                                                                                   | N/A                                                                                                  |
+| `Status`                                                                                             | [operations.DeleteConnectorInstanceStatus](../../models/operations/deleteconnectorinstancestatus.md) | :heavy_check_mark:                                                                                   | N/A                                                                                                  |

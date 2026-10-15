@@ -1,0 +1,9 @@
+# Stats
+
+
+## Fields
+
+| Field                                                                                                | Type                                                                                                 | Required                                                                                             | Description                                                                                          |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `Total`                                                                                              | `int64`                                                                                              | :heavy_check_mark:                                                                                   | Records synced from the connector                                                                    |
+| `IndexingStatus`                                                                                     | [components.ConnectorIndexingStatusCounts](../../models/components/connectorindexingstatuscounts.md) | :heavy_check_mark:                                                                                   | Number of records in each indexing status.                                                           |
