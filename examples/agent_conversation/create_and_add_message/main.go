@@ -72,7 +72,7 @@ func main() {
 }
 
 func resolveDuckDuckGoWebSearch(ctx context.Context, sdk *pipeshub.Pipeshub) (components.AgentCreateWebSearch, error) {
-	res, err := sdk.WebSearch.GetWebSearchProviders(ctx)
+	res, err := sdk.WebSearch.GetWebSearchProviders(ctx, nil)
 	if err != nil {
 		return components.AgentCreateWebSearch{}, fmt.Errorf("get web search providers: %w", err)
 	}

@@ -49,7 +49,7 @@ func main() {
 
 	recordID := uploadSampleRecord(ctx, sdk, kbID, nil)
 
-	res, err := sdk.KnowledgeBase.StreamRecordBuffer(ctx, recordID, nil)
+	res, err := sdk.KnowledgeBase.StreamRecordBuffer(ctx, recordID, nil, nil)
 	if err != nil {
 		log.Fatalf("stream record buffer: %v", err)
 	}
