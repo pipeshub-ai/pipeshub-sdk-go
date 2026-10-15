@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 type AgentMessageStreamSSEEventEvent string
 
 const (
@@ -46,8 +50,8 @@ func (e *AgentMessageStreamSSEEventEvent) IsExact() bool {
 // AgentMessageStreamSSEEvent - Server-Sent Event envelope for `POST /agents/{agentKey}/conversations/{conversationId}/messages/stream`.
 // AG-UI is the sole wire protocol.
 //
-// `event` carries the AG-UI type name and `data` is a JSON-encoded
-// object that includes a `"type"` field matching `event`, plus
+// `event` carries the AG-UI type name and `data` is the decoded JSON
+// object, which includes a `"type"` field matching `event`, plus
 // type-specific fields. The public route requires `chatMode: quick`.
 // Forwarded lifecycle events may carry `runId`, `threadId`, and
 // `parentRunId`. Stable gateway-generated top-level outcomes:
@@ -68,11 +72,22 @@ func (e *AgentMessageStreamSSEEventEvent) IsExact() bool {
 // as errors.
 type AgentMessageStreamSSEEvent struct {
 	Event *AgentMessageStreamSSEEventEvent `json:"event,omitzero"`
-	// JSON-encoded event payload. The decoded JSON includes a `"type"`
+	// Decoded JSON payload. It includes a `"type"`
 	// field matching `event`, plus type-specific fields. Shape depends
 	// on `event`.
 	//
-	Data *string `json:"data,omitzero"`
+	Data map[string]any `json:"data,omitzero"`
+}
+
+func (a AgentMessageStreamSSEEvent) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *AgentMessageStreamSSEEvent) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *AgentMessageStreamSSEEvent) GetEvent() *AgentMessageStreamSSEEventEvent {
@@ -82,7 +97,7 @@ func (a *AgentMessageStreamSSEEvent) GetEvent() *AgentMessageStreamSSEEventEvent
 	return a.Event
 }
 
-func (a *AgentMessageStreamSSEEvent) GetData() *string {
+func (a *AgentMessageStreamSSEEvent) GetData() map[string]any {
 	if a == nil {
 		return nil
 	}
@@ -90,5 +105,5 @@ func (a *AgentMessageStreamSSEEvent) GetData() *string {
 }
 
 func (a AgentMessageStreamSSEEvent) GetEventEncoding(event string) (string, error) {
-	return "string", nil
+	return "application/json", nil
 }

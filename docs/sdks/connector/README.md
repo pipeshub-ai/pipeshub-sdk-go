@@ -32,6 +32,19 @@ a chat citation's `recordId`, then call this endpoint to read the
 full content when the search snippet or citation excerpt isn't
 enough to answer the question.
 
+**Reading part of a long record, or a whole Slack thread:**
+
+With no query parameters the whole record is returned, which for a
+pull request with its diffs or a long document can run to hundreds of
+thousands of characters. Pass any of `maxChars`, `startBlock`, `query`
+or `mode` for a budgeted read instead: the response stays within
+`maxChars` and says how to continue (`nextStartBlock`, or
+`nextStartRecord` for a thread). `query` makes a record too large for
+the budget show its most relevant blocks first, with the skipped
+ranges marked. `mode=thread` returns every message of the Slack
+thread the record belongs to, oldest first, as far as the caller may
+see them.
+
 **Permission scoping:**
 
 The requesting user/token must have access to the record; access is
@@ -51,6 +64,7 @@ import(
 	"os"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 	"log"
 )
 
@@ -63,7 +77,9 @@ func main() {
         }),
     )
 
-    res, err := s.Connector.GetRecordContent(ctx, "<id>")
+    res, err := s.Connector.GetRecordContent(ctx, operations.GetRecordContentRequest{
+        RecordID: "<id>",
+    })
     if err != nil {
         log.Fatal(err)
     }
@@ -75,11 +91,11 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                                                                        | Type                                                                                                                             | Required                                                                                                                         | Description                                                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `ctx`                                                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                                                            | :heavy_check_mark:                                                                                                               | The context to use for the request.                                                                                              |
-| `recordID`                                                                                                                       | `string`                                                                                                                         | :heavy_check_mark:                                                                                                               | Record ID to fetch. Obtain it from a `pipeshub_search` result (`hits[*].recordId`) or a chat citation (`citations[*].recordId`). |
-| `opts`                                                                                                                           | [][operations.Option](../../models/operations/option.md)                                                                         | :heavy_minus_sign:                                                                                                               | The options for this request.                                                                                                    |
+| Parameter                                                                                | Type                                                                                     | Required                                                                                 | Description                                                                              |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `ctx`                                                                                    | [context.Context](https://pkg.go.dev/context#Context)                                    | :heavy_check_mark:                                                                       | The context to use for the request.                                                      |
+| `request`                                                                                | [operations.GetRecordContentRequest](../../models/operations/getrecordcontentrequest.md) | :heavy_check_mark:                                                                       | The request object to use for the request.                                               |
+| `opts`                                                                                   | [][operations.Option](../../models/operations/option.md)                                 | :heavy_minus_sign:                                                                       | The options for this request.                                                            |
 
 ### Response
 
@@ -89,7 +105,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 401, 403                | application/json        |
+| apierrors.ErrorResponse | 401, 403, 422           | application/json        |
 | apierrors.ErrorResponse | 500, 503                | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 

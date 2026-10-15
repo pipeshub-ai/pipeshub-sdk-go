@@ -2,6 +2,135 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+)
+
+// Mode - Budgeted reads only. Which kind of read this was.
+type Mode string
+
+const (
+	ModeRecord Mode = "record"
+	ModeThread Mode = "thread"
+)
+
+func (e Mode) ToPointer() *Mode {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *Mode) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "record", "thread":
+			return true
+		}
+	}
+	return false
+}
+
+// Order - Budgeted record reads only. `relevance` when `query` chose which blocks to show; the blocks are then not contiguous.
+type Order string
+
+const (
+	OrderInOrder   Order = "in_order"
+	OrderRelevance Order = "relevance"
+)
+
+func (e Order) ToPointer() *Order {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *Order) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "in_order", "relevance":
+			return true
+		}
+	}
+	return false
+}
+
+type GivenUpBlock struct {
+	RecordID *string `json:"recordId,omitzero"`
+	Block    *int64  `json:"block,omitzero"`
+}
+
+func (g *GivenUpBlock) GetRecordID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.RecordID
+}
+
+func (g *GivenUpBlock) GetBlock() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Block
+}
+
+type GetRecordContentResponseSchemaRecord struct {
+	RecordID       *string                                   `json:"recordId,omitzero"`
+	RecordName     optionalnullable.OptionalNullable[string] `json:"recordName,omitzero"`
+	StartBlock     *int64                                    `json:"startBlock,omitzero"`
+	Complete       *bool                                     `json:"complete,omitzero"`
+	TruncatedBy    optionalnullable.OptionalNullable[string] `json:"truncatedBy,omitzero"`
+	GivenUpBlock   optionalnullable.OptionalNullable[int64]  `json:"givenUpBlock,omitzero"`
+	NextStartBlock optionalnullable.OptionalNullable[int64]  `json:"nextStartBlock,omitzero"`
+}
+
+func (g *GetRecordContentResponseSchemaRecord) GetRecordID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.RecordID
+}
+
+func (g *GetRecordContentResponseSchemaRecord) GetRecordName() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.RecordName
+}
+
+func (g *GetRecordContentResponseSchemaRecord) GetStartBlock() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.StartBlock
+}
+
+func (g *GetRecordContentResponseSchemaRecord) GetComplete() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Complete
+}
+
+func (g *GetRecordContentResponseSchemaRecord) GetTruncatedBy() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.TruncatedBy
+}
+
+func (g *GetRecordContentResponseSchemaRecord) GetGivenUpBlock() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.GivenUpBlock
+}
+
+func (g *GetRecordContentResponseSchemaRecord) GetNextStartBlock() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.NextStartBlock
+}
+
 // GetRecordContentResponseSchema - Response returned by GET /connectors/record/{recordId}/content.
 //
 // `content` is the record's full parsed content flattened into a single
@@ -11,11 +140,70 @@ package components
 //
 // For `TICKET` records (e.g. Jira) the metadata header is refreshed with
 // live ticket fields (status, assignee, comments) at request time rather
-// than the last-indexed snapshot. `content` may be empty for records with
-// no extractable text (e.g. image-only or not-yet-parsed records).
+// than the last-indexed snapshot. `content` may be empty for an indexed
+// record with no extractable text (e.g. image-only).
+//
+// A record that exists and that the caller may read, but whose content
+// is not indexed yet (`indexingStatus` other than `COMPLETED`), has no
+// parsed text. `content` is then a description of the record instead:
+// its metadata header (name, link, dates, type-specific fields) followed
+// by a paragraph that starts `Not indexed:` and names the status, e.g.
+// `(status: AUTO_INDEX_OFF)`. It is not the record's text.
+//
+// `content` is the literal `No record found` when the caller may read
+// an indexed record but its stored content could not be loaded. An id
+// that does not exist, a record in the trash, and a record the caller
+// may not read all answer `403` instead.
 type GetRecordContentResponseSchema struct {
-	// The record's full parsed content as a single plain-text string.
+	// The record's full parsed content as a single plain-text string; for a record whose content is not indexed yet, a description of the record and its indexing status instead (see above). In a budgeted read, the part of the record (or thread) that fit.
 	Content string `json:"content"`
+	// Budgeted reads only. Which kind of read this was.
+	Mode *Mode `json:"mode,omitzero"`
+	// Budgeted record reads only. The record read.
+	RecordID *string `json:"recordId,omitzero"`
+	// Budgeted record reads only. `relevance` when `query` chose which blocks to show; the blocks are then not contiguous.
+	Order *Order `json:"order,omitzero"`
+	// Budgeted reads only. Where this read started (in a thread read, within the record at `startRecord`).
+	StartBlock *int64 `json:"startBlock,omitzero"`
+	// Budgeted record reads only. Blocks in the record.
+	TotalBlocks *int64 `json:"totalBlocks,omitzero"`
+	// Budgeted record reads only. The block ranges shown, as `[first, last]` pairs.
+	ShownBlocks [][]int64 `json:"shownBlocks,omitzero"`
+	// Budgeted reads only. True when nothing of the record (or thread) is left to read after this one. A block larger than the largest `maxChars` (140000) is returned cut and given up; when nothing follows it, `complete` is true and `truncatedBy` is `clipped`.
+	Complete *bool `json:"complete,omitzero"`
+	// Budgeted reads. Why the read stopped short: `chars`, `selection`, or `clipped` (a block larger than `maxChars` was cut; it takes precedence over the others). Null when the read lost nothing. `clipped` can come with `complete: true`: a block given up at the largest `maxChars` with nothing after it.
+	TruncatedBy optionalnullable.OptionalNullable[string] `json:"truncatedBy,omitzero"`
+	// Budgeted record reads only. A block larger than the largest `maxChars` (140000) that this read cut and gave up: no read can return the rest of it. Set in the read that gave it up, even when more of the record follows.
+	GivenUpBlock optionalnullable.OptionalNullable[int64] `json:"givenUpBlock,omitzero"`
+	// Thread reads only. Every block this read gave up at the largest `maxChars`, by record.
+	GivenUpBlocks []GivenUpBlock `json:"givenUpBlocks,omitzero"`
+	// Pass as `startBlock` to read on; null when nothing is left. In a thread read it is the block of the record at `nextStartRecord` (0 unless that record was cut short). A block larger than `maxChars` holds it on that block: send it again with a larger `maxChars` (up to 140000) to read the block whole.
+	NextStartBlock optionalnullable.OptionalNullable[int64] `json:"nextStartBlock,omitzero"`
+	// Thread reads only. Records in the thread the caller may see.
+	ThreadRecordCount *int64 `json:"threadRecordCount,omitzero"`
+	// Thread reads only. Where this read started.
+	StartRecord *int64 `json:"startRecord,omitzero"`
+	// Thread reads only. Pass as `startRecord`, with `nextStartBlock` as `startBlock`, to read on. It stays on a record that was cut short until that record has been read to its end. A block larger than `maxChars` holds the cursor on that block; send the same cursor with a larger `maxChars` to read it. Null when nothing is left to read, and `complete` is then true. A block given up at the largest `maxChars` is named in the text, and its record's entry in `records` has `truncatedBy: clipped`.
+	NextStartRecord optionalnullable.OptionalNullable[int64] `json:"nextStartRecord,omitzero"`
+	// Thread reads only. The records shown, oldest first.
+	Records []GetRecordContentResponseSchemaRecord `json:"records,omitzero"`
+	// Thread reads only. Records of the thread the caller may see whose content could not be loaded.
+	UnreadableRecordIds []string `json:"unreadableRecordIds,omitzero"`
+	// Budgeted reads only. Characters in `content`.
+	Chars *int64 `json:"chars,omitzero"`
+	// Budgeted reads only. The budget this read used.
+	MaxChars *int64 `json:"maxChars,omitzero"`
+}
+
+func (g GetRecordContentResponseSchema) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetRecordContentResponseSchema) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (g *GetRecordContentResponseSchema) GetContent() string {
@@ -23,4 +211,130 @@ func (g *GetRecordContentResponseSchema) GetContent() string {
 		return ""
 	}
 	return g.Content
+}
+
+func (g *GetRecordContentResponseSchema) GetMode() *Mode {
+	if g == nil {
+		return nil
+	}
+	return g.Mode
+}
+
+func (g *GetRecordContentResponseSchema) GetRecordID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.RecordID
+}
+
+func (g *GetRecordContentResponseSchema) GetOrder() *Order {
+	if g == nil {
+		return nil
+	}
+	return g.Order
+}
+
+func (g *GetRecordContentResponseSchema) GetStartBlock() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.StartBlock
+}
+
+func (g *GetRecordContentResponseSchema) GetTotalBlocks() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.TotalBlocks
+}
+
+func (g *GetRecordContentResponseSchema) GetShownBlocks() [][]int64 {
+	if g == nil {
+		return nil
+	}
+	return g.ShownBlocks
+}
+
+func (g *GetRecordContentResponseSchema) GetComplete() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.Complete
+}
+
+func (g *GetRecordContentResponseSchema) GetTruncatedBy() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.TruncatedBy
+}
+
+func (g *GetRecordContentResponseSchema) GetGivenUpBlock() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.GivenUpBlock
+}
+
+func (g *GetRecordContentResponseSchema) GetGivenUpBlocks() []GivenUpBlock {
+	if g == nil {
+		return nil
+	}
+	return g.GivenUpBlocks
+}
+
+func (g *GetRecordContentResponseSchema) GetNextStartBlock() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.NextStartBlock
+}
+
+func (g *GetRecordContentResponseSchema) GetThreadRecordCount() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.ThreadRecordCount
+}
+
+func (g *GetRecordContentResponseSchema) GetStartRecord() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.StartRecord
+}
+
+func (g *GetRecordContentResponseSchema) GetNextStartRecord() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.NextStartRecord
+}
+
+func (g *GetRecordContentResponseSchema) GetRecords() []GetRecordContentResponseSchemaRecord {
+	if g == nil {
+		return nil
+	}
+	return g.Records
+}
+
+func (g *GetRecordContentResponseSchema) GetUnreadableRecordIds() []string {
+	if g == nil {
+		return nil
+	}
+	return g.UnreadableRecordIds
+}
+
+func (g *GetRecordContentResponseSchema) GetChars() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.Chars
+}
+
+func (g *GetRecordContentResponseSchema) GetMaxChars() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.MaxChars
 }

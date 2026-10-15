@@ -17,6 +17,12 @@ type SemanticSearchAiResponse struct {
 	Message       string                      `json:"message"`
 	// Present when KB filters were applied to the search request.
 	AppliedFilters *SemanticSearchAppliedFilters `json:"appliedFilters,omitzero"`
+	// Present only when some records lost passages to the per-record cap: maps a
+	// `recordId` to how many of its passages were left out. Each record keeps at most
+	// `max(SEARCH_PER_RECORD_FLOOR, limit / SEARCH_PER_RECORD_DIVISOR)` passages
+	// (4 at the default limit): the passages that matched first, then those nearest a match.
+	//
+	OmittedPassages map[string]int64 `json:"omittedPassages,omitzero"`
 	// Maps virtual record id (object property name) to the accessible graph record document for that id.
 	VirtualToRecordMap map[string]SemanticSearchGraphRecord `json:"virtual_to_record_map,omitzero"`
 }
@@ -72,6 +78,13 @@ func (s *SemanticSearchAiResponse) GetAppliedFilters() *SemanticSearchAppliedFil
 		return nil
 	}
 	return s.AppliedFilters
+}
+
+func (s *SemanticSearchAiResponse) GetOmittedPassages() map[string]int64 {
+	if s == nil {
+		return nil
+	}
+	return s.OmittedPassages
 }
 
 func (s *SemanticSearchAiResponse) GetVirtualToRecordMap() map[string]SemanticSearchGraphRecord {

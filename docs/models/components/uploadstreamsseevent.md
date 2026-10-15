@@ -6,7 +6,7 @@ Server-Sent Event envelope for the KB streaming upload endpoint
 These endpoints respond with `Content-Type: text/event-stream`: the upload
 and its per-file progress are a single request. The body streams one
 terminal event per file, then a final `done` summary, then closes. `data`
-is a JSON-encoded string whose decoded shape depends on `event`:
+is the decoded JSON object for the frame; its shape depends on `event`:
 
 - `file:succeeded` — see `UploadSucceededFileDetail`. The file was
   uploaded and its record created; content indexing then continues
@@ -34,4 +34,4 @@ events).
 | Field                                                                                         | Type                                                                                          | Required                                                                                      | Description                                                                                   |
 | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `Event`                                                                                       | [*components.UploadStreamSSEEventEvent](../../models/components/uploadstreamsseeventevent.md) | :heavy_minus_sign:                                                                            | N/A                                                                                           |
-| `Data`                                                                                        | `*string`                                                                                     | :heavy_minus_sign:                                                                            | JSON-encoded event payload. Shape depends on `event`.                                         |
+| `Data`                                                                                        | map[string]`any`                                                                              | :heavy_minus_sign:                                                                            | Decoded JSON payload. Shape depends on `event`.                                               |

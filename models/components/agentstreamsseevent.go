@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 type AgentStreamSSEEventEvent string
 
 const (
@@ -46,8 +50,8 @@ func (e *AgentStreamSSEEventEvent) IsExact() bool {
 // AgentStreamSSEEvent - SSE event envelope for `POST /agents/{agentKey}/conversations/stream`.
 // AG-UI is the sole wire protocol.
 //
-// `event` carries the AG-UI type name and `data` is a JSON-encoded
-// object that includes a `"type"` field matching `event`, plus
+// `event` carries the AG-UI type name and `data` is the decoded JSON
+// object, which includes a `"type"` field matching `event`, plus
 // type-specific fields. The public route requires `chatMode: quick`.
 // Forwarded lifecycle events may carry `runId`, `threadId`, and
 // `parentRunId`; gateway-generated root terminal events do not.
@@ -58,11 +62,22 @@ func (e *AgentStreamSSEEventEvent) IsExact() bool {
 // as errors.
 type AgentStreamSSEEvent struct {
 	Event *AgentStreamSSEEventEvent `json:"event,omitzero"`
-	// JSON-encoded event payload. The decoded JSON includes a `"type"`
+	// Decoded JSON payload. It includes a `"type"`
 	// field matching `event`, plus type-specific fields. Shape depends
 	// on `event`.
 	//
-	Data *string `json:"data,omitzero"`
+	Data map[string]any `json:"data,omitzero"`
+}
+
+func (a AgentStreamSSEEvent) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *AgentStreamSSEEvent) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *AgentStreamSSEEvent) GetEvent() *AgentStreamSSEEventEvent {
@@ -72,7 +87,7 @@ func (a *AgentStreamSSEEvent) GetEvent() *AgentStreamSSEEventEvent {
 	return a.Event
 }
 
-func (a *AgentStreamSSEEvent) GetData() *string {
+func (a *AgentStreamSSEEvent) GetData() map[string]any {
 	if a == nil {
 		return nil
 	}
@@ -80,5 +95,5 @@ func (a *AgentStreamSSEEvent) GetData() *string {
 }
 
 func (a AgentStreamSSEEvent) GetEventEncoding(event string) (string, error) {
-	return "string", nil
+	return "application/json", nil
 }

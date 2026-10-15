@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 type AgentRegenerateSSEEventEvent string
 
 const (
@@ -64,11 +68,22 @@ func (e *AgentRegenerateSSEEventEvent) IsExact() bool {
 // the gateway-generated root terminal event does not.
 type AgentRegenerateSSEEvent struct {
 	Event *AgentRegenerateSSEEventEvent `json:"event,omitzero"`
-	// JSON-encoded event payload. The decoded JSON includes a `"type"`
+	// Decoded JSON payload. It includes a `"type"`
 	// field matching `event`, plus type-specific fields. Shape depends
 	// on `event`.
 	//
-	Data *string `json:"data,omitzero"`
+	Data map[string]any `json:"data,omitzero"`
+}
+
+func (a AgentRegenerateSSEEvent) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *AgentRegenerateSSEEvent) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *AgentRegenerateSSEEvent) GetEvent() *AgentRegenerateSSEEventEvent {
@@ -78,7 +93,7 @@ func (a *AgentRegenerateSSEEvent) GetEvent() *AgentRegenerateSSEEventEvent {
 	return a.Event
 }
 
-func (a *AgentRegenerateSSEEvent) GetData() *string {
+func (a *AgentRegenerateSSEEvent) GetData() map[string]any {
 	if a == nil {
 		return nil
 	}
@@ -86,5 +101,5 @@ func (a *AgentRegenerateSSEEvent) GetData() *string {
 }
 
 func (a AgentRegenerateSSEEvent) GetEventEncoding(event string) (string, error) {
-	return "string", nil
+	return "application/json", nil
 }

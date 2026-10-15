@@ -33,6 +33,24 @@ type SemanticSearchRequest struct {
 	Filters *Filters `json:"filters,omitzero"`
 	// Maximum number of results to return
 	Limit *int64 `default:"10" json:"limit"`
+	// Only records the source created on or after this date. `YYYY-MM-DD` (the whole
+	// day, UTC) or an ISO 8601 datetime with a timezone offset. A date that is not
+	// one of these, or in the future, is a `400` that says why.
+	//
+	CreatedAfter *string `json:"createdAfter,omitzero"`
+	// Only records the source created on or before this date. A `YYYY-MM-DD` value
+	// includes that whole day.
+	//
+	CreatedBefore *string `json:"createdBefore,omitzero"`
+	// Only records last changed in the source on or after this date. Same format as
+	// `createdAfter`.
+	//
+	ModifiedAfter *string `json:"modifiedAfter,omitzero"`
+	// Only records last changed in the source on or before this date. Same format as
+	// `createdBefore`. Records with no source date are left out whenever a bound on
+	// that date is set.
+	//
+	ModifiedBefore *string `json:"modifiedBefore,omitzero"`
 }
 
 func (s SemanticSearchRequest) MarshalJSON() ([]byte, error) {
@@ -65,4 +83,32 @@ func (s *SemanticSearchRequest) GetLimit() *int64 {
 		return nil
 	}
 	return s.Limit
+}
+
+func (s *SemanticSearchRequest) GetCreatedAfter() *string {
+	if s == nil {
+		return nil
+	}
+	return s.CreatedAfter
+}
+
+func (s *SemanticSearchRequest) GetCreatedBefore() *string {
+	if s == nil {
+		return nil
+	}
+	return s.CreatedBefore
+}
+
+func (s *SemanticSearchRequest) GetModifiedAfter() *string {
+	if s == nil {
+		return nil
+	}
+	return s.ModifiedAfter
+}
+
+func (s *SemanticSearchRequest) GetModifiedBefore() *string {
+	if s == nil {
+		return nil
+	}
+	return s.ModifiedBefore
 }

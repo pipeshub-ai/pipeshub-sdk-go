@@ -1,0 +1,9 @@
+# ConnectorFiltersConfig
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `Sync`                                                                                          | [*components.ConnectorFiltersConfigSync](../../models/components/connectorfiltersconfigsync.md) | :heavy_minus_sign:                                                                              | N/A                                                                                             |
+| `Indexing`                                                                                      | [*components.Indexing](../../models/components/indexing.md)                                     | :heavy_minus_sign:                                                                              | N/A                                                                                             |

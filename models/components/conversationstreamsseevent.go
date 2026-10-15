@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 type ConversationStreamSSEEventEvent string
 
 const (
@@ -47,8 +51,8 @@ func (e *ConversationStreamSSEEventEvent) IsExact() bool {
 // `agent`, `internal_search`, or `web_search`. AG-UI is the sole wire
 // protocol.
 //
-// `event` carries the AG-UI type name and `data` is a JSON-encoded
-// object that includes a `"type"` field matching `event`, plus
+// `event` carries the AG-UI type name and `data` is the decoded JSON
+// object, which includes a `"type"` field matching `event`, plus
 // type-specific fields. Universal `agent` mode may emit `STEP_STARTED`,
 // `STEP_FINISHED`, and nested child-run events carrying `parentRunId`.
 // Stable gateway-generated top-level outcomes:
@@ -71,12 +75,23 @@ func (e *ConversationStreamSSEEventEvent) IsExact() bool {
 // as errors.
 type ConversationStreamSSEEvent struct {
 	Event *ConversationStreamSSEEventEvent `json:"event,omitzero"`
-	// JSON-encoded event payload. The decoded JSON includes a `"type"`
+	// Decoded JSON payload. It includes a `"type"`
 	// field matching `event`, plus type-specific fields. Shape depends
 	// on `event`. Forwarded lifecycle events may carry `runId`,
 	// `threadId`, and `parentRunId`.
 	//
-	Data *string `json:"data,omitzero"`
+	Data map[string]any `json:"data,omitzero"`
+}
+
+func (c ConversationStreamSSEEvent) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(c, "", false)
+}
+
+func (c *ConversationStreamSSEEvent) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &c, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *ConversationStreamSSEEvent) GetEvent() *ConversationStreamSSEEventEvent {
@@ -86,7 +101,7 @@ func (c *ConversationStreamSSEEvent) GetEvent() *ConversationStreamSSEEventEvent
 	return c.Event
 }
 
-func (c *ConversationStreamSSEEvent) GetData() *string {
+func (c *ConversationStreamSSEEvent) GetData() map[string]any {
 	if c == nil {
 		return nil
 	}
@@ -94,5 +109,5 @@ func (c *ConversationStreamSSEEvent) GetData() *string {
 }
 
 func (c ConversationStreamSSEEvent) GetEventEncoding(event string) (string, error) {
-	return "string", nil
+	return "application/json", nil
 }

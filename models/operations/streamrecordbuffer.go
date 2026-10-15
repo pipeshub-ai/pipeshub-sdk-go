@@ -12,6 +12,10 @@ type StreamRecordBufferRequest struct {
 	RecordID string `pathParam:"style=simple,explode=false,name=recordId"`
 	// Target format for conversion
 	ConvertTo *string `queryParam:"style=form,explode=true,name=convertTo"`
+	// Registry version to pin ARTIFACT record content to. Omit to stream
+	// the latest version. Ignored for non-artifact records.
+	//
+	Version *int64 `queryParam:"style=form,explode=true,name=version"`
 }
 
 func (s *StreamRecordBufferRequest) GetRecordID() string {
@@ -26,6 +30,13 @@ func (s *StreamRecordBufferRequest) GetConvertTo() *string {
 		return nil
 	}
 	return s.ConvertTo
+}
+
+func (s *StreamRecordBufferRequest) GetVersion() *int64 {
+	if s == nil {
+		return nil
+	}
+	return s.Version
 }
 
 type StreamRecordBufferResponse struct {

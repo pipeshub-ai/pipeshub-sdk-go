@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 type SSEEventEvent string
 
 const (
@@ -46,8 +50,8 @@ func (e *SSEEventEvent) IsExact() bool {
 // SSEEvent - Server-Sent Event envelope for streaming chat responses. AG-UI is
 // the sole wire protocol.
 //
-// `event` carries the AG-UI type name and `data` is a JSON-encoded
-// object that includes a `"type"` field matching `event`, plus
+// `event` carries the AG-UI type name and `data` is the decoded JSON
+// object, which includes a `"type"` field matching `event`, plus
 // type-specific fields. Stable gateway-generated top-level outcomes:
 //
 //   - `RUN_FINISHED` — `{ type, result }`; `result` carries the full
@@ -61,11 +65,22 @@ func (e *SSEEventEvent) IsExact() bool {
 // do not. Clients should ignore unknown event names.
 type SSEEvent struct {
 	Event *SSEEventEvent `json:"event,omitzero"`
-	// JSON-encoded event payload. The decoded JSON includes a `"type"`
+	// Decoded JSON payload. It includes a `"type"`
 	// field matching `event`, plus type-specific fields. Shape depends
 	// on `event`.
 	//
-	Data *string `json:"data,omitzero"`
+	Data map[string]any `json:"data,omitzero"`
+}
+
+func (s SSEEvent) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(s, "", false)
+}
+
+func (s *SSEEvent) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &s, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *SSEEvent) GetEvent() *SSEEventEvent {
@@ -75,7 +90,7 @@ func (s *SSEEvent) GetEvent() *SSEEventEvent {
 	return s.Event
 }
 
-func (s *SSEEvent) GetData() *string {
+func (s *SSEEvent) GetData() map[string]any {
 	if s == nil {
 		return nil
 	}
@@ -83,5 +98,5 @@ func (s *SSEEvent) GetData() *string {
 }
 
 func (s SSEEvent) GetEventEncoding(event string) (string, error) {
-	return "string", nil
+	return "application/json", nil
 }

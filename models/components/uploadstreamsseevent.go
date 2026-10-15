@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+)
+
 type UploadStreamSSEEventEvent string
 
 const (
@@ -32,7 +36,7 @@ func (e *UploadStreamSSEEventEvent) IsExact() bool {
 // These endpoints respond with `Content-Type: text/event-stream`: the upload
 // and its per-file progress are a single request. The body streams one
 // terminal event per file, then a final `done` summary, then closes. `data`
-// is a JSON-encoded string whose decoded shape depends on `event`:
+// is the decoded JSON object for the frame; its shape depends on `event`:
 //
 //   - `file:succeeded` — see `UploadSucceededFileDetail`. The file was
 //     uploaded and its record created; content indexing then continues
@@ -54,8 +58,19 @@ func (e *UploadStreamSSEEventEvent) IsExact() bool {
 // events).
 type UploadStreamSSEEvent struct {
 	Event *UploadStreamSSEEventEvent `json:"event,omitzero"`
-	// JSON-encoded event payload. Shape depends on `event`.
-	Data *string `json:"data,omitzero"`
+	// Decoded JSON payload. Shape depends on `event`.
+	Data map[string]any `json:"data,omitzero"`
+}
+
+func (u UploadStreamSSEEvent) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(u, "", false)
+}
+
+func (u *UploadStreamSSEEvent) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u *UploadStreamSSEEvent) GetEvent() *UploadStreamSSEEventEvent {
@@ -65,7 +80,7 @@ func (u *UploadStreamSSEEvent) GetEvent() *UploadStreamSSEEventEvent {
 	return u.Event
 }
 
-func (u *UploadStreamSSEEvent) GetData() *string {
+func (u *UploadStreamSSEEvent) GetData() map[string]any {
 	if u == nil {
 		return nil
 	}
@@ -73,5 +88,5 @@ func (u *UploadStreamSSEEvent) GetData() *string {
 }
 
 func (u UploadStreamSSEEvent) GetEventEncoding(event string) (string, error) {
-	return "string", nil
+	return "application/json", nil
 }
