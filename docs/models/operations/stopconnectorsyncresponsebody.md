@@ -1,0 +1,13 @@
+# StopConnectorSyncResponseBody
+
+Stop recorded, or nothing was running
+
+
+## Fields
+
+| Field                                                                                          | Type                                                                                           | Required                                                                                       | Description                                                                                    |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `Success`                                                                                      | `bool`                                                                                         | :heavy_check_mark:                                                                             | N/A                                                                                            |
+| `Stopped`                                                                                      | `bool`                                                                                         | :heavy_check_mark:                                                                             | Whether a sync was running and has been asked to stop. False is a normal answer, not an error. |
+| `Status`                                                                                       | [operations.StopConnectorSyncStatus](../../models/operations/stopconnectorsyncstatus.md)       | :heavy_check_mark:                                                                             | The status the connector is actually left in.                                                  |
+| `Message`                                                                                      | `string`                                                                                       | :heavy_check_mark:                                                                             | N/A                                                                                            |

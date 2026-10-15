@@ -195,22 +195,26 @@ type Pipeshub struct {
 	KnowledgeHub *KnowledgeHub
 	// AI-powered conversational chat management with citations and follow-up questions
 	Conversations *Conversations
-	// Workspaces that group related assistant and agent conversations under a
-	// shared name, custom instructions, a knowledge scope, and reference
-	// files. Projects can be shared with teammates; project membership only
-	// grants read access to conversations explicitly marked
-	// `projectVisibility: project` — a member never gets access to another
-	// member's private chats. See `Conversations` for the two fields
-	// (`projectId`, `projectVisibility`) that link a conversation to a
-	// project.
-	//
-	Projects *Projects
 	// Enterprise semantic search across all indexed knowledge with relevance scoring
 	SemanticSearch *SemanticSearch
 	// Custom AI agents with specialized capabilities and tool integrations
 	Agents *Agents
+	// Browse available connector types and their configuration schemas
+	ConnectorRegistry *ConnectorRegistry
+	// Create, manage, and delete connector instances for your organization
+	ConnectorInstances *ConnectorInstances
 	// Connector-related operations
 	Connector *Connector
+	// Configure authentication, sync settings, and filters for connectors
+	ConnectorConfiguration *ConnectorConfiguration
+	// Enable/disable connectors for sync or agent functionality
+	ConnectorControl *ConnectorControl
+	// OAuth 2.0 authorization flow for connectors requiring user consent
+	ConnectorOAuth *ConnectorOAuth
+	// Dynamic filter options for selecting which data to sync
+	ConnectorFilters *ConnectorFilters
+	// Admin management of OAuth credentials for connector types
+	OAuthConfiguration *OAuthConfiguration
 	// Manage individual AI model providers - add, update, delete, and set defaults.
 	AIModelsProviders *AIModelsProviders
 	// Manage web search providers (DuckDuckGo, Serper, Tavily, Exa) and settings for internet search.
@@ -303,10 +307,10 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *Pipeshub {
 	sdk := &Pipeshub{
-		SDKVersion: "1.7.0",
+		SDKVersion: "1.8.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:         "speakeasy-sdk/go 1.7.0 2.946.0 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
-			SDKVersion:        "1.7.0",
+			UserAgent:         "speakeasy-sdk/go 1.8.0 2.946.0 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
+			SDKVersion:        "1.8.0",
 			GenVersion:        "2.946.0",
 			OpenAPIDocVersion: "1.0.0",
 			ServerList:        ServerList,
@@ -349,10 +353,16 @@ func New(opts ...SDKOption) *Pipeshub {
 	sdk.KnowledgeBase = newKnowledgeBase(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.KnowledgeHub = newKnowledgeHub(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Conversations = newConversations(sdk, sdk.sdkConfiguration, sdk.hooks)
-	sdk.Projects = newProjects(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.SemanticSearch = newSemanticSearch(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Agents = newAgents(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.ConnectorRegistry = newConnectorRegistry(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.ConnectorInstances = newConnectorInstances(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.Connector = newConnector(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.ConnectorConfiguration = newConnectorConfiguration(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.ConnectorControl = newConnectorControl(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.ConnectorOAuth = newConnectorOAuth(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.ConnectorFilters = newConnectorFilters(sdk, sdk.sdkConfiguration, sdk.hooks)
+	sdk.OAuthConfiguration = newOAuthConfiguration(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.AIModelsProviders = newAIModelsProviders(sdk, sdk.sdkConfiguration, sdk.hooks)
 	sdk.WebSearch = newWebSearch(sdk, sdk.sdkConfiguration, sdk.hooks)
 

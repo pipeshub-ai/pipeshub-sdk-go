@@ -1,0 +1,9 @@
+# UpdateConnectorAuthConfigRequest
+
+
+## Fields
+
+| Field                                                                                          | Type                                                                                           | Required                                                                                       | Description                                                                                    |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `ConnectorID`                                                                                  | `string`                                                                                       | :heavy_check_mark:                                                                             | Connector instance ID                                                                          |
+| `Body`                                                                                         | [components.UpdateConnectorAuthRequest](../../models/components/updateconnectorauthrequest.md) | :heavy_check_mark:                                                                             | Request payload                                                                                |

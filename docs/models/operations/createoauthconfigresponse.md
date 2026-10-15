@@ -1,0 +1,9 @@
+# CreateOAuthConfigResponse
+
+
+## Fields
+
+| Field                                                                                                 | Type                                                                                                  | Required                                                                                              | Description                                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                            | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                    | :heavy_check_mark:                                                                                    | N/A                                                                                                   |
+| `Object`                                                                                              | [*operations.CreateOAuthConfigResponseBody](../../models/operations/createoauthconfigresponsebody.md) | :heavy_minus_sign:                                                                                    | OAuth configuration created                                                                           |

@@ -68,11 +68,40 @@ func (e *ConversationMessageStreamRequestProtocol) UnmarshalJSON(data []byte) er
 	}
 }
 
+// ConversationMessageStreamRequestKeywordSearchBudget - How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+type ConversationMessageStreamRequestKeywordSearchBudget string
+
+const (
+	ConversationMessageStreamRequestKeywordSearchBudgetShort ConversationMessageStreamRequestKeywordSearchBudget = "short"
+	ConversationMessageStreamRequestKeywordSearchBudgetFull  ConversationMessageStreamRequestKeywordSearchBudget = "full"
+)
+
+func (e ConversationMessageStreamRequestKeywordSearchBudget) ToPointer() *ConversationMessageStreamRequestKeywordSearchBudget {
+	return &e
+}
+func (e *ConversationMessageStreamRequestKeywordSearchBudget) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "short":
+		fallthrough
+	case "full":
+		*e = ConversationMessageStreamRequestKeywordSearchBudget(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for ConversationMessageStreamRequestKeywordSearchBudget: %v", v)
+	}
+}
+
 // ConversationMessageStreamRequest - Request body for
 // `POST /conversations/{conversationId}/messages/stream`. The public
 // stream requires an explicit universal execution mode.
 type ConversationMessageStreamRequest struct {
-	// The follow-up question or message content
+	// The follow-up question or message content. Held to the same
+	// 100,000-character limit as the first message of a conversation.
+	//
 	Query string `json:"query"`
 	// App connector instance ids and knowledge-base / record-group ids that narrow retrieval
 	// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
@@ -91,7 +120,10 @@ type ConversationMessageStreamRequest struct {
 	// `POST /conversations/attachments/upload`).
 	//
 	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
-	// Override the model for this specific message
+	// Override the model for this specific message. When neither
+	// `modelKey` nor `modelName` is sent, the organization's default
+	// model answers and is saved in the message's `modelInfo`.
+	//
 	ModelKey *string `json:"modelKey,omitzero"`
 	// Display name of the model
 	ModelName *string `json:"modelName,omitzero"`
@@ -126,6 +158,19 @@ type ConversationMessageStreamRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Opt in to measurement frames on this stream: CUSTOM `retrieval_context` events naming the records and blocks that reached the model, and one CUSTOM `run_usage` event carrying the run's token totals and loop outcome. Identifiers only, never block text. Does not change the answer.
+	IncludeRetrievalContext *bool `default:"false" json:"includeRetrievalContext"`
+	// How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+	KeywordSearchBudget *ConversationMessageStreamRequestKeywordSearchBudget `json:"keywordSearchBudget,omitzero"`
+	// The person's answer to a tool approval card. The web app sends it with the query
+	// `Tool approval: allow` or `Tool approval: deny`, and the request carries on the turn that
+	// stopped on the card: the saved call runs (when allowed) and its result answers the call
+	// the model made, in the same reply. The call is the one saved server-side when the card was
+	// shown (answerable for 15 minutes, settled once, bound to the asking user and
+	// conversation); only its id and the answer travel here. A reply that answered a card
+	// can't be regenerated.
+	//
+	ToolApproval *ToolApprovalAnswer `json:"toolApproval,omitzero"`
 	// Client-generated identifier for this run. Send it here to enable
 	// `POST /conversations/{conversationId}/cancel {runId}` while the
 	// stream is still generating.
@@ -233,6 +278,27 @@ func (c *ConversationMessageStreamRequest) GetAgentCapabilities() *AgentCapabili
 		return nil
 	}
 	return c.AgentCapabilities
+}
+
+func (c *ConversationMessageStreamRequest) GetIncludeRetrievalContext() *bool {
+	if c == nil {
+		return nil
+	}
+	return c.IncludeRetrievalContext
+}
+
+func (c *ConversationMessageStreamRequest) GetKeywordSearchBudget() *ConversationMessageStreamRequestKeywordSearchBudget {
+	if c == nil {
+		return nil
+	}
+	return c.KeywordSearchBudget
+}
+
+func (c *ConversationMessageStreamRequest) GetToolApproval() *ToolApprovalAnswer {
+	if c == nil {
+		return nil
+	}
+	return c.ToolApproval
 }
 
 func (c *ConversationMessageStreamRequest) GetRunID() *string {

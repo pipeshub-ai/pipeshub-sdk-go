@@ -1,0 +1,9 @@
+# GetConnectorFiltersResponse
+
+
+## Fields
+
+| Field                                                                                                     | Type                                                                                                      | Required                                                                                                  | Description                                                                                               |
+| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                        | :heavy_check_mark:                                                                                        | N/A                                                                                                       |
+| `Object`                                                                                                  | [*operations.GetConnectorFiltersResponseBody](../../models/operations/getconnectorfiltersresponsebody.md) | :heavy_minus_sign:                                                                                        | Filter options retrieved                                                                                  |

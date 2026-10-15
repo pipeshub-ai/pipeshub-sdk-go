@@ -336,9 +336,9 @@ who've since been deleted from the org — see `ownerDeleted` on
 compromised laptop, where only the token's own creator could
 otherwise see or revoke it.
 
-Requires org-admin privileges (`userAdminCheck`) — note this returns
-**`400`**, not `403`, for a non-admin caller (shared middleware
-behavior across the codebase, not specific to this route).
+Requires org-admin privileges (`userAdminCheck`): a non-admin caller
+gets `403` (`ForbiddenError`, message
+"You need admin access to do this. Ask an admin in your organisation.").
 
 
 ### Example Usage
@@ -391,7 +391,7 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 400, 401                                      | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403                                 | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
@@ -400,8 +400,8 @@ func main() {
 Revokes a token by id, scoped to the org's PAT client but **not** to
 a specific owning user — the admin counterpart to
 `DELETE /personal-access-tokens/{tokenId}`. Requires org-admin
-privileges (`userAdminCheck`); returns `400` (not `403`) for a
-non-admin caller, same as `GET /personal-access-tokens/admin`.
+privileges (`userAdminCheck`); a non-admin caller gets `403`
+(`ForbiddenError`), same as `GET /personal-access-tokens/admin`.
 
 
 ### Example Usage
@@ -456,6 +456,6 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 400, 401, 404                                 | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
