@@ -1,20 +1,20 @@
-// Print the instance's upload limits with GetUploadLimits: the most files one
-// upload request may carry and the largest file size accepted.
+// Read the upload limits (max files per request, max file size).
+// Needs PIPESHUB_BASE_URL, PIPESHUB_CLIENT_ID, PIPESHUB_CLIENT_SECRET.
 //
-// Usage (from examples/):
-//
-//	go run ./KB/kb/get_upload_limits <path-to-.env>
+// Usage (from examples/): go run ./KB/kb/get_upload_limits <path-to-.env>
 package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
-
-	"enterprise_search/auth"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
 func main() {
@@ -22,23 +22,27 @@ func main() {
 		log.Fatal("usage: go run ./KB/kb/get_upload_limits <path-to-.env>")
 	}
 	if err := godotenv.Load(os.Args[1]); err != nil {
-		log.Fatalf("load .env: %v", err)
-	}
-
-	sdk, err := auth.NewOAuthClient()
-	if err != nil {
 		log.Fatal(err)
 	}
 
-	res, err := sdk.KnowledgeBase.GetUploadLimits(context.Background())
-	if err != nil {
-		log.Fatalf("get upload limits: %v", err)
+	baseURL := strings.TrimRight(os.Getenv("PIPESHUB_BASE_URL"), "/") + "/api/v1"
+	tokenURL := os.Getenv("PIPESHUB_TOKEN_URL") // optional
+	if tokenURL == "" {
+		tokenURL = baseURL + "/oauth2/token"
 	}
-	if res.UploadLimitsResponseSchema == nil {
-		log.Fatal("get upload limits: empty response")
-	}
-	limits := res.UploadLimitsResponseSchema
+	client := pipeshub.New(
+		pipeshub.WithServerURL(baseURL),
+		pipeshub.WithSecurity(components.Security{Oauth2: &components.SchemeOauth2{
+			ClientID:     os.Getenv("PIPESHUB_CLIENT_ID"),
+			ClientSecret: os.Getenv("PIPESHUB_CLIENT_SECRET"),
+			TokenURL:     tokenURL,
+		}}),
+	)
 
-	fmt.Printf("Max files per upload request: %d\n", limits.MaxFilesPerRequest)
-	fmt.Printf("Max file size:                %d bytes (%.1f MiB)\n", limits.MaxFileSizeBytes, float64(limits.MaxFileSizeBytes)/(1<<20))
+	res, err := client.KnowledgeBase.GetUploadLimits(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	out, _ := json.MarshalIndent(res.UploadLimitsResponseSchema, "", "  ")
+	fmt.Println(string(out))
 }
