@@ -10,12 +10,12 @@ import (
 	"log"
 	"os"
 
+	"enterprise_search/agui"
 	"github.com/joho/godotenv"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 
-	"enterprise_search/agui"
 	"enterprise_search/auth"
 )
 
@@ -90,7 +90,7 @@ func askFirst(ctx context.Context, sdk *pipeshub.Pipeshub, query string, filters
 		if ev == nil || ev.Event == nil || ev.Data == nil {
 			continue
 		}
-		done, err := c.Handle(string(*ev.Event), *ev.Data)
+		done, err := c.Handle(string(*ev.Event), agui.Raw(ev.Data))
 		if err != nil {
 			return "", err
 		}
@@ -137,7 +137,7 @@ func askFollowUp(ctx context.Context, sdk *pipeshub.Pipeshub, convID, query stri
 		if ev == nil || ev.Event == nil || ev.Data == nil {
 			continue
 		}
-		done, err := c.Handle(string(*ev.Event), *ev.Data)
+		done, err := c.Handle(string(*ev.Event), agui.Raw(ev.Data))
 		if err != nil {
 			return err
 		}

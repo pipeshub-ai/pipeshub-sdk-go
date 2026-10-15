@@ -16,6 +16,7 @@ import (
 	"log"
 	"os"
 
+	"enterprise_search/agui"
 	"github.com/joho/godotenv"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 
@@ -71,7 +72,7 @@ func main() {
 					ConversationID string `json:"conversationId"`
 				} `json:"value"`
 			}
-			if err := json.Unmarshal([]byte(*ev.Data), &f); err != nil {
+			if err := json.Unmarshal([]byte(agui.Raw(ev.Data)), &f); err != nil {
 				log.Fatalf("decode CUSTOM: %v", err)
 			}
 			// CUSTOM/conversation_created replaced the legacy `connected` event.
@@ -87,7 +88,7 @@ func main() {
 			var f struct {
 				Delta string `json:"delta"`
 			}
-			if err := json.Unmarshal([]byte(*ev.Data), &f); err != nil {
+			if err := json.Unmarshal([]byte(agui.Raw(ev.Data)), &f); err != nil {
 				log.Fatalf("decode TEXT_MESSAGE_CONTENT: %v", err)
 			}
 			streamed += f.Delta
@@ -106,7 +107,7 @@ func main() {
 					} `json:"conversation"`
 				} `json:"result"`
 			}
-			if err := json.Unmarshal([]byte(*ev.Data), &f); err != nil {
+			if err := json.Unmarshal([]byte(agui.Raw(ev.Data)), &f); err != nil {
 				log.Fatalf("decode RUN_FINISHED: %v", err)
 			}
 			// Sub-agents emit their own RUN_FINISHED, which the gateway forwards
@@ -134,7 +135,7 @@ func main() {
 				Message     string  `json:"message"`
 				Code        string  `json:"code"`
 			}
-			if err := json.Unmarshal([]byte(*ev.Data), &f); err != nil {
+			if err := json.Unmarshal([]byte(agui.Raw(ev.Data)), &f); err != nil {
 				log.Fatalf("decode RUN_ERROR: %v", err)
 			}
 			// Likewise, a child RUN_ERROR is one sub-agent failing, not the stream.

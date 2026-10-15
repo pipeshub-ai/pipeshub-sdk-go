@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"enterprise_search/agui"
 	"github.com/joho/godotenv"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 
@@ -87,7 +88,7 @@ func main() {
 		}
 		data := ""
 		if ev.Data != nil {
-			data = *ev.Data
+			data = agui.Raw(ev.Data)
 		}
 		fmt.Printf("%s  %s\n", *ev.Event, data)
 	}

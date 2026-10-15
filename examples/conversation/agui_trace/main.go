@@ -16,10 +16,10 @@ import (
 	"os"
 	"strings"
 
+	"enterprise_search/agui"
 	"github.com/joho/godotenv"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 
-	"enterprise_search/agui"
 	"enterprise_search/auth"
 )
 
@@ -68,7 +68,7 @@ func main() {
 		if ev == nil || ev.Event == nil || ev.Data == nil {
 			continue
 		}
-		event, data := string(*ev.Event), *ev.Data
+		event, data := string(*ev.Event), agui.Raw(ev.Data)
 		counts[event]++
 		trace(event, data)
 

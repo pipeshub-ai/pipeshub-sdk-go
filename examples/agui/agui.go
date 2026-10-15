@@ -262,3 +262,10 @@ func (c *Collector) Answer() string {
 	}
 	return ""
 }
+
+// Raw re-encodes the already-decoded data of a generated SSE event (a
+// map[string]any since SDK 1.8.0) as the JSON text Handle and the decoders take.
+func Raw(data map[string]any) string {
+	b, _ := json.Marshal(data)
+	return string(b)
+}

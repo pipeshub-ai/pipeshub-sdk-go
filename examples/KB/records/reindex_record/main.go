@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 
+	"enterprise_search/agui"
 	"github.com/joho/godotenv"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
@@ -87,7 +88,7 @@ func uploadSampleRecord(ctx context.Context, sdk *pipeshub.Pipeshub, kbID string
 				ID string `json:"id"`
 			} `json:"record"`
 		}
-		_ = json.Unmarshal([]byte(*ev.Data), &payload)
+		_ = json.Unmarshal([]byte(agui.Raw(ev.Data)), &payload)
 		for _, id := range []string{payload.RecordID, payload.ID, payload.Record.ID} {
 			if id != "" {
 				recordID = id

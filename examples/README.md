@@ -1,6 +1,6 @@
 # PipesHub Go SDK examples
 
-38 runnable Go programs that authenticate against a PipesHub instance and exercise semantic search, conversations, the agent loop, agent CRUD, and knowledge base management.
+69 runnable Go programs that authenticate against a PipesHub instance and exercise semantic search, conversations, the agent loop, agent CRUD, personal access tokens, and knowledge base management.
 
 The Go module is named `enterprise_search` (which is why imports read `enterprise_search/auth`), but it lives in this `examples/` directory. Each program is its own package in its own directory, so `go build ./...` and `go vet ./...` cover the whole tree.
 
@@ -21,16 +21,40 @@ go mod tidy
 
 Every program takes the `.env` path as its first argument.
 
+### Authentication
+
+The programs added in SDK 1.7.1 (`KB/kb/get_upload_limits`, `KB/records/get_record_by_id`, `KB/records/reindex_record_group`, `KB/trash/*`, and the non-streaming `conversation/*` programs) authenticate with **OAuth2 client credentials** through `auth.NewOAuthClient`. Create an OAuth app with the `client_credentials` grant and the scopes the examples use, then set `PIPESHUB_CLIENT_ID` and `PIPESHUB_CLIENT_SECRET`. The SDK fetches the access token from `PIPESHUB_TOKEN_URL` or, when that is unset, `${PIPESHUB_BASE_URL}/api/v1/oauth2/token`, and fetches a new one when it expires. The SDK's built-in default token URL is relative, so the helper always passes an absolute one.
+
+```go
+// What auth.NewOAuthClient passes to pipeshub.WithSecurity
+components.Security{Oauth2: &components.SchemeOauth2{
+	ClientID:     os.Getenv("PIPESHUB_CLIENT_ID"),
+	ClientSecret: os.Getenv("PIPESHUB_CLIENT_SECRET"),
+	TokenURL:     "http://localhost:3000/api/v1/oauth2/token",
+}}
+```
+
+The `personal_access_tokens/*` programs use `auth.NewSessionClient`, which logs in with `PIPESHUB_TEST_USER_EMAIL` and `PIPESHUB_TEST_USER_PASSWORD`: the personal access token routes require an interactive user session and reject OAuth tokens with `403`.
+
+The older programs use `auth.NewClient`: `PIPESHUB_BEARER_AUTH` when it is set, otherwise the same email and password login.
+
+
 | Variable | Needed by |
 | --- | --- |
 | `PIPESHUB_BASE_URL` | all — the examples append `/api/v1` themselves |
-| `PIPESHUB_BEARER_AUTH` | optional; a raw JWT access token. When set, it is used directly and the email/password login is skipped |
-| `PIPESHUB_TEST_USER_EMAIL`, `PIPESHUB_TEST_USER_PASSWORD` | all, unless `PIPESHUB_BEARER_AUTH` is set |
+| `PIPESHUB_CLIENT_ID`, `PIPESHUB_CLIENT_SECRET` | the 1.7.1 programs (see [Authentication](#authentication)); OAuth2 client credentials |
+| `PIPESHUB_TOKEN_URL` | optional; OAuth2 token endpoint (default `${PIPESHUB_BASE_URL}/api/v1/oauth2/token`) |
+| `PIPESHUB_TEST_USER_EMAIL`, `PIPESHUB_TEST_USER_PASSWORD` | `personal_access_tokens/*`; the older programs unless `PIPESHUB_BEARER_AUTH` is set |
+| `PIPESHUB_BEARER_AUTH` | optional, older programs only; a JWT access token used instead of the email and password login |
 | `PIPESHUB_AGENT_KEY` | all `agent_conversation/*` except `create_and_add_message` |
 | `KB_ID`, `CONNECTOR_ID` | optional knowledge filters for `agent_conversation/*` |
-| `PIPESHUB_KB_NAME`, `PIPESHUB_CONNECTOR_NAME` | optional lookup-name overrides (default `SDK-test`, `ABC News RSS` / `abc news`) |
+| `PIPESHUB_KB_NAME`, `PIPESHUB_CONNECTOR_NAME` | optional lookup-name overrides (default `SDK-test`, `ABC News RSS` / `abc news`). `KB/records/reindex_record_group` falls back to the first connector |
 | `PIPESHUB_AGENT_MODEL_KEY` | optional; used when an example creates an agent |
-| `PIPESHUB_UPLOAD_PATH` | optional; file for `KB/*/upload_records` (falls back to a built-in sample) |
+| `PIPESHUB_UPLOAD_PATH` | optional; file for `KB/*/upload_records`, `KB/records/get_record_by_id` and `KB/trash/*` (falls back to a built-in sample) |
+| `PIPESHUB_GOOGLE_SERVICE_ACCOUNT_FILE`, `PIPESHUB_GOOGLE_ADMIN_EMAIL`, `PIPESHUB_ATLASSIAN_*`, `PIPESHUB_S3_*` | the Gmail, Drive, Confluence, Jira and S3 programs; see `.env.example`. Gmail, Drive, Confluence, Jira and Slack keep the source's permissions, so search only finds their records for PipesHub users whose email has access in the source; the examples report that instead of failing. |
+| `PIPESHUB_AZURE_FILES_CONNECTION_STRING` | `connectors/azure_files`; a storage account connection string. `PIPESHUB_AZURE_FILES_SHARE` and `PIPESHUB_AZURE_FILES_SEARCH_QUERY` are optional |
+| `PIPESHUB_SLACK_BOT_TOKEN` | `connectors/slack_workspace`; a Slack bot token (`xoxb-…`). `PIPESHUB_SLACK_CHANNEL_ID` and `PIPESHUB_SLACK_SEARCH_QUERY` are optional |
+| `PIPESHUB_RSS_FEED_URL` | optional; the feed `connectors/rss` syncs (default Hacker News, which currently refuses the RSS connector with HTTP 419, so its connection test fails) |
 
 ## Run
 
@@ -76,6 +100,37 @@ Suggested order — each step only needs what the ones before it produced.
 | `./conversation/connector` | `StreamChat` scoped by `Filters.Apps` | a connector named `ABC News RSS` | yes |
 | `./semantic_search/knowledgebase` | `Search` scoped by `Filters.Kb` | a KB named `SDK-test` | no |
 | `./semantic_search/connector` | `Search` scoped by `Filters.Apps` | a connector named `abc news` | no |
+| `./conversation/create_conversation` | `CreateConversation` (non-streaming) | — | yes |
+| `./conversation/add_message` | `AddMessage` (non-streaming follow-up) | — | yes |
+| `./conversation/get_all_conversations` | paginated `GetAllConversations` | — | yes |
+| `./conversation/get_conversation_by_id` | `GetConversationByID` | — | yes |
+| `./conversation/update_conversation_title` | `UpdateConversationTitle` | — | yes |
+| `./conversation/archive_unarchive` | `ArchiveConversation`, `UnarchiveConversation` | — | yes |
+| `./conversation/get_archived_conversations` | `GetArchivedConversations` | — | yes |
+| `./conversation/search_archived_conversations` | `SearchArchivedConversations` | — | yes |
+| `./conversation/update_message_feedback` | `UpdateMessageFeedback` | — | yes |
+| `./conversation/delete_conversation` | `DeleteConversationByID` | — | yes |
+| `./conversation/cancel_conversation_stream` | `StreamChat` with a `runId`, then `CancelConversationStream` | — | yes |
+| `./KB/kb/get_upload_limits` | `GetUploadLimits` | — | no |
+| `./KB/records/get_record_by_id` | `GetRecordByID` | `PIPESHUB_UPLOAD_PATH` (optional) | no |
+| `./KB/records/reindex_record_group` | knowledge-hub lookup, then `ReindexRecordGroup` on a connector record group | a connector, `PIPESHUB_CONNECTOR_NAME` (optional) | no |
+| `./KB/trash/list_trash` | `ListTrash` | trash enabled (see below) | no |
+| `./KB/trash/restore_record` | `RestoreRecord` | trash enabled (see below) | no |
+| `./KB/trash/restore_records` | `RestoreRecords` (bulk) | trash enabled (see below) | no |
+| `./personal_access_tokens/list_scopes` | `ListPersonalAccessTokenScopes` | email + password | no |
+| `./personal_access_tokens/create_token` | `CreatePersonalAccessToken` (then revokes it) | email + password | no |
+| `./personal_access_tokens/list_tokens` | `ListPersonalAccessTokens` | email + password | no |
+| `./personal_access_tokens/revoke_token` | `RevokePersonalAccessToken` | email + password | no |
+| `./personal_access_tokens/admin_list_tokens` | `AdminListPersonalAccessTokens` | email + password, org admin | no |
+| `./personal_access_tokens/admin_revoke_token` | `AdminRevokePersonalAccessToken` | email + password, org admin | no |
+| `./connectors/gmail_workspace` | Gmail Workspace: a Google service account with domain-wide delegation (`PIPESHUB_GOOGLE_SERVICE_ACCOUNT_FILE`, `PIPESHUB_GOOGLE_ADMIN_EMAIL`), mail received in the last 7 days; syncs, waits until indexing finishes, searches it, then turns the sync off and deletes it | see `.env.example` | no |
+| `./connectors/drive_workspace` | Drive Workspace: the same Google service account, files modified in the last 30 days, one drive when `PIPESHUB_GOOGLE_DRIVE_ID` is set or the connector lists any; syncs, waits until indexing finishes, searches it, then turns the sync off and deletes it | see `.env.example` | no |
+| `./connectors/confluence` | Confluence: an Atlassian API token (`PIPESHUB_ATLASSIAN_BASE_URL`, `PIPESHUB_ATLASSIAN_EMAIL`, `PIPESHUB_ATLASSIAN_API_TOKEN`), one space (`PIPESHUB_CONFLUENCE_SPACE_KEY`, or the first); syncs, waits until indexing finishes, searches it, then turns the sync off and deletes it | see `.env.example` | no |
+| `./connectors/jira` | Jira: the same Atlassian API token, one project (`PIPESHUB_JIRA_PROJECT_KEY`, or the first) and issues modified in the last 30 days; syncs, waits until indexing finishes, searches it, then turns the sync off and deletes it | see `.env.example` | no |
+| `./connectors/s3` | S3: an access key (`PIPESHUB_S3_ACCESS_KEY`, `PIPESHUB_S3_SECRET_KEY`), one bucket (`PIPESHUB_S3_BUCKET`, or the first); syncs, waits until indexing finishes, searches it, then turns the sync off and deletes it | see `.env.example` | no |
+| `./connectors/azure_files` | `CreateConnectorInstance` (Azure Files, connection string), `GetFilterFieldOptions` for shares, `UpdateConnectorFiltersSyncConfig` (one share), `ToggleConnector`, wait for indexing, scoped `Search`, then sync off and `DeleteConnectorInstance` | `PIPESHUB_AZURE_FILES_CONNECTION_STRING`; `PIPESHUB_AZURE_FILES_SHARE`, `PIPESHUB_AZURE_FILES_SEARCH_QUERY` (optional) | no |
+| `./connectors/slack_workspace` | `CreateConnectorInstance` (Slack Workspace, bot token), `GetFilterFieldOptions` for channels, `UpdateConnectorFiltersSyncConfig` (one channel, last 7 days), `ToggleConnector`, wait for indexing, scoped `Search`, then sync off and `DeleteConnectorInstance`. Slack records keep Slack's permissions, so search only finds them for PipesHub users whose email matches a member of the channel; the example says so instead of failing when the caller sees none. | `PIPESHUB_SLACK_BOT_TOKEN`; `PIPESHUB_SLACK_CHANNEL_ID`, `PIPESHUB_SLACK_SEARCH_QUERY` (optional) | no |
+| `./connectors/rss` | registry lookup, `CreateConnectorInstance` (RSS), `ToggleConnector`, `GetConnectorStats` until indexed, scoped `Search`, then sync off and `DeleteConnectorInstance` | `PIPESHUB_RSS_FEED_URL` (optional) | no |
 
 ```bash
 go run ./st_examples/search .env
@@ -85,6 +140,14 @@ go run ./agent/delete .env <agent-key>
 ```
 
 Edit the `query` string in any `main.go` to change the question.
+
+The programs added for conversations, the KB trash and personal access tokens are self-contained: each creates the conversations, knowledge bases, agents or tokens it needs and deletes or revokes them before it exits. The exception is `KB/records/reindex_record_group`, which queues a reindex of an existing connector record group.
+
+A few need something on the instance first:
+
+- **`KB/trash/*`** need the workspace Labs setting **"Move Deleted Records to the Trash"** (`ENABLE_SOFT_DELETE`). With it off, a deleted record is gone for good, `ListTrash` stays empty and restoring fails.
+- **`KB/records/reindex_record_group`** needs a connector record group. A knowledge base, or a folder in one, is not a record group here and returns `404`; use `KB/records/reindex_record` for KB content. The record group is found through the knowledge-hub calls, which the SDK marks deprecated but which are still the only way to browse a connector's record groups.
+- **`personal_access_tokens/*`** log in with email and password (see [Authentication](#authentication)) and print token ids and metadata but never the secret. `expiryDays` accepts only `30`, `90`, `365` or `"never"`. The `admin_*` programs need an org admin.
 
 ## Understanding the stream (AG-UI)
 
@@ -145,11 +208,15 @@ So pass `nil`, never an empty-but-non-nil `Filters`, when you mean "no opinion".
 examples/
 ├── go.mod  .env.example
 ├── agui/agui.go                        shared AG-UI SSE decoder
-├── auth/login.go                       shared NewClient (InitAuth → Authenticate)
+├── auth/login.go                       shared NewOAuthClient, NewSessionClient, NewClient
+├── connectorsync/                      shared connector steps: options, filters, sync, wait, search, clean up
 ├── KB/
-│   ├── kb/                             create, get, list, update, delete, upload_records
+│   ├── kb/                             create, get, list, update, delete, upload_records,
+│   │                                   get_upload_limits
 │   ├── folder/                         create, update, delete, upload_records
-│   └── records/                        update, move, delete, reindex, stream_record_buffer
+│   ├── records/                        update, move, delete, reindex, stream_record_buffer,
+│   │                                   get_record_by_id, reindex_record_group
+│   └── trash/                          list_trash, restore_record, restore_records
 ├── agent/{create,list_and_get,update,delete}/
 ├── agent_conversation/                 9 programs, agent-scoped conversations
 ├── conversation/
@@ -157,14 +224,16 @@ examples/
 │   ├── agent/                          chatMode=agent, tools, capabilities
 │   ├── agui_trace/                     every frame, by category
 │   ├── knowledgebase/  connector/      Filters.Kb / Filters.Apps
-│   └── web_search/
+│   ├── web_search/
+│   └── create_conversation/ …          11 non-streaming / management programs
+├── personal_access_tokens/             list_scopes, create, list, revoke, admin list / revoke
 ├── semantic_search/{knowledgebase,connector}/
 └── st_examples/{chat,search}/
 ```
 
 ## Notes
 
-- `go.mod` requires the published SDK, `github.com/pipeshub-ai/pipeshub-sdk-go v1.7.0`. `go mod tidy` downloads it.
+- `go.mod` requires `github.com/pipeshub-ai/pipeshub-sdk-go v1.8.0`. `go mod tidy` downloads it.
 - Every `KB/*` program creates a fresh knowledge base named `Internal documents`, so it never touches your data. Repeated runs leave extra copies behind; delete them in the UI when you are done.
 - One `main()` per directory — that is what keeps `go build ./...` and `go vet ./...` working across the tree.
 - Troubleshooting: `401` means bad credentials; `500` on a conversation means no AI model provider is configured; an empty answer means nothing is indexed in the knowledge sources you scoped to.

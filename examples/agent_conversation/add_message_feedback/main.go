@@ -13,11 +13,11 @@ import (
 	"os"
 	"time"
 
+	"enterprise_search/agui"
 	"github.com/joho/godotenv"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 
-	"enterprise_search/agui"
 	"enterprise_search/auth"
 )
 
@@ -99,7 +99,7 @@ func createAgentConversation(ctx context.Context, sdk *pipeshub.Pipeshub, agentK
 		if ev == nil || ev.Event == nil || ev.Data == nil {
 			continue
 		}
-		done, err := c.Handle(string(*ev.Event), *ev.Data)
+		done, err := c.Handle(string(*ev.Event), agui.Raw(ev.Data))
 		if err != nil {
 			return "", "", "", err
 		}
