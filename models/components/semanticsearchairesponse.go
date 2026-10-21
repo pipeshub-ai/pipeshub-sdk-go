@@ -17,8 +17,32 @@ type SemanticSearchAiResponse struct {
 	Message       string                      `json:"message"`
 	// Present when KB filters were applied to the search request.
 	AppliedFilters *SemanticSearchAppliedFilters `json:"appliedFilters,omitzero"`
+	// Present only when some records lost passages to the per-record cap: maps a
+	// `recordId` to how many of its passages were left out. Each record keeps at most
+	// `max(SEARCH_PER_RECORD_FLOOR, limit / SEARCH_PER_RECORD_DIVISOR)` passages
+	// (4 at the default limit): the passages that matched first, then those nearest a match.
+	//
+	OmittedPassages map[string]int64 `json:"omittedPassages,omitzero"`
 	// Maps virtual record id (object property name) to the accessible graph record document for that id.
 	VirtualToRecordMap map[string]SemanticSearchGraphRecord `json:"virtual_to_record_map,omitzero"`
+	// Present only on a search run as a timeline: one with `timeline` set, or one over a span
+	// of more than 31 days with it left out. `searchResults` then come period by period,
+	// oldest first, and by record date within a period; each hit's `timelinePeriod` is its
+	// period's index in `periods`.
+	//
+	Timeline *SemanticSearchTimeline `json:"timeline,omitzero"`
+	// Present only on a search with date bounds, when the same search without them found
+	// matches the bounds left out. Date bounds match when a record was written or last changed,
+	// not when the event it describes happened, so release notes, a retrospective or a weekly
+	// summary written after a period are left out of a search bounded to that period. The
+	// search without dates, with the same query, filters and permissions and a limit of 10,
+	// runs beside the bounded search (or beside a timeline's searches: one plain search, not a
+	// second timeline). Its best matches outside the bounds, up to 3 records, best first, come
+	// here, never in `searchResults`, which are unchanged. When nothing inside the bounds
+	// matched, the response is then a `200` with empty `searchResults`. A server whose
+	// `DATE_FILTER_SAFETY_NET` setting is `false` never sends this field.
+	//
+	OutsideDates *SemanticSearchOutsideDates `json:"outsideDates,omitzero"`
 }
 
 func (s SemanticSearchAiResponse) MarshalJSON() ([]byte, error) {
@@ -74,9 +98,30 @@ func (s *SemanticSearchAiResponse) GetAppliedFilters() *SemanticSearchAppliedFil
 	return s.AppliedFilters
 }
 
+func (s *SemanticSearchAiResponse) GetOmittedPassages() map[string]int64 {
+	if s == nil {
+		return nil
+	}
+	return s.OmittedPassages
+}
+
 func (s *SemanticSearchAiResponse) GetVirtualToRecordMap() map[string]SemanticSearchGraphRecord {
 	if s == nil {
 		return nil
 	}
 	return s.VirtualToRecordMap
+}
+
+func (s *SemanticSearchAiResponse) GetTimeline() *SemanticSearchTimeline {
+	if s == nil {
+		return nil
+	}
+	return s.Timeline
+}
+
+func (s *SemanticSearchAiResponse) GetOutsideDates() *SemanticSearchOutsideDates {
+	if s == nil {
+		return nil
+	}
+	return s.OutsideDates
 }

@@ -16,6 +16,12 @@ type AppliedFilterNode struct {
 	NodeType *string `json:"nodeType,omitzero"`
 	// Connector identifier associated with this node
 	Connector *string `json:"connector,omitzero"`
+	// File extension of a record node, for its icon
+	Extension *string `json:"extension,omitzero"`
+	// MIME type of a record node, for its icon
+	MimeType *string `json:"mimeType,omitzero"`
+	// True when the node was picked with an @ mention in the message
+	Mentioned *bool `json:"mentioned,omitzero"`
 }
 
 func (a AppliedFilterNode) MarshalJSON() ([]byte, error) {
@@ -55,4 +61,25 @@ func (a *AppliedFilterNode) GetConnector() *string {
 		return nil
 	}
 	return a.Connector
+}
+
+func (a *AppliedFilterNode) GetExtension() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Extension
+}
+
+func (a *AppliedFilterNode) GetMimeType() *string {
+	if a == nil {
+		return nil
+	}
+	return a.MimeType
+}
+
+func (a *AppliedFilterNode) GetMentioned() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.Mentioned
 }

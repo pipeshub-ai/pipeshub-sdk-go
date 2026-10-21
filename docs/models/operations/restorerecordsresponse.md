@@ -1,0 +1,9 @@
+# RestoreRecordsResponse
+
+
+## Fields
+
+| Field                                                                                               | Type                                                                                                | Required                                                                                            | Description                                                                                         |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                          | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                  | :heavy_check_mark:                                                                                  | N/A                                                                                                 |
+| `RestoreRecordsResponseSchema`                                                                      | [*components.RestoreRecordsResponseSchema](../../models/components/restorerecordsresponseschema.md) | :heavy_minus_sign:                                                                                  | Outcome for each requested record                                                                   |

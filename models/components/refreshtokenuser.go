@@ -33,20 +33,20 @@ func (e *Kind) IsExact() bool {
 	return false
 }
 
-// RefreshTokenUserRole - Organization role stored on the user document (`admin` or `member`)
-type RefreshTokenUserRole string
+// Role - Organization role stored on the user document (`admin` or `member`)
+type Role string
 
 const (
-	RefreshTokenUserRoleAdmin  RefreshTokenUserRole = "admin"
-	RefreshTokenUserRoleMember RefreshTokenUserRole = "member"
+	RoleAdmin  Role = "admin"
+	RoleMember Role = "member"
 )
 
-func (e RefreshTokenUserRole) ToPointer() *RefreshTokenUserRole {
+func (e Role) ToPointer() *Role {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *RefreshTokenUserRole) IsExact() bool {
+func (e *Role) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "admin", "member":
@@ -90,8 +90,8 @@ type RefreshTokenUser struct {
 	//
 	RestoreOpID *string `json:"restoreOpId,omitzero"`
 	// Organization role stored on the user document (`admin` or `member`)
-	Role    *RefreshTokenUserRole `json:"role,omitzero"`
-	Address *Address              `json:"address,omitzero"`
+	Role    *Role    `json:"role,omitzero"`
+	Address *Address `json:"address,omitzero"`
 	// Whether user has consented to data collection
 	DataCollectionConsent *bool `json:"dataCollectionConsent,omitzero"`
 	HasLoggedIn           bool  `json:"hasLoggedIn"`
@@ -208,7 +208,7 @@ func (r *RefreshTokenUser) GetRestoreOpID() *string {
 	return r.RestoreOpID
 }
 
-func (r *RefreshTokenUser) GetRole() *RefreshTokenUserRole {
+func (r *RefreshTokenUser) GetRole() *Role {
 	if r == nil {
 		return nil
 	}

@@ -53,6 +53,22 @@ func newConnector(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks *h
 // full content when the search snippet or citation excerpt isn't
 // enough to answer the question.
 //
+// **Reading part of a long record, or a whole Slack thread:**
+//
+// With no query parameters the whole record is returned, which for a
+// pull request with its diffs or a long document can run to hundreds of
+// thousands of characters. Pass any of `maxChars`, `startBlock`, `query`
+// or `mode` for a budgeted read instead: the response stays within
+// `maxChars` and says how to continue (`nextStartBlock`, or
+// `nextStartRecord` for a thread). `query` makes a record too large for
+// the budget show its most relevant blocks first, with the skipped
+// ranges marked. `mode=thread` returns every message of the Slack
+// thread the record belongs to, oldest first, as far as the caller may
+// see them. A Slack record in no single thread (several channel
+// messages in one record, or a message without replies) returns itself,
+// then the replies of each thread its messages started; the first page
+// opens with a bracketed note saying which.
+//
 // **Permission scoping:**
 //
 // The requesting user/token must have access to the record; access is
@@ -61,11 +77,7 @@ func newConnector(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks *h
 // a `403`.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
-func (s *Connector) GetRecordContent(ctx context.Context, recordID string, opts ...operations.Option) (*operations.GetRecordContentResponse, error) {
-	request := operations.GetRecordContentRequest{
-		RecordID: recordID,
-	}
-
+func (s *Connector) GetRecordContent(ctx context.Context, request operations.GetRecordContentRequest, opts ...operations.Option) (*operations.GetRecordContentResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -116,6 +128,10 @@ func (s *Connector) GetRecordContent(ctx context.Context, recordID string, opts 
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
+		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
 
 	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
@@ -248,6 +264,8 @@ func (s *Connector) GetRecordContent(ctx context.Context, recordID string, opts 
 	case httpRes.StatusCode == 401:
 		fallthrough
 	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode == 422:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)

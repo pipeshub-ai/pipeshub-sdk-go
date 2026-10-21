@@ -79,9 +79,15 @@ type GetKnowledgeHubRootNodesRequest struct {
 	// building sidebar / tree navigation). Leaf nodes are excluded.
 	//
 	OnlyContainers *bool `default:"false" queryParam:"style=form,explode=true,name=onlyContainers"`
-	// Page number (1-indexed). Combined with `limit` to paginate results.
+	// Page number (1-indexed, at most 50). Combined with `limit` to paginate results.
+	// Prefer `cursor`: a page number is reached by reading the pages before it.
 	//
 	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Opaque cursor from `pagination.nextCursor` or `pagination.prevCursor` of a previous
+	// response. Send it with the same path, filters and sort as the request that returned
+	// it; a cursor issued for another place, user or listing mode is refused with 400.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
 	// Maximum number of items to return per page.
 	//
 	Limit *int64 `default:"50" queryParam:"style=form,explode=true,name=limit"`
@@ -189,6 +195,13 @@ func (g *GetKnowledgeHubRootNodesRequest) GetPage() *int64 {
 		return nil
 	}
 	return g.Page
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetCursor() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Cursor
 }
 
 func (g *GetKnowledgeHubRootNodesRequest) GetLimit() *int64 {
@@ -615,9 +628,15 @@ type GetKnowledgeHubChildNodesRequest struct {
 	// building sidebar / tree navigation). Leaf nodes are excluded.
 	//
 	OnlyContainers *bool `default:"false" queryParam:"style=form,explode=true,name=onlyContainers"`
-	// Page number (1-indexed). Combined with `limit` to paginate results.
+	// Page number (1-indexed, at most 50). Combined with `limit` to paginate results.
+	// Prefer `cursor`: a page number is reached by reading the pages before it.
 	//
 	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Opaque cursor from `pagination.nextCursor` or `pagination.prevCursor` of a previous
+	// response. Send it with the same path, filters and sort as the request that returned
+	// it; a cursor issued for another place, user or listing mode is refused with 400.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
 	// Maximum number of items to return per page.
 	//
 	Limit *int64 `default:"50" queryParam:"style=form,explode=true,name=limit"`
@@ -739,6 +758,13 @@ func (g *GetKnowledgeHubChildNodesRequest) GetPage() *int64 {
 		return nil
 	}
 	return g.Page
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetCursor() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Cursor
 }
 
 func (g *GetKnowledgeHubChildNodesRequest) GetLimit() *int64 {
@@ -965,7 +991,7 @@ func (g *GetKnowledgeHubChildNodesResponse) GetKnowledgeHubNodesResponse() *comp
 type GetAvailableModelsByTypeRequest struct {
 	// Category of AI model to retrieve.
 	//
-	// Must be one of: `llm`, `embedding`, `ocr`, `slm`, `reasoning`, `multiModal`, `imageGeneration`, `tts`, `stt`.
+	// Must be one of: `llm`, `embedding`, `ocr`, `slm`, `reasoning`, `multiModal`, `imageGeneration`, `tts`, `stt`, `decision`.
 	//
 	ModelType components.ModelType `pathParam:"style=simple,explode=false,name=modelType"`
 }
@@ -1173,6 +1199,32 @@ func (e *GetAvailableModelsByTypeStatus) UnmarshalJSON(data []byte) error {
 	}
 }
 
+// DefaultReasoningEffort - The model's own reasoning effort. It applies only when the chat request sets no `reasoningEffort` and the agent has no `defaultReasoningEffort`; a level the user picks always wins. Read from `configuration.defaultReasoningEffort`, falling back to a top-level `defaultReasoningEffort`. Present on every model expanded from the entry, and left out when no default is stored. `none` is a legacy value that runs as `low`.
+type DefaultReasoningEffort string
+
+const (
+	DefaultReasoningEffortNone   DefaultReasoningEffort = "none"
+	DefaultReasoningEffortLow    DefaultReasoningEffort = "low"
+	DefaultReasoningEffortMedium DefaultReasoningEffort = "medium"
+	DefaultReasoningEffortHigh   DefaultReasoningEffort = "high"
+	DefaultReasoningEffortMax    DefaultReasoningEffort = "max"
+)
+
+func (e DefaultReasoningEffort) ToPointer() *DefaultReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *DefaultReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
+
 type Model struct {
 	// Model category — always matches the `{modelType}` path parameter.
 	ModelType components.ModelType `json:"modelType"`
@@ -1190,6 +1242,8 @@ type Model struct {
 	IsDefault bool `json:"isDefault"`
 	// Optional human-readable display name. Only present when the provider configuration entry contains exactly one model name (not a comma-separated list) **and** a friendly name was added during configuration.
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
+	// The model's own reasoning effort. It applies only when the chat request sets no `reasoningEffort` and the agent has no `defaultReasoningEffort`; a level the user picks always wins. Read from `configuration.defaultReasoningEffort`, falling back to a top-level `defaultReasoningEffort`. Present on every model expanded from the entry, and left out when no default is stored. `none` is a legacy value that runs as `low`.
+	DefaultReasoningEffort *DefaultReasoningEffort `json:"defaultReasoningEffort,omitzero"`
 }
 
 func (m *Model) GetModelType() components.ModelType {
@@ -1246,6 +1300,13 @@ func (m *Model) GetModelFriendlyName() *string {
 		return nil
 	}
 	return m.ModelFriendlyName
+}
+
+func (m *Model) GetDefaultReasoningEffort() *DefaultReasoningEffort {
+	if m == nil {
+		return nil
+	}
+	return m.DefaultReasoningEffort
 }
 
 // GetAvailableModelsByTypeResponseBody - Available models retrieved successfully.

@@ -6,14 +6,44 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
 
+type KnowledgeNode struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// `recordGroup`, `folder` or `record`.
+	NodeType string `json:"nodeType"`
+}
+
+func (k *KnowledgeNode) GetID() string {
+	if k == nil {
+		return ""
+	}
+	return k.ID
+}
+
+func (k *KnowledgeNode) GetName() string {
+	if k == nil {
+		return ""
+	}
+	return k.Name
+}
+
+func (k *KnowledgeNode) GetNodeType() string {
+	if k == nil {
+		return ""
+	}
+	return k.NodeType
+}
+
 // FiltersParsed - Server-derived read-only object parsed from the stored
 // `filters` JSON by the graph provider on GET (Neo4j / Arango).
 // Empty object when `filters` is missing or invalid JSON.
 type FiltersParsed struct {
-	// Deprecated/legacy: record-group ids for connector record-group scoping (e.g. Confluence spaces, Jira projects). No longer set for KB (Collection) entries — a KB is identified by its own `connectorId`, not by an id in this list.
+	// Record-group ids (e.g. Confluence spaces, Jira projects), each with the groups nested in it. Not set for KB (Collection) entries — a KB is identified by its own `connectorId`; an id equal to a source's `connectorId` is ignored.
 	RecordGroups []string `json:"recordGroups,omitzero"`
-	// Individual record ids in scope.
+	// Folder or record ids, each with everything under it.
 	Records []string `json:"records,omitzero"`
+	// Names of the ids above, for display. Not used for search.
+	Nodes []KnowledgeNode `json:"nodes,omitzero"`
 }
 
 func (f FiltersParsed) MarshalJSON() ([]byte, error) {
@@ -39,6 +69,13 @@ func (f *FiltersParsed) GetRecords() []string {
 		return nil
 	}
 	return f.Records
+}
+
+func (f *FiltersParsed) GetNodes() []KnowledgeNode {
+	if f == nil {
+		return nil
+	}
+	return f.Nodes
 }
 
 // Knowledge connector / indexed scope linked to an agent, as projected by

@@ -1,0 +1,9 @@
+# GetConnectorEgressIpsResponse
+
+
+## Fields
+
+| Field                                                                                                         | Type                                                                                                          | Required                                                                                                      | Description                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                                    | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                            | :heavy_check_mark:                                                                                            | N/A                                                                                                           |
+| `Object`                                                                                                      | [*operations.GetConnectorEgressIpsResponseBody](../../models/operations/getconnectoregressipsresponsebody.md) | :heavy_minus_sign:                                                                                            | Egress IP addresses                                                                                           |

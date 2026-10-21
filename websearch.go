@@ -44,7 +44,11 @@ func newWebSearch(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks *h
 // sending the placeholder back keeps the stored key.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
-func (s *WebSearch) GetWebSearchProviders(ctx context.Context, opts ...operations.Option) (*operations.GetWebSearchProvidersResponse, error) {
+func (s *WebSearch) GetWebSearchProviders(ctx context.Context, reveal *components.RevealStoredSecrets, opts ...operations.Option) (*operations.GetWebSearchProvidersResponse, error) {
+	request := operations.GetWebSearchProvidersRequest{
+		Reveal: reveal,
+	}
+
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -95,6 +99,10 @@ func (s *WebSearch) GetWebSearchProviders(ctx context.Context, opts ...operation
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
+		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
 
 	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err

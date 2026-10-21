@@ -15,6 +15,14 @@ type DeleteRecordResponseSchema struct {
 	RecordID  string                                    `json:"recordId"`
 	Connector optionalnullable.OptionalNullable[string] `json:"connector,omitzero"`
 	Timestamp optionalnullable.OptionalNullable[int64]  `json:"timestamp,omitzero"`
+	// True when the record went to the trash instead of being removed
+	SoftDeleted *bool `json:"softDeleted,omitzero"`
+	// The delete batch; restoring any record in it restores all of it
+	BatchID optionalnullable.OptionalNullable[string] `json:"batchId,omitzero"`
+	// The record is deleted, but removing its embeddings is still owed
+	VectorCleanupPending                *bool    `json:"vectorCleanupPending,omitzero"`
+	VectorCleanupFailedRecordIds        []string `json:"vectorCleanupFailedRecordIds,omitzero"`
+	VectorCleanupFailedVirtualRecordIds []string `json:"vectorCleanupFailedVirtualRecordIds,omitzero"`
 }
 
 func (d DeleteRecordResponseSchema) MarshalJSON() ([]byte, error) {
@@ -58,4 +66,39 @@ func (d *DeleteRecordResponseSchema) GetTimestamp() optionalnullable.OptionalNul
 		return nil
 	}
 	return d.Timestamp
+}
+
+func (d *DeleteRecordResponseSchema) GetSoftDeleted() *bool {
+	if d == nil {
+		return nil
+	}
+	return d.SoftDeleted
+}
+
+func (d *DeleteRecordResponseSchema) GetBatchID() optionalnullable.OptionalNullable[string] {
+	if d == nil {
+		return nil
+	}
+	return d.BatchID
+}
+
+func (d *DeleteRecordResponseSchema) GetVectorCleanupPending() *bool {
+	if d == nil {
+		return nil
+	}
+	return d.VectorCleanupPending
+}
+
+func (d *DeleteRecordResponseSchema) GetVectorCleanupFailedRecordIds() []string {
+	if d == nil {
+		return nil
+	}
+	return d.VectorCleanupFailedRecordIds
+}
+
+func (d *DeleteRecordResponseSchema) GetVectorCleanupFailedVirtualRecordIds() []string {
+	if d == nil {
+		return nil
+	}
+	return d.VectorCleanupFailedVirtualRecordIds
 }

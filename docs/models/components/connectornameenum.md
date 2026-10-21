@@ -65,6 +65,7 @@ custom := components.ConnectorNameEnum("custom_value")
 | `ConnectorNameEnumAzureFiles`                   | AZURE FILES                                     |
 | `ConnectorNameEnumLinear`                       | LINEAR                                          |
 | `ConnectorNameEnumZammad`                       | ZAMMAD                                          |
+| `ConnectorNameEnumZendesk`                      | ZENDESK                                         |
 | `ConnectorNameEnumZoom`                         | ZOOM                                            |
 | `ConnectorNameEnumGitlab`                       | GITLAB                                          |
 | `ConnectorNameEnumGitlabPersonal`               | GITLAB PERSONAL                                 |

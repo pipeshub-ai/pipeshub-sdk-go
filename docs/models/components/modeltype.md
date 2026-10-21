@@ -29,3 +29,4 @@ custom := components.ModelType("custom_value")
 | `ModelTypeImageGeneration` | imageGeneration            |
 | `ModelTypeTts`             | tts                        |
 | `ModelTypeStt`             | stt                        |
+| `ModelTypeDecision`        | decision                   |

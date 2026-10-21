@@ -1,0 +1,26 @@
+# LastSyncOutcome
+
+How the last sync run ended
+
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+)
+
+value := components.LastSyncOutcomeSucceeded
+
+// Open enum: custom values can be created with a direct type cast
+custom := components.LastSyncOutcome("custom_value")
+```
+
+
+## Values
+
+| Name                       | Value                      |
+| -------------------------- | -------------------------- |
+| `LastSyncOutcomeSucceeded` | succeeded                  |
+| `LastSyncOutcomeFailed`    | failed                     |
+| `LastSyncOutcomeStopped`   | stopped                    |
+| `LastSyncOutcomeSkipped`   | skipped                    |

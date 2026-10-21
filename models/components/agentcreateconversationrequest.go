@@ -91,6 +91,33 @@ func (e *AgentCreateConversationRequestProtocol) UnmarshalJSON(data []byte) erro
 	}
 }
 
+// AgentCreateConversationRequestKeywordSearchBudget - How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+type AgentCreateConversationRequestKeywordSearchBudget string
+
+const (
+	AgentCreateConversationRequestKeywordSearchBudgetShort AgentCreateConversationRequestKeywordSearchBudget = "short"
+	AgentCreateConversationRequestKeywordSearchBudgetFull  AgentCreateConversationRequestKeywordSearchBudget = "full"
+)
+
+func (e AgentCreateConversationRequestKeywordSearchBudget) ToPointer() *AgentCreateConversationRequestKeywordSearchBudget {
+	return &e
+}
+func (e *AgentCreateConversationRequestKeywordSearchBudget) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "short":
+		fallthrough
+	case "full":
+		*e = AgentCreateConversationRequestKeywordSearchBudget(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AgentCreateConversationRequestKeywordSearchBudget: %v", v)
+	}
+}
+
 // AgentCreateConversationRequest - First turn of an agent conversation. Used as-is by the non-streaming
 // `POST /agents/{agentKey}/conversations`, where `chatMode` may be
 // omitted; `AgentStreamCreateConversationRequest` additionally requires
@@ -150,7 +177,8 @@ type AgentCreateConversationRequest struct {
 	CurrentTime *time.Time `json:"currentTime,omitzero"`
 	// Allowed tool ids for this turn, such as `jira.create_issue`. Omit
 	// to let the agent use its default toolset; send `[]` to disable
-	// tools for this turn.
+	// tools for this turn. A list that leaves out `web_search` turns off
+	// the agent's web search for the turn.
 	//
 	Tools []string `json:"tools,omitzero"`
 	// AG-UI is the only supported wire protocol. When present must be
@@ -166,6 +194,19 @@ type AgentCreateConversationRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Opt in to measurement frames on this stream: CUSTOM `retrieval_context` events naming the records and blocks that reached the model, and one CUSTOM `run_usage` event carrying the run's token totals and loop outcome. Identifiers only, never block text. Does not change the answer.
+	IncludeRetrievalContext *bool `default:"false" json:"includeRetrievalContext"`
+	// How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+	KeywordSearchBudget *AgentCreateConversationRequestKeywordSearchBudget `json:"keywordSearchBudget,omitzero"`
+	// The person's answer to a tool approval card. The web app sends it with the query
+	// `Tool approval: allow` or `Tool approval: deny`, and the request carries on the turn that
+	// stopped on the card: the saved call runs (when allowed) and its result answers the call
+	// the model made, in the same reply. The call is the one saved server-side when the card was
+	// shown (answerable for 15 minutes, settled once, bound to the asking user and
+	// conversation); only its id and the answer travel here. A reply that answered a card
+	// can't be regenerated.
+	//
+	ToolApproval *ToolApprovalAnswer `json:"toolApproval,omitzero"`
 	// Client-generated identifier for this run. Send it here to enable
 	// `POST /agents/{agentKey}/conversations/{conversationId}/cancel
 	// {runId}` while the stream is still generating.
@@ -294,6 +335,27 @@ func (a *AgentCreateConversationRequest) GetAgentCapabilities() *AgentCapabiliti
 		return nil
 	}
 	return a.AgentCapabilities
+}
+
+func (a *AgentCreateConversationRequest) GetIncludeRetrievalContext() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.IncludeRetrievalContext
+}
+
+func (a *AgentCreateConversationRequest) GetKeywordSearchBudget() *AgentCreateConversationRequestKeywordSearchBudget {
+	if a == nil {
+		return nil
+	}
+	return a.KeywordSearchBudget
+}
+
+func (a *AgentCreateConversationRequest) GetToolApproval() *ToolApprovalAnswer {
+	if a == nil {
+		return nil
+	}
+	return a.ToolApproval
 }
 
 func (a *AgentCreateConversationRequest) GetRunID() *string {
