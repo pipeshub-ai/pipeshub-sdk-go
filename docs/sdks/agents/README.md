@@ -18,6 +18,7 @@ Custom AI agents with specialized capabilities and tool integrations
 * [StreamAgentConversation](#streamagentconversation) - Create agent conversation with streaming response
 * [StreamAgentConversationMessage](#streamagentconversationmessage) - Add message to agent conversation with streaming response
 * [RegenerateAgentConversationMessage](#regenerateagentconversationmessage) - Regenerate agent conversation message
+* [ForkAgentConversation](#forkagentconversation) - Fork agent conversation from a message
 * [CancelAgentConversationStream](#cancelagentconversationstream) - Cancel an in-flight agent chat stream
 * [UpdateAgentConversationMessageFeedback](#updateagentconversationmessagefeedback) - Submit feedback for an agent message
 * [AddAgentConversationMessage](#addagentconversationmessage) - Add message to agent conversation (non-streaming)
@@ -988,6 +989,68 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
+## ForkAgentConversation
+
+Copy this agent conversation into a new private chat owned by the
+caller, including every message up to and including `messageId`. The
+original conversation is left unchanged.
+
+Only the owner of the conversation can fork it; anyone else gets 404.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="forkAgentConversation" method="post" path="/agents/{agentKey}/conversations/{conversationId}/message/{messageId}/fork" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Agents.ForkAgentConversation(ctx, "<value>", "<value>", "<value>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ForkConversationResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `agentKey`                                               | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `messageID`                                              | `string`                                                 | :heavy_check_mark:                                       | Inclusive last message to copy into the new chat         |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.ForkAgentConversationResponse](../../models/operations/forkagentconversationresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
 ## CancelAgentConversationStream
 
 Cooperatively stop a `POST /agents/{agentKey}/conversations/stream`
@@ -1448,6 +1511,12 @@ This makes the operation idempotent:
 - deleting a nonexistent conversation returns success with `null`
 - deleting through a different `agentKey` returns success with `null`
 - deleting an already deleted conversation returns success with `null`
+
+**Artifacts:** before the conversation is marked deleted, every artifact
+the caller created in it is deleted for good (every version and stored
+file). Artifacts another participant created stay theirs. If the cleanup
+cannot be done the conversation is left in place and the error is
+returned (for example 503); repeating the request finishes it.
 
 
 ### Example Usage

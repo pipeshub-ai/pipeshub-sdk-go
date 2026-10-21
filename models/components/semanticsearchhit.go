@@ -31,6 +31,10 @@ type SemanticSearchHit struct {
 	// directly or the section matched as a whole.
 	//
 	DistanceFromMatch *int64 `json:"distanceFromMatch,omitzero"`
+	// Set only on a search with `timeline`: the index in `timeline.periods` of the period
+	// this hit's record is dated in.
+	//
+	TimelinePeriod *int64 `json:"timelinePeriod,omitzero"`
 }
 
 func (s SemanticSearchHit) MarshalJSON() ([]byte, error) {
@@ -105,4 +109,11 @@ func (s *SemanticSearchHit) GetDistanceFromMatch() *int64 {
 		return nil
 	}
 	return s.DistanceFromMatch
+}
+
+func (s *SemanticSearchHit) GetTimelinePeriod() *int64 {
+	if s == nil {
+		return nil
+	}
+	return s.TimelinePeriod
 }

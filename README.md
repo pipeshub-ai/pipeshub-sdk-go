@@ -25,6 +25,9 @@ Most endpoints require JWT Bearer token authentication. Some internal endpoints 
 
 ## Base URLs
 All endpoints use the `/api/v1` prefix unless otherwise noted.
+
+## Query parameter names
+On every `/api/v1` and `/mcp` endpoint, a query parameter whose name starts with `$` or contains `.` (including a nested name such as `filter[$ne]` or `a.b`) is refused with `400` and error code `VALIDATION_ERROR`. Only names are checked: values may contain dots, such as file names.
 <!-- End Summary [summary] -->
 
 <!-- Start Table of Contents [toc] -->
@@ -33,6 +36,7 @@ All endpoints use the `/api/v1` prefix unless otherwise noted.
 * [pipeshub-sdk-go](#pipeshub-sdk-go)
   * [Authentication](#authentication)
   * [Base URLs](#base-urls)
+  * [Query parameter names](#query-parameter-names)
   * [SDK Installation](#sdk-installation)
   * [SDK Example Usage](#sdk-example-usage)
   * [Authentication](#authentication-1)
@@ -42,6 +46,7 @@ All endpoints use the `/api/v1` prefix unless otherwise noted.
   * [Error Handling](#error-handling)
   * [Server Selection](#server-selection)
   * [Custom HTTP Client](#custom-http-client)
+  * [Special Types](#special-types)
 
 <!-- End Table of Contents [toc] -->
 
@@ -187,6 +192,7 @@ func main() {
 * [StreamAgentConversation](docs/sdks/agents/README.md#streamagentconversation) - Create agent conversation with streaming response
 * [StreamAgentConversationMessage](docs/sdks/agents/README.md#streamagentconversationmessage) - Add message to agent conversation with streaming response
 * [RegenerateAgentConversationMessage](docs/sdks/agents/README.md#regenerateagentconversationmessage) - Regenerate agent conversation message
+* [ForkAgentConversation](docs/sdks/agents/README.md#forkagentconversation) - Fork agent conversation from a message
 * [CancelAgentConversationStream](docs/sdks/agents/README.md#cancelagentconversationstream) - Cancel an in-flight agent chat stream
 * [UpdateAgentConversationMessageFeedback](docs/sdks/agents/README.md#updateagentconversationmessagefeedback) - Submit feedback for an agent message
 * [AddAgentConversationMessage](docs/sdks/agents/README.md#addagentconversationmessage) - Add message to agent conversation (non-streaming)
@@ -222,7 +228,7 @@ func main() {
 ### [ConnectorFilters](docs/sdks/connectorfilters/README.md)
 
 * [GetConnectorFilters](docs/sdks/connectorfilters/README.md#getconnectorfilters) - Get filter options
-* [SaveConnectorFilters](docs/sdks/connectorfilters/README.md#saveconnectorfilters) - Save filter selections
+* [~~SaveConnectorFilters~~](docs/sdks/connectorfilters/README.md#saveconnectorfilters) - Save filter selections (deprecated) :warning: **Deprecated**
 * [GetFilterFieldOptions](docs/sdks/connectorfilters/README.md#getfilterfieldoptions) - Get dynamic filter options
 
 ### [ConnectorInstances](docs/sdks/connectorinstances/README.md)
@@ -261,7 +267,10 @@ func main() {
 * [UpdateConversationTitle](docs/sdks/conversations/README.md#updateconversationtitle) - Update conversation title
 * [ArchiveConversation](docs/sdks/conversations/README.md#archiveconversation) - Archive conversation
 * [UnarchiveConversation](docs/sdks/conversations/README.md#unarchiveconversation) - Unarchive conversation
+* [PinConversation](docs/sdks/conversations/README.md#pinconversation) - Pin conversation
+* [UnpinConversation](docs/sdks/conversations/README.md#unpinconversation) - Unpin conversation
 * [RegenerateAnswer](docs/sdks/conversations/README.md#regenerateanswer) - Regenerate AI response
+* [ForkConversation](docs/sdks/conversations/README.md#forkconversation) - Fork conversation from a message
 * [CancelConversationStream](docs/sdks/conversations/README.md#cancelconversationstream) - Cancel an in-flight chat stream
 * [UpdateMessageFeedback](docs/sdks/conversations/README.md#updatemessagefeedback) - Submit feedback on AI response
 
@@ -526,8 +535,7 @@ For example, the `OauthToken` function may return the following errors:
 
 | Error Type                                    | Status Code | Content Type     |
 | --------------------------------------------- | ----------- | ---------------- |
-| apierrors.ErrorResponse                       | 400         | application/json |
-| apierrors.OAuthErrorResponse                  | 401         | application/json |
+| apierrors.OAuthErrorResponse                  | 400, 401    | application/json |
 | apierrors.OAuthClientManagementRateLimitError | 429         | application/json |
 | apierrors.APIError                            | 4XX, 5XX    | \*/\*            |
 
@@ -554,12 +562,6 @@ func main() {
 		GrantType: components.GrantTypeClientCredentials,
 	})
 	if err != nil {
-
-		var e *apierrors.ErrorResponse
-		if errors.As(err, &e) {
-			// handle error
-			log.Fatal(e.Error())
-		}
 
 		var e *apierrors.OAuthErrorResponse
 		if errors.As(err, &e) {
@@ -698,5 +700,31 @@ var (
 
 This can be a convenient way to configure timeouts, cookies, proxies, custom headers, and other low-level configuration.
 <!-- End Custom HTTP Client [http-client] -->
+
+<!-- Start Special Types [types] -->
+## Special Types
+
+This SDK defines the following custom types to assist with marshalling and unmarshalling data.
+
+### Date
+
+`types.Date` is a wrapper around time.Time that allows for JSON marshaling a date string formatted as "2006-01-02".
+
+#### Usage
+
+```go
+d1 := types.NewDate(time.Now()) // returns *types.Date
+
+d2 := types.DateFromTime(time.Now()) // returns types.Date
+
+d3, err := types.NewDateFromString("2019-01-01") // returns *types.Date, error
+
+d4, err := types.DateFromString("2019-01-01") // returns types.Date, error
+
+d5 := types.MustNewDateFromString("2019-01-01") // returns *types.Date and panics on error
+
+d6 := types.MustDateFromString("2019-01-01") // returns types.Date and panics on error
+```
+<!-- End Special Types [types] -->
 
 <!-- Placeholder for Future Speakeasy SDK Sections -->

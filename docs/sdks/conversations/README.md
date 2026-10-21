@@ -18,7 +18,10 @@ AI-powered conversational chat management with citations and follow-up questions
 * [UpdateConversationTitle](#updateconversationtitle) - Update conversation title
 * [ArchiveConversation](#archiveconversation) - Archive conversation
 * [UnarchiveConversation](#unarchiveconversation) - Unarchive conversation
+* [PinConversation](#pinconversation) - Pin conversation
+* [UnpinConversation](#unpinconversation) - Unpin conversation
 * [RegenerateAnswer](#regenerateanswer) - Regenerate AI response
+* [ForkConversation](#forkconversation) - Fork conversation from a message
 * [CancelConversationStream](#cancelconversationstream) - Cancel an in-flight chat stream
 * [UpdateMessageFeedback](#updatemessagefeedback) - Submit feedback on AI response
 
@@ -286,6 +289,9 @@ Defaults to `owned` when omitted. Each call returns one list; call twice if you 
 **Sorting:**
 
 Conversations are sorted by last activity timestamp (most recent first) by default.
+With `source=owned`, conversations the caller pinned
+(`PATCH /conversations/{conversationId}/pin`) come first, in the same order,
+whatever `sortBy` is. `source=shared` is never pinned-first.
 
 
 ### Example Usage
@@ -586,6 +592,12 @@ referenced by messages in the conversation are also soft-deleted.
 The conversation initiator can always delete. Users the conversation has
 been shared with may delete it only when their `sharedWith.accessLevel`
 is `write`.
+
+**Artifacts:** before the conversation is marked deleted, every artifact
+the caller created in it is deleted for good (every version and stored
+file), and so are older stored outputs of the conversation. If that cannot
+be done the conversation is left in place and the error is returned
+(for example 503); repeating the request finishes the cleanup.
 
 
 ### Example Usage
@@ -1023,6 +1035,147 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
+## PinConversation
+
+Pin a conversation so it is listed first in the caller's own conversation list.
+
+**Access:**
+
+Owner only: the caller must be the conversation's `initiator`. People the
+conversation is shared with, even with `write` access, cannot pin it, and
+their own lists are not affected by the owner's pin.
+
+**Behaviour:**
+
+Idempotent: pinning an already pinned conversation succeeds and changes nothing.
+Archived and deleted conversations cannot be pinned. Archiving a pinned
+conversation removes its pin. Pinning does not change `lastActivityAt` or
+`updatedAt`, so the conversation keeps its place among the other pinned chats.
+
+- Path params: `conversationId`
+- Query params: none
+- Body: none
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="pinConversation" method="patch" path="/conversations/{conversationId}/pin" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.PinConversation(ctx, "<value>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ConversationPinResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | Conversation identifier                                  |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.PinConversationResponse](../../models/operations/pinconversationresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## UnpinConversation
+
+Remove a conversation's pin so it is listed by recent activity again.
+
+**Access:**
+
+Owner only, as for `PATCH /conversations/{conversationId}/pin`.
+
+**Behaviour:**
+
+Idempotent: unpinning a conversation that is not pinned succeeds and changes nothing.
+
+- Path params: `conversationId`
+- Query params: none
+- Body: none
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="unpinConversation" method="patch" path="/conversations/{conversationId}/unpin" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.UnpinConversation(ctx, "<value>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ConversationPinResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | Conversation identifier                                  |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.UnpinConversationResponse](../../models/operations/unpinconversationresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
 ## RegenerateAnswer
 
 Regenerate the AI response for a specific message and stream the new
@@ -1121,6 +1274,72 @@ func main() {
 ### Response
 
 **[*operations.RegenerateAnswerResponse](../../models/operations/regenerateanswerresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
+## ForkConversation
+
+Copy this conversation into a new private chat owned by the caller,
+including every message up to and including `messageId`. The original
+conversation is left unchanged.
+
+Only the owner of the conversation can fork it. A shared recipient or a
+project member gets 404, because their access to the original's
+attachments and artifacts is revoked on unshare. The fork does not
+inherit share settings. If the source is linked to a project the caller
+can still see, the fork stays in that project but is private to the
+caller; otherwise it is created outside the project.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="forkConversation" method="post" path="/conversations/{conversationId}/message/{messageId}/fork" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.ForkConversation(ctx, "<value>", "<value>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ForkConversationResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `messageID`                                              | `string`                                                 | :heavy_check_mark:                                       | Inclusive last message to copy into the new chat         |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.ForkConversationResponse](../../models/operations/forkconversationresponse.md), error**
 
 ### Errors
 

@@ -6,6 +6,34 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
+// AccessRule - How this record's own permissions combine with its ancestors'.
+// OPEN: an accessible parent, or a direct grant, is enough.
+// STRICT: every ancestor up to the connector must be accessible too.
+// RESTRICTED: strict, and a grant on the record itself is required.
+// Absent on records written before the field existed; read as OPEN.
+type AccessRule string
+
+const (
+	AccessRuleOpen       AccessRule = "OPEN"
+	AccessRuleStrict     AccessRule = "STRICT"
+	AccessRuleRestricted AccessRule = "RESTRICTED"
+)
+
+func (e AccessRule) ToPointer() *AccessRule {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *AccessRule) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "OPEN", "STRICT", "RESTRICTED":
+			return true
+		}
+	}
+	return false
+}
+
 type GetRecordByIDResponseSchemaFileRecord struct {
 	ID                  string                                    `json:"id"`
 	OrgID               string                                    `json:"orgId"`
@@ -167,6 +195,13 @@ type GetRecordByIDResponseSchemaRecord struct {
 	// connectors that do not set it.
 	//
 	RootRecordGroupID optionalnullable.OptionalNullable[string] `json:"rootRecordGroupId,omitzero"`
+	// How this record's own permissions combine with its ancestors'.
+	// OPEN: an accessible parent, or a direct grant, is enough.
+	// STRICT: every ancestor up to the connector must be accessible too.
+	// RESTRICTED: strict, and a grant on the record itself is required.
+	// Absent on records written before the field existed; read as OPEN.
+	//
+	AccessRule *AccessRule `json:"accessRule,omitzero"`
 	// User id of whoever uploaded the file to the knowledge base.
 	// Absent for connector records and for files uploaded before the
 	// field existed.
@@ -228,26 +263,33 @@ type GetRecordByIDResponseSchemaRecord struct {
 	QueuedAtTimestamp           optionalnullable.OptionalNullable[int64]  `json:"queuedAtTimestamp,omitzero"`
 	ParsingStatus               optionalnullable.OptionalNullable[string] `json:"parsingStatus,omitzero"`
 	IndexingStatus              string                                    `json:"indexingStatus"`
-	ExtractionStatus            string                                    `json:"extractionStatus"`
-	Reason                      optionalnullable.OptionalNullable[string] `json:"reason,omitzero"`
-	IsDeleted                   bool                                      `json:"isDeleted"`
-	IsArchived                  bool                                      `json:"isArchived"`
-	DeletedByUserID             optionalnullable.OptionalNullable[string] `json:"deletedByUserId,omitzero"`
-	IsDirty                     optionalnullable.OptionalNullable[bool]   `json:"isDirty,omitzero"`
-	IsVLMOcrProcessed           *bool                                     `json:"isVLMOcrProcessed"`
-	MimeType                    *string                                   `json:"mimeType"`
-	SizeInBytes                 *int64                                    `json:"sizeInBytes"`
-	Md5Checksum                 optionalnullable.OptionalNullable[string] `json:"md5Checksum,omitzero"`
-	VirtualRecordID             optionalnullable.OptionalNullable[string] `json:"virtualRecordId,omitzero"`
-	SummaryDocumentID           optionalnullable.OptionalNullable[string] `json:"summaryDocumentId,omitzero"`
-	StorageDocumentID           optionalnullable.OptionalNullable[string] `json:"storageDocumentId,omitzero"`
-	WebURL                      *string                                   `json:"webUrl"`
-	PreviewRenderable           optionalnullable.OptionalNullable[bool]   `json:"previewRenderable,omitzero"`
-	IsShared                    optionalnullable.OptionalNullable[bool]   `json:"isShared,omitzero"`
-	IsDependentNode             optionalnullable.OptionalNullable[bool]   `json:"isDependentNode,omitzero"`
-	ParentNodeID                optionalnullable.OptionalNullable[string] `json:"parentNodeId,omitzero"`
-	HideWeburl                  optionalnullable.OptionalNullable[bool]   `json:"hideWeburl,omitzero"`
-	IsInternal                  optionalnullable.OptionalNullable[bool]   `json:"isInternal,omitzero"`
+	// True after the record is indexed (every COMPLETED write, including the upgrade
+	// backfill for records indexed earlier), and false once it is marked EMPTY. A later
+	// re-queue or a failed re-index leaves it as it is, so search keeps returning the
+	// previous indexed copy until the new version is indexed. Absent until the first
+	// COMPLETED or EMPTY write sets it.
+	//
+	HasIndexedCopy    *bool                                     `json:"hasIndexedCopy,omitzero"`
+	ExtractionStatus  string                                    `json:"extractionStatus"`
+	Reason            optionalnullable.OptionalNullable[string] `json:"reason,omitzero"`
+	IsDeleted         bool                                      `json:"isDeleted"`
+	IsArchived        bool                                      `json:"isArchived"`
+	DeletedByUserID   optionalnullable.OptionalNullable[string] `json:"deletedByUserId,omitzero"`
+	IsDirty           optionalnullable.OptionalNullable[bool]   `json:"isDirty,omitzero"`
+	IsVLMOcrProcessed *bool                                     `json:"isVLMOcrProcessed"`
+	MimeType          *string                                   `json:"mimeType"`
+	SizeInBytes       *int64                                    `json:"sizeInBytes"`
+	Md5Checksum       optionalnullable.OptionalNullable[string] `json:"md5Checksum,omitzero"`
+	VirtualRecordID   optionalnullable.OptionalNullable[string] `json:"virtualRecordId,omitzero"`
+	SummaryDocumentID optionalnullable.OptionalNullable[string] `json:"summaryDocumentId,omitzero"`
+	StorageDocumentID optionalnullable.OptionalNullable[string] `json:"storageDocumentId,omitzero"`
+	WebURL            *string                                   `json:"webUrl"`
+	PreviewRenderable optionalnullable.OptionalNullable[bool]   `json:"previewRenderable,omitzero"`
+	IsShared          optionalnullable.OptionalNullable[bool]   `json:"isShared,omitzero"`
+	IsDependentNode   optionalnullable.OptionalNullable[bool]   `json:"isDependentNode,omitzero"`
+	ParentNodeID      optionalnullable.OptionalNullable[string] `json:"parentNodeId,omitzero"`
+	HideWeburl        optionalnullable.OptionalNullable[bool]   `json:"hideWeburl,omitzero"`
+	IsInternal        optionalnullable.OptionalNullable[bool]   `json:"isInternal,omitzero"`
 	// True for placeholder/stub records standing in for an out-of-scope ancestor (rendered read-only, no content actions; excluded from search and indexing).
 	IsPlaceholder optionalnullable.OptionalNullable[bool] `json:"isPlaceholder,omitzero"`
 	FileRecord    *GetRecordByIDResponseSchemaFileRecord  `json:"fileRecord"`
@@ -323,6 +365,13 @@ func (g *GetRecordByIDResponseSchemaRecord) GetRootRecordGroupID() optionalnulla
 		return nil
 	}
 	return g.RootRecordGroupID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetAccessRule() *AccessRule {
+	if g == nil {
+		return nil
+	}
+	return g.AccessRule
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetUploadedBy() optionalnullable.OptionalNullable[string] {
@@ -449,6 +498,13 @@ func (g *GetRecordByIDResponseSchemaRecord) GetIndexingStatus() string {
 		return ""
 	}
 	return g.IndexingStatus
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetHasIndexedCopy() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.HasIndexedCopy
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetExtractionStatus() string {

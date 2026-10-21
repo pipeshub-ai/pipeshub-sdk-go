@@ -1,0 +1,10 @@
+# ConversationPinResponse
+
+
+## Fields
+
+| Field                                                                                            | Type                                                                                             | Required                                                                                         | Description                                                                                      |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `ID`                                                                                             | `string`                                                                                         | :heavy_check_mark:                                                                               | Conversation identifier                                                                          |
+| `IsPinned`                                                                                       | `bool`                                                                                           | :heavy_check_mark:                                                                               | The conversation's pin state after the call.                                                     |
+| `Meta`                                                                                           | [components.ConversationPinResponseMeta](../../models/components/conversationpinresponsemeta.md) | :heavy_check_mark:                                                                               | N/A                                                                                              |

@@ -131,6 +131,27 @@ func (g *GetRecordContentResponseSchemaRecord) GetNextStartBlock() optionalnulla
 	return g.NextStartBlock
 }
 
+type Thread struct {
+	// The thread's record group.
+	ThreadRecordGroupID *string `json:"threadRecordGroupId,omitzero"`
+	// Replies of this thread the caller may see.
+	RecordCount *int64 `json:"recordCount,omitzero"`
+}
+
+func (t *Thread) GetThreadRecordGroupID() *string {
+	if t == nil {
+		return nil
+	}
+	return t.ThreadRecordGroupID
+}
+
+func (t *Thread) GetRecordCount() *int64 {
+	if t == nil {
+		return nil
+	}
+	return t.RecordCount
+}
+
 // GetRecordContentResponseSchema - Response returned by GET /connectors/record/{recordId}/content.
 //
 // `content` is the record's full parsed content flattened into a single
@@ -189,6 +210,10 @@ type GetRecordContentResponseSchema struct {
 	Records []GetRecordContentResponseSchemaRecord `json:"records,omitzero"`
 	// Thread reads only. Records of the thread the caller may see whose content could not be loaded.
 	UnreadableRecordIds []string `json:"unreadableRecordIds,omitzero"`
+	// Thread reads of a Slack record in no single thread only (several channel messages in one record, or a message without replies). The threads its messages started whose replies follow it in `records`, in the order their first messages were posted; empty when none of its messages has replies the caller may see.
+	Threads []Thread `json:"threads,omitzero"`
+	// Thread reads of a Slack record in no single thread only. Threads of its messages left out because one read covers at most 10.
+	ThreadsNotRead *int64 `json:"threadsNotRead,omitzero"`
 	// Budgeted reads only. Characters in `content`.
 	Chars *int64 `json:"chars,omitzero"`
 	// Budgeted reads only. The budget this read used.
@@ -323,6 +348,20 @@ func (g *GetRecordContentResponseSchema) GetUnreadableRecordIds() []string {
 		return nil
 	}
 	return g.UnreadableRecordIds
+}
+
+func (g *GetRecordContentResponseSchema) GetThreads() []Thread {
+	if g == nil {
+		return nil
+	}
+	return g.Threads
+}
+
+func (g *GetRecordContentResponseSchema) GetThreadsNotRead() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.ThreadsNotRead
 }
 
 func (g *GetRecordContentResponseSchema) GetChars() *int64 {

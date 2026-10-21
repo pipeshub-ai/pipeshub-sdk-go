@@ -297,11 +297,17 @@ func (s *ConnectorFilters) GetConnectorFilters(ctx context.Context, connectorID 
 
 }
 
-// SaveConnectorFilters - Save filter selections
+// SaveConnectorFilters - Save filter selections (deprecated)
+// <b>Deprecated.</b> Save filters with
+// <code>PUT /connectors/{connectorId}/config/filters-sync</code> instead, which is what the
+// PipesHub app uses. That route takes <code>{sync?, filters?: {sync, indexing}}</code>. It ignores the
+// flat <code>filters</code> map this one takes: the call still returns 200, but nothing is saved.
+// It also refuses while the connector is active, so disable it first.
+// This endpoint will be removed in a future release.<br><br>
+// What this endpoint saves goes to <code>filters.values</code>, which sync does not read:
+// sync reads <code>filters.sync</code> and <code>filters.indexing</code>.<br><br>
 // Save the user's filter selections for a connector.<br><br>
 // <b>Overview:</b><br>
-// After viewing filter options, use this endpoint to save the
-// selected values. These determine what data will be synced.<br><br>
 // <b>Request:</b><br>
 // <code>filters</code> must hold at least one entry: <code>{"filters": {}}</code> is
 // refused with <code>400</code>. The server stores whatever it is given under the
@@ -310,6 +316,8 @@ func (s *ConnectorFilters) GetConnectorFilters(ctx context.Context, connectorID 
 // sync and indexing filters.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+//
+// Deprecated: Use PUT /connectors/{connectorId}/config/filters-sync instead, with a body of {sync?, filters?: {sync, indexing}} (the flat filters map this route takes is ignored there: the call returns 200 and saves none of it), and only while the connector is disabled. This endpoint will be removed in a future release..
 func (s *ConnectorFilters) SaveConnectorFilters(ctx context.Context, connectorID string, body components.SaveConnectorFiltersRequest, opts ...operations.Option) (*operations.SaveConnectorFiltersResponse, error) {
 	request := operations.SaveConnectorFiltersRequest{
 		ConnectorID: connectorID,

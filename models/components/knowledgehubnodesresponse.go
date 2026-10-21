@@ -91,6 +91,16 @@ type KnowledgeHubNodesResponsePagination struct {
 	TotalPages int64 `json:"totalPages"`
 	HasNext    bool  `json:"hasNext"`
 	HasPrev    bool  `json:"hasPrev"`
+	// Cursor for the next page; null on the last page.
+	NextCursor optionalnullable.OptionalNullable[string] `json:"nextCursor,omitzero"`
+	// Cursor for the previous page; null on the first page.
+	PrevCursor optionalnullable.OptionalNullable[string] `json:"prevCursor,omitzero"`
+	// 1-based index of the first item on this page, when known.
+	StartIndex optionalnullable.OptionalNullable[int64] `json:"startIndex,omitzero"`
+	// 1-based index of the last item on this page, when known.
+	EndIndex optionalnullable.OptionalNullable[int64] `json:"endIndex,omitzero"`
+	// Number of items on this page.
+	CurrentPageItems optionalnullable.OptionalNullable[int64] `json:"currentPageItems,omitzero"`
 }
 
 func (k *KnowledgeHubNodesResponsePagination) GetPage() int64 {
@@ -133,6 +143,41 @@ func (k *KnowledgeHubNodesResponsePagination) GetHasPrev() bool {
 		return false
 	}
 	return k.HasPrev
+}
+
+func (k *KnowledgeHubNodesResponsePagination) GetNextCursor() optionalnullable.OptionalNullable[string] {
+	if k == nil {
+		return nil
+	}
+	return k.NextCursor
+}
+
+func (k *KnowledgeHubNodesResponsePagination) GetPrevCursor() optionalnullable.OptionalNullable[string] {
+	if k == nil {
+		return nil
+	}
+	return k.PrevCursor
+}
+
+func (k *KnowledgeHubNodesResponsePagination) GetStartIndex() optionalnullable.OptionalNullable[int64] {
+	if k == nil {
+		return nil
+	}
+	return k.StartIndex
+}
+
+func (k *KnowledgeHubNodesResponsePagination) GetEndIndex() optionalnullable.OptionalNullable[int64] {
+	if k == nil {
+		return nil
+	}
+	return k.EndIndex
+}
+
+func (k *KnowledgeHubNodesResponsePagination) GetCurrentPageItems() optionalnullable.OptionalNullable[int64] {
+	if k == nil {
+		return nil
+	}
+	return k.CurrentPageItems
 }
 
 // CreatedAt - Date range filter with optional inclusive bounds (epoch ms).

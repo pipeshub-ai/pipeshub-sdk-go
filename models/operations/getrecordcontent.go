@@ -9,7 +9,7 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
-// Mode - `record` (default) reads this record. `thread` reads every record of the Slack thread this message belongs to, oldest first; a record outside any thread answers `422`.
+// Mode - `record` (default) reads this record. `thread` reads every record of the Slack thread this message belongs to, oldest first. A Slack record in no single thread reads as itself, then the threads its messages started (at most 10). A record that is not from Slack answers `422`.
 type Mode string
 
 const (
@@ -45,7 +45,7 @@ type GetRecordContentRequest struct {
 	StartBlock *int64 `queryParam:"style=form,explode=true,name=startBlock"`
 	// What you are looking for in the record. When the record does not fit in `maxChars`, the blocks most relevant to it are shown first and the skipped ranges are marked.
 	Query *string `queryParam:"style=form,explode=true,name=query"`
-	// `record` (default) reads this record. `thread` reads every record of the Slack thread this message belongs to, oldest first; a record outside any thread answers `422`.
+	// `record` (default) reads this record. `thread` reads every record of the Slack thread this message belongs to, oldest first. A Slack record in no single thread reads as itself, then the threads its messages started (at most 10). A record that is not from Slack answers `422`.
 	Mode *Mode `queryParam:"style=form,explode=true,name=mode"`
 	// Thread mode: start at this record of the thread, the `nextStartRecord` of a previous read. Pass the read's `nextStartBlock` with it.
 	StartRecord *int64 `queryParam:"style=form,explode=true,name=startRecord"`

@@ -79,9 +79,15 @@ type GetKnowledgeHubRootNodesRequest struct {
 	// building sidebar / tree navigation). Leaf nodes are excluded.
 	//
 	OnlyContainers *bool `default:"false" queryParam:"style=form,explode=true,name=onlyContainers"`
-	// Page number (1-indexed). Combined with `limit` to paginate results.
+	// Page number (1-indexed, at most 50). Combined with `limit` to paginate results.
+	// Prefer `cursor`: a page number is reached by reading the pages before it.
 	//
 	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Opaque cursor from `pagination.nextCursor` or `pagination.prevCursor` of a previous
+	// response. Send it with the same path, filters and sort as the request that returned
+	// it; a cursor issued for another place, user or listing mode is refused with 400.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
 	// Maximum number of items to return per page.
 	//
 	Limit *int64 `default:"50" queryParam:"style=form,explode=true,name=limit"`
@@ -189,6 +195,13 @@ func (g *GetKnowledgeHubRootNodesRequest) GetPage() *int64 {
 		return nil
 	}
 	return g.Page
+}
+
+func (g *GetKnowledgeHubRootNodesRequest) GetCursor() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Cursor
 }
 
 func (g *GetKnowledgeHubRootNodesRequest) GetLimit() *int64 {
@@ -615,9 +628,15 @@ type GetKnowledgeHubChildNodesRequest struct {
 	// building sidebar / tree navigation). Leaf nodes are excluded.
 	//
 	OnlyContainers *bool `default:"false" queryParam:"style=form,explode=true,name=onlyContainers"`
-	// Page number (1-indexed). Combined with `limit` to paginate results.
+	// Page number (1-indexed, at most 50). Combined with `limit` to paginate results.
+	// Prefer `cursor`: a page number is reached by reading the pages before it.
 	//
 	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Opaque cursor from `pagination.nextCursor` or `pagination.prevCursor` of a previous
+	// response. Send it with the same path, filters and sort as the request that returned
+	// it; a cursor issued for another place, user or listing mode is refused with 400.
+	//
+	Cursor *string `queryParam:"style=form,explode=true,name=cursor"`
 	// Maximum number of items to return per page.
 	//
 	Limit *int64 `default:"50" queryParam:"style=form,explode=true,name=limit"`
@@ -739,6 +758,13 @@ func (g *GetKnowledgeHubChildNodesRequest) GetPage() *int64 {
 		return nil
 	}
 	return g.Page
+}
+
+func (g *GetKnowledgeHubChildNodesRequest) GetCursor() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Cursor
 }
 
 func (g *GetKnowledgeHubChildNodesRequest) GetLimit() *int64 {
@@ -965,7 +991,7 @@ func (g *GetKnowledgeHubChildNodesResponse) GetKnowledgeHubNodesResponse() *comp
 type GetAvailableModelsByTypeRequest struct {
 	// Category of AI model to retrieve.
 	//
-	// Must be one of: `llm`, `embedding`, `ocr`, `slm`, `reasoning`, `multiModal`, `imageGeneration`, `tts`, `stt`.
+	// Must be one of: `llm`, `embedding`, `ocr`, `slm`, `reasoning`, `multiModal`, `imageGeneration`, `tts`, `stt`, `decision`.
 	//
 	ModelType components.ModelType `pathParam:"style=simple,explode=false,name=modelType"`
 }

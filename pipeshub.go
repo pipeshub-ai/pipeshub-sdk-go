@@ -69,6 +69,9 @@ func Pointer[T any](v T) *T { return &v }
 //
 // ## Base URLs
 // All endpoints use the `/api/v1` prefix unless otherwise noted.
+//
+// ## Query parameter names
+// On every `/api/v1` and `/mcp` endpoint, a query parameter whose name starts with `$` or contains `.` (including a nested name such as `filter[$ne]` or `a.b`) is refused with `400` and error code `VALIDATION_ERROR`. Only names are checked: values may contain dots, such as file names.
 type Pipeshub struct {
 	SDKVersion string
 	// PipesHub OAuth 2.0 Authorization Server implementing RFC 6749, RFC 7636 (PKCE), and OpenID Connect.

@@ -64,7 +64,10 @@ func newConnector(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks *h
 // the budget show its most relevant blocks first, with the skipped
 // ranges marked. `mode=thread` returns every message of the Slack
 // thread the record belongs to, oldest first, as far as the caller may
-// see them.
+// see them. A Slack record in no single thread (several channel
+// messages in one record, or a message without replies) returns itself,
+// then the replies of each thread its messages started; the first page
+// opens with a bracketed note saying which.
 //
 // **Permission scoping:**
 //

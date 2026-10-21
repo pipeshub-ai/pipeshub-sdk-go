@@ -135,7 +135,8 @@ type AgentAddMessageStreamRequest struct {
 	CurrentTime *time.Time `json:"currentTime,omitzero"`
 	// Allowed tool ids for this turn, such as `jira.create_issue`. Omit
 	// to let the agent use its default toolset; send `[]` to disable
-	// tools for this turn.
+	// tools for this turn. A list that leaves out `web_search` turns off
+	// the agent's web search for the turn.
 	//
 	Tools []string `json:"tools,omitzero"`
 	// AG-UI is the only supported wire protocol. When present must be

@@ -139,12 +139,28 @@ type ConversationStreamRequest struct {
 	// When provided, only these records will be searched for context.
 	//
 	RecordIds []string `json:"recordIds,omitzero"`
-	// App connector instance ids and knowledge-base / record-group ids that narrow retrieval
-	// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
-	// For **agent** chat streams, send explicit id lists, or **omit** `filters` (and `tools`)
-	// to let the service use the agent’s stored knowledge and tool configuration. Sending
-	// `{ "apps": [], "kb": [] }` on an agent stream means **no** knowledge sources for that
-	// turn (it is not “full org default”).
+	// What retrieval is narrowed to for a turn: whole apps, and selections below app
+	// level (record groups, folders, records). The keys are a union. For **org assistant**
+	// chat streams, send explicit lists. For **agent** chat streams, send explicit id lists,
+	// or **omit** `filters` (and `tools`) to let the service use the agent’s stored knowledge
+	// and tool configuration. Sending `{ "apps": [], "kb": [] }` on an agent stream means
+	// **no** knowledge sources for that turn (it is not “full org default”).
+	//
+	// A selection below app level is the whole scope of the turn: with `recordGroups`,
+	// `records` or `recordsExact` present, an absent or empty `apps` / `kb` means none of
+	// them. A selected node that does not exist or that the caller cannot read contributes
+	// nothing; when nothing valid remains the turn searches nothing. `/search` answers 404
+	// for that; a chat turn is not failed, its search simply finds nothing.
+	// At most 200 ids may be sent in one request, counted across all keys, and every id must
+	// be a valid UUID. A key this schema does not list is ignored by the gateway rather than
+	// refused.
+	//
+	// A selection that covers more than the configured number of nodes (50,000 by default),
+	// or that touches a source still being prepared for folder-level search, is refused:
+	// `/search` and the non-streaming chat routes answer 422 with the message, and a chat
+	// stream ends with an error frame (`RUN_ERROR`, or `error` on the legacy protocol)
+	// whose `code` is `selection_too_large` or `selection_not_ready` and whose `message`
+	// says what to change. No model call is made for such a turn.
 	//
 	Filters *Filters `json:"filters,omitzero"`
 	// Rich filter state selected by the user, used for display and persistence only.
@@ -197,7 +213,8 @@ type ConversationStreamRequest struct {
 	// Optional list of tool identifiers (fully-qualified action names such as
 	// "jira.create_issue") that the AI agent is permitted to invoke for this
 	// request. When omitted the agent may use any configured tool. Applicable
-	// only when `chatMode` is `agent`.
+	// only when `chatMode` is `agent`. Web search is not governed by this
+	// list; `agentCapabilities.webSearch` turns it on or off.
 	//
 	Tools []string `json:"tools,omitzero"`
 	// AG-UI is the only supported wire protocol. When present must be

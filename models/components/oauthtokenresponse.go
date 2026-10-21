@@ -17,6 +17,11 @@ type OAuthTokenResponse struct {
 	Scope *string `json:"scope,omitzero"`
 	// OpenID Connect ID token (JWT) if openid scope was requested
 	IDToken *string `json:"id_token,omitzero"`
+	// The type of the issued token (RFC 8693 Section 2.2.1). Returned by
+	// the token-exchange grant, where it is always
+	// `urn:ietf:params:oauth:token-type:access_token`.
+	//
+	IssuedTokenType *string `json:"issued_token_type,omitzero"`
 }
 
 func (o *OAuthTokenResponse) GetAccessToken() *string {
@@ -59,4 +64,11 @@ func (o *OAuthTokenResponse) GetIDToken() *string {
 		return nil
 	}
 	return o.IDToken
+}
+
+func (o *OAuthTokenResponse) GetIssuedTokenType() *string {
+	if o == nil {
+		return nil
+	}
+	return o.IssuedTokenType
 }

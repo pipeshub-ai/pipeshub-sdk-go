@@ -7,6 +7,31 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
+// LastSyncOutcome - How the last sync run ended
+type LastSyncOutcome string
+
+const (
+	LastSyncOutcomeSucceeded LastSyncOutcome = "succeeded"
+	LastSyncOutcomeFailed    LastSyncOutcome = "failed"
+	LastSyncOutcomeStopped   LastSyncOutcome = "stopped"
+	LastSyncOutcomeSkipped   LastSyncOutcome = "skipped"
+)
+
+func (e LastSyncOutcome) ToPointer() *LastSyncOutcome {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *LastSyncOutcome) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "succeeded", "failed", "stopped", "skipped":
+			return true
+		}
+	}
+	return false
+}
+
 // ConnectorInstance - A connector instance: its type's registry entry plus the instance's own state.
 type ConnectorInstance struct {
 	// Connector instance ID
@@ -63,6 +88,14 @@ type ConnectorInstance struct {
 	CreatedAtTimestamp *int64 `json:"createdAtTimestamp,omitzero"`
 	// Epoch milliseconds
 	UpdatedAtTimestamp *int64 `json:"updatedAtTimestamp,omitzero"`
+	// Epoch ms when the last sync run started; absent before the first run
+	LastSyncStartedAtTimestamp optionalnullable.OptionalNullable[int64] `json:"lastSyncStartedAtTimestamp,omitzero"`
+	// Epoch ms when the last sync run ended, however it ended; absent until a run ends
+	LastSyncFinishedAtTimestamp optionalnullable.OptionalNullable[int64] `json:"lastSyncFinishedAtTimestamp,omitzero"`
+	// How the last sync run ended
+	LastSyncOutcome optionalnullable.OptionalNullable[LastSyncOutcome] `json:"lastSyncOutcome,omitzero"`
+	// What the last run did, in the connector's own terms. For a Web connector: pagesSaved (written this run), pagesStored (kept after it, which Maximum pages caps), pagesVisited, failed, failedByStatus, robotsSkipped, noindexSkipped, skippedMaxPages, deferred, pruned, sitemapUrls, stopReason (max_pages, time_limit, stalled, rate_limited or null) and resumed.
+	LastSyncSummary optionalnullable.OptionalNullable[map[string]any] `json:"lastSyncSummary,omitzero"`
 	// Configuration form for a connector type: the auth fields per auth type, the sync strategies and settings, and the sync and indexing filters.
 	Config *ConnectorSchema `json:"config,omitzero"`
 }
@@ -293,6 +326,34 @@ func (c *ConnectorInstance) GetUpdatedAtTimestamp() *int64 {
 		return nil
 	}
 	return c.UpdatedAtTimestamp
+}
+
+func (c *ConnectorInstance) GetLastSyncStartedAtTimestamp() optionalnullable.OptionalNullable[int64] {
+	if c == nil {
+		return nil
+	}
+	return c.LastSyncStartedAtTimestamp
+}
+
+func (c *ConnectorInstance) GetLastSyncFinishedAtTimestamp() optionalnullable.OptionalNullable[int64] {
+	if c == nil {
+		return nil
+	}
+	return c.LastSyncFinishedAtTimestamp
+}
+
+func (c *ConnectorInstance) GetLastSyncOutcome() optionalnullable.OptionalNullable[LastSyncOutcome] {
+	if c == nil {
+		return nil
+	}
+	return c.LastSyncOutcome
+}
+
+func (c *ConnectorInstance) GetLastSyncSummary() optionalnullable.OptionalNullable[map[string]any] {
+	if c == nil {
+		return nil
+	}
+	return c.LastSyncSummary
 }
 
 func (c *ConnectorInstance) GetConfig() *ConnectorSchema {
