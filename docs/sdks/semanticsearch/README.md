@@ -20,11 +20,21 @@ Run a semantic search across your organization's knowledge base.
 Matching is meaning-based, so relevant results surface even when
 the wording differs from the query.
 
-Use optional `filters` to narrow the scope:
+Use optional `filters` to narrow the scope (see `Filters`):
 
-- `filters.apps` — restrict to specific connector apps (for
-  example Google Drive or Confluence).
-- `filters.kb` — restrict to specific knowledge bases.
+- `filters.apps` — restrict to whole apps: connector instances
+  (for example Google Drive or Confluence) and collections.
+  `filters.kb` is the older name for collections and means the
+  same.
+- `filters.recordGroups` — restrict to record groups (a drive, a
+  space, a project), each with the groups nested in it.
+- `filters.records` — restrict to folders or records, each with
+  everything under it.
+- `filters.recordsExact` — restrict to records alone, without
+  what is under them.
+
+The keys are a union. With any of the last three present, an
+absent or empty `apps` / `kb` means no whole app.
 
 The response returns a `searchId` for the persisted search along
 with ranked matches, each carrying a relevance score and the
@@ -97,6 +107,7 @@ func main() {
 
     res, err := s.SemanticSearch.Search(ctx, components.SemanticSearchRequest{
         Query: "company vacation policy",
+        RewriteQuery: pipeshub.Pointer(false),
     })
     if err != nil {
         log.Fatal(err)
@@ -121,9 +132,10 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 422                | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## SearchHistory
 

@@ -14,6 +14,12 @@ type AppliedFilters struct {
 	Apps []AppliedFilterNode `json:"apps,omitzero"`
 	// Applied knowledge-base filter nodes
 	Kb []AppliedFilterNode `json:"kb,omitzero"`
+	// Applied record-group filter nodes
+	RecordGroups []AppliedFilterNode `json:"recordGroups,omitzero"`
+	// Applied folder and record filter nodes (each with everything under it)
+	Records []AppliedFilterNode `json:"records,omitzero"`
+	// Applied record filter nodes selected alone
+	RecordsExact []AppliedFilterNode `json:"recordsExact,omitzero"`
 }
 
 func (a AppliedFilters) MarshalJSON() ([]byte, error) {
@@ -39,4 +45,25 @@ func (a *AppliedFilters) GetKb() []AppliedFilterNode {
 		return nil
 	}
 	return a.Kb
+}
+
+func (a *AppliedFilters) GetRecordGroups() []AppliedFilterNode {
+	if a == nil {
+		return nil
+	}
+	return a.RecordGroups
+}
+
+func (a *AppliedFilters) GetRecords() []AppliedFilterNode {
+	if a == nil {
+		return nil
+	}
+	return a.Records
+}
+
+func (a *AppliedFilters) GetRecordsExact() []AppliedFilterNode {
+	if a == nil {
+		return nil
+	}
+	return a.RecordsExact
 }

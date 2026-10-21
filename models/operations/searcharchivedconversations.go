@@ -322,6 +322,12 @@ type SearchArchivedConversationsConversation struct {
 	UpdatedAt          *time.Time                                     `json:"updatedAt,omitzero"`
 	IsOwner            *bool                                          `json:"isOwner,omitzero"`
 	AccessLevel        *SearchArchivedConversationsAccessLevel        `json:"accessLevel,omitzero"`
+	// `true` when the owner pinned this conversation. Absent on
+	// conversations that are not pinned (never `false`). Set via
+	// `PATCH /conversations/{conversationId}/pin`. Only returned to the
+	// owner: lists with `source=shared` omit it.
+	//
+	IsPinned *bool `json:"isPinned,omitzero"`
 	// The project this conversation is linked to, if any. Set via
 	// `PUT /conversations/{conversationId}/project` or at creation
 	// time; absent on conversations that were never linked.
@@ -508,6 +514,13 @@ func (s *SearchArchivedConversationsConversation) GetAccessLevel() *SearchArchiv
 		return nil
 	}
 	return s.AccessLevel
+}
+
+func (s *SearchArchivedConversationsConversation) GetIsPinned() *bool {
+	if s == nil {
+		return nil
+	}
+	return s.IsPinned
 }
 
 func (s *SearchArchivedConversationsConversation) GetProjectID() optionalnullable.OptionalNullable[string] {

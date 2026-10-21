@@ -25,6 +25,16 @@ type SemanticSearchHit struct {
 	//
 	BlockType  optionalnullable.OptionalNullable[string] `json:"block_type,omitzero"`
 	BlockIndex optionalnullable.OptionalNullable[int64]  `json:"block_index,omitzero"`
+	// Set on a passage returned because a match inside its section (a thread, a list,
+	// a table) brought the whole section back: how many blocks it sits from the passage
+	// the search matched nearest to it. `0` is a matched passage. Absent when the hit matched
+	// directly or the section matched as a whole.
+	//
+	DistanceFromMatch *int64 `json:"distanceFromMatch,omitzero"`
+	// Set only on a search with `timeline`: the index in `timeline.periods` of the period
+	// this hit's record is dated in.
+	//
+	TimelinePeriod *int64 `json:"timelinePeriod,omitzero"`
 }
 
 func (s SemanticSearchHit) MarshalJSON() ([]byte, error) {
@@ -92,4 +102,18 @@ func (s *SemanticSearchHit) GetBlockIndex() optionalnullable.OptionalNullable[in
 		return nil
 	}
 	return s.BlockIndex
+}
+
+func (s *SemanticSearchHit) GetDistanceFromMatch() *int64 {
+	if s == nil {
+		return nil
+	}
+	return s.DistanceFromMatch
+}
+
+func (s *SemanticSearchHit) GetTimelinePeriod() *int64 {
+	if s == nil {
+		return nil
+	}
+	return s.TimelinePeriod
 }

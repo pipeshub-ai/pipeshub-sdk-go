@@ -58,12 +58,24 @@ func newOAuthProvider(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hook
 // OauthToken - Exchange authorization code for tokens
 // OAuth 2.0 Token Endpoint (RFC 6749 Section 4.1.3).
 //
-// Exchanges an authorization code, client credentials, or refresh token for access tokens.
+// Exchanges an authorization code, client credentials, refresh token, or
+// service token for access tokens.
 //
 // **Grant Types:**
-// - `authorization_code`: Exchange auth code for tokens (user-based)
-// - `client_credentials`: Get tokens for machine-to-machine auth
-// - `refresh_token`: Get new access token using refresh token
+//   - `authorization_code`: Exchange auth code for tokens (user-based)
+//   - `client_credentials`: Get tokens for machine-to-machine auth
+//   - `refresh_token`: Get new access token using refresh token. The refresh token must have been issued to the presenting `client_id`; one issued to another client is rejected with `400 invalid_grant` and is left untouched (not rotated, not revoked).
+//   - `urn:ietf:params:oauth:grant-type:token-exchange`: Service-account
+//     delegation (RFC 8693). A service account exchanges its own token for
+//     a five-minute token that acts as one named person from its
+//     allow-list. **Enterprise edition.** The Community build answers this
+//     grant with `unsupported_grant_type` and leaves it out of discovery,
+//     so check `grant_types_supported` rather than assuming it is there. **This grant sends no `client_id` or `client_secret`** —
+//     the `subject_token` is the authentication, since it already carries
+//     a verified identity and the scopes that bound it. Refusals about the
+//     person asked for all return `400 invalid_target` with one wording;
+//     the cause is recorded in the delegation log, which only an
+//     administrator can read.
 //
 // For **`client_credentials`**, access tokens represent the **OAuth app creator** (the user who registered the client). The JWT may encode **`userId === client_id`**; the **Node API gateway** resolves the creator (**`createdBy`** claim or OAuth app lookup) — see **OAuth Provider** tag.
 //
@@ -259,30 +271,7 @@ func (s *OAuthProvider) OauthToken(ctx context.Context, request components.OAuth
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 400:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out apierrors.ErrorResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
-			}
-
-			out.HTTPMeta = components.HTTPMetadata{
-				Request:  req,
-				Response: httpRes,
-			}
-			return nil, &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
+		fallthrough
 	case httpRes.StatusCode == 401:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):

@@ -9,20 +9,20 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
-// ListAgentConversationsIsArchived - Optional archived flag applied to the `sharedWithMeConversations`
+// IsArchived - Optional archived flag applied to the `sharedWithMeConversations`
 // branch before the route-level non-archived guard is enforced.
 // Accepted values are `true` and `false`.
-type ListAgentConversationsIsArchived string
+type IsArchived string
 
 const (
-	ListAgentConversationsIsArchivedTrue  ListAgentConversationsIsArchived = "true"
-	ListAgentConversationsIsArchivedFalse ListAgentConversationsIsArchived = "false"
+	IsArchivedTrue  IsArchived = "true"
+	IsArchivedFalse IsArchived = "false"
 )
 
-func (e ListAgentConversationsIsArchived) ToPointer() *ListAgentConversationsIsArchived {
+func (e IsArchived) ToPointer() *IsArchived {
 	return &e
 }
-func (e *ListAgentConversationsIsArchived) UnmarshalJSON(data []byte) error {
+func (e *IsArchived) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -31,10 +31,10 @@ func (e *ListAgentConversationsIsArchived) UnmarshalJSON(data []byte) error {
 	case "true":
 		fallthrough
 	case "false":
-		*e = ListAgentConversationsIsArchived(v)
+		*e = IsArchived(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for ListAgentConversationsIsArchived: %v", v)
+		return fmt.Errorf("invalid value for IsArchived: %v", v)
 	}
 }
 
@@ -82,7 +82,7 @@ type ListAgentConversationsRequest struct {
 	// branch before the route-level non-archived guard is enforced.
 	// Accepted values are `true` and `false`.
 	//
-	IsArchived *ListAgentConversationsIsArchived `queryParam:"style=form,explode=true,name=isArchived"`
+	IsArchived *IsArchived `queryParam:"style=form,explode=true,name=isArchived"`
 	// Restrict results to a single project. Pass a project's `id`, or
 	// the literal string `unassigned` to list agent conversations with
 	// no `projectId`.
@@ -164,7 +164,7 @@ func (l *ListAgentConversationsRequest) GetStatus() *string {
 	return l.Status
 }
 
-func (l *ListAgentConversationsRequest) GetIsArchived() *ListAgentConversationsIsArchived {
+func (l *ListAgentConversationsRequest) GetIsArchived() *IsArchived {
 	if l == nil {
 		return nil
 	}

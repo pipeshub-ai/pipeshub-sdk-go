@@ -2,7 +2,7 @@
 
 package components
 
-// WebSearchProviderType - Supported web search provider
+// WebSearchProviderType - Supported web search provider. crawl4ai only reads pages (it backs up the built-in page reader) and cannot be the default; firecrawl both searches and reads pages. searxng, firecrawl and crawl4ai take a baseUrl; firecrawl defaults to its cloud API.
 type WebSearchProviderType string
 
 const (
@@ -10,6 +10,10 @@ const (
 	WebSearchProviderTypeSerper     WebSearchProviderType = "serper"
 	WebSearchProviderTypeTavily     WebSearchProviderType = "tavily"
 	WebSearchProviderTypeExa        WebSearchProviderType = "exa"
+	WebSearchProviderTypeBrave      WebSearchProviderType = "brave"
+	WebSearchProviderTypeSearxng    WebSearchProviderType = "searxng"
+	WebSearchProviderTypeFirecrawl  WebSearchProviderType = "firecrawl"
+	WebSearchProviderTypeCrawl4ai   WebSearchProviderType = "crawl4ai"
 )
 
 func (e WebSearchProviderType) ToPointer() *WebSearchProviderType {
@@ -20,7 +24,7 @@ func (e WebSearchProviderType) ToPointer() *WebSearchProviderType {
 func (e *WebSearchProviderType) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "duckduckgo", "serper", "tavily", "exa":
+		case "duckduckgo", "serper", "tavily", "exa", "brave", "searxng", "firecrawl", "crawl4ai":
 			return true
 		}
 	}

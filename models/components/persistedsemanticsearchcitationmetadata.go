@@ -5,6 +5,7 @@ package components
 import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"time"
 )
 
 // PersistedSemanticSearchCitationMetadata - Citation metadata as persisted in MongoDB. Required fields mirror the
@@ -27,13 +28,17 @@ type PersistedSemanticSearchCitationMetadata struct {
 	// the kind of source (for example `SLACK`), which several instances can
 	// share. Absent on citations saved before this field was stored.
 	//
-	ConnectorID optionalnullable.OptionalNullable[string]                               `json:"connectorId,omitzero"`
-	RecordType  optionalnullable.OptionalNullable[string]                               `json:"recordType,omitzero"`
-	BlockNum    optionalnullable.OptionalNullable[[]*float64]                           `json:"blockNum,omitzero"`
-	PageNum     optionalnullable.OptionalNullable[[]*float64]                           `json:"pageNum,omitzero"`
-	SheetNum    optionalnullable.OptionalNullable[float64]                              `json:"sheetNum,omitzero"`
-	SheetName   optionalnullable.OptionalNullable[string]                               `json:"sheetName,omitzero"`
-	BoundingBox optionalnullable.OptionalNullable[[]PersistedSemanticSearchBoundingBox] `json:"bounding_box,omitzero"`
+	ConnectorID optionalnullable.OptionalNullable[string] `json:"connectorId,omitzero"`
+	// The name the connector instance had when the answer was written.
+	// Absent on citations saved before this field was stored.
+	//
+	ConnectorInstanceName optionalnullable.OptionalNullable[string]                               `json:"connectorInstanceName,omitzero"`
+	RecordType            optionalnullable.OptionalNullable[string]                               `json:"recordType,omitzero"`
+	BlockNum              optionalnullable.OptionalNullable[[]*float64]                           `json:"blockNum,omitzero"`
+	PageNum               optionalnullable.OptionalNullable[[]*float64]                           `json:"pageNum,omitzero"`
+	SheetNum              optionalnullable.OptionalNullable[float64]                              `json:"sheetNum,omitzero"`
+	SheetName             optionalnullable.OptionalNullable[string]                               `json:"sheetName,omitzero"`
+	BoundingBox           optionalnullable.OptionalNullable[[]PersistedSemanticSearchBoundingBox] `json:"bounding_box,omitzero"`
 	// Block type for this citation. Common values: `text`, `image`, `table_row`, `table`,
 	// `record_summary` (whole-record semantic summary chunk).
 	//
@@ -42,6 +47,8 @@ type PersistedSemanticSearchCitationMetadata struct {
 	Departments optionalnullable.OptionalNullable[[]string] `json:"departments,omitzero"`
 	Languages   optionalnullable.OptionalNullable[[]string] `json:"languages,omitzero"`
 	Topics      optionalnullable.OptionalNullable[[]string] `json:"topics,omitzero"`
+	// When the cited record was last updated at its source.
+	UpdatedAt optionalnullable.OptionalNullable[time.Time] `json:"updatedAt,omitzero"`
 }
 
 func (p PersistedSemanticSearchCitationMetadata) MarshalJSON() ([]byte, error) {
@@ -139,6 +146,13 @@ func (p *PersistedSemanticSearchCitationMetadata) GetConnectorID() optionalnulla
 	return p.ConnectorID
 }
 
+func (p *PersistedSemanticSearchCitationMetadata) GetConnectorInstanceName() optionalnullable.OptionalNullable[string] {
+	if p == nil {
+		return nil
+	}
+	return p.ConnectorInstanceName
+}
+
 func (p *PersistedSemanticSearchCitationMetadata) GetRecordType() optionalnullable.OptionalNullable[string] {
 	if p == nil {
 		return nil
@@ -214,4 +228,11 @@ func (p *PersistedSemanticSearchCitationMetadata) GetTopics() optionalnullable.O
 		return nil
 	}
 	return p.Topics
+}
+
+func (p *PersistedSemanticSearchCitationMetadata) GetUpdatedAt() optionalnullable.OptionalNullable[time.Time] {
+	if p == nil {
+		return nil
+	}
+	return p.UpdatedAt
 }

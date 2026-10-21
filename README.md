@@ -25,6 +25,9 @@ Most endpoints require JWT Bearer token authentication. Some internal endpoints 
 
 ## Base URLs
 All endpoints use the `/api/v1` prefix unless otherwise noted.
+
+## Query parameter names
+On every `/api/v1` and `/mcp` endpoint, a query parameter whose name starts with `$` or contains `.` (including a nested name such as `filter[$ne]` or `a.b`) is refused with `400` and error code `VALIDATION_ERROR`. Only names are checked: values may contain dots, such as file names.
 <!-- End Summary [summary] -->
 
 <!-- Start Table of Contents [toc] -->
@@ -33,6 +36,7 @@ All endpoints use the `/api/v1` prefix unless otherwise noted.
 * [pipeshub-sdk-go](#pipeshub-sdk-go)
   * [Authentication](#authentication)
   * [Base URLs](#base-urls)
+  * [Query parameter names](#query-parameter-names)
   * [SDK Installation](#sdk-installation)
   * [SDK Example Usage](#sdk-example-usage)
   * [Authentication](#authentication-1)
@@ -42,6 +46,7 @@ All endpoints use the `/api/v1` prefix unless otherwise noted.
   * [Error Handling](#error-handling)
   * [Server Selection](#server-selection)
   * [Custom HTTP Client](#custom-http-client)
+  * [Special Types](#special-types)
 
 <!-- End Table of Contents [toc] -->
 
@@ -187,14 +192,13 @@ func main() {
 * [StreamAgentConversation](docs/sdks/agents/README.md#streamagentconversation) - Create agent conversation with streaming response
 * [StreamAgentConversationMessage](docs/sdks/agents/README.md#streamagentconversationmessage) - Add message to agent conversation with streaming response
 * [RegenerateAgentConversationMessage](docs/sdks/agents/README.md#regenerateagentconversationmessage) - Regenerate agent conversation message
+* [ForkAgentConversation](docs/sdks/agents/README.md#forkagentconversation) - Fork agent conversation from a message
 * [CancelAgentConversationStream](docs/sdks/agents/README.md#cancelagentconversationstream) - Cancel an in-flight agent chat stream
 * [UpdateAgentConversationMessageFeedback](docs/sdks/agents/README.md#updateagentconversationmessagefeedback) - Submit feedback for an agent message
 * [AddAgentConversationMessage](docs/sdks/agents/README.md#addagentconversationmessage) - Add message to agent conversation (non-streaming)
 * [ArchiveAgentConversation](docs/sdks/agents/README.md#archiveagentconversation) - Archive an agent conversation
 * [UnarchiveAgentConversation](docs/sdks/agents/README.md#unarchiveagentconversation) - Unarchive an agent conversation
 * [UpdateAgentConversationTitle](docs/sdks/agents/README.md#updateagentconversationtitle) - Update agent conversation title
-* [SetAgentConversationProject](docs/sdks/agents/README.md#setagentconversationproject) - Link or unlink an agent conversation to a project
-* [SetAgentConversationProjectVisibility](docs/sdks/agents/README.md#setagentconversationprojectvisibility) - Override an agent conversation's project visibility
 * [DeleteAgentConversationByID](docs/sdks/agents/README.md#deleteagentconversationbyid) - Delete an agent conversation
 * [GetAgentConversationByID](docs/sdks/agents/README.md#getagentconversationbyid) - Get agent conversation by ID
 * [ListAgentConversations](docs/sdks/agents/README.md#listagentconversations) - List agent conversations
@@ -210,6 +214,45 @@ func main() {
 * [NavigateKnowledgeGraph](docs/sdks/connector/README.md#navigateknowledgegraph) - Browse the knowledge graph from a node
 * [LookupRecordByIdentifier](docs/sdks/connector/README.md#lookuprecordbyidentifier) - Resolve a URL, issue key or external ID to a Record ID
 
+### [ConnectorConfiguration](docs/sdks/connectorconfiguration/README.md)
+
+* [GetConnectorConfig](docs/sdks/connectorconfiguration/README.md#getconnectorconfig) - Get connector configuration
+* [UpdateConnectorConfig](docs/sdks/connectorconfiguration/README.md#updateconnectorconfig) - Update connector configuration
+* [UpdateConnectorAuthConfig](docs/sdks/connectorconfiguration/README.md#updateconnectorauthconfig) - Update authentication configuration
+* [UpdateConnectorFiltersSyncConfig](docs/sdks/connectorconfiguration/README.md#updateconnectorfilterssyncconfig) - Update filters and sync configuration
+
+### [ConnectorControl](docs/sdks/connectorcontrol/README.md)
+
+* [ToggleConnector](docs/sdks/connectorcontrol/README.md#toggleconnector) - Toggle connector sync or agent
+
+### [ConnectorFilters](docs/sdks/connectorfilters/README.md)
+
+* [GetConnectorFilters](docs/sdks/connectorfilters/README.md#getconnectorfilters) - Get filter options
+* [~~SaveConnectorFilters~~](docs/sdks/connectorfilters/README.md#saveconnectorfilters) - Save filter selections (deprecated) :warning: **Deprecated**
+* [GetFilterFieldOptions](docs/sdks/connectorfilters/README.md#getfilterfieldoptions) - Get dynamic filter options
+
+### [ConnectorInstances](docs/sdks/connectorinstances/README.md)
+
+* [ListConnectorInstances](docs/sdks/connectorinstances/README.md#listconnectorinstances) - List connector instances
+* [CreateConnectorInstance](docs/sdks/connectorinstances/README.md#createconnectorinstance) - Create connector instance
+* [GetConnectorInstance](docs/sdks/connectorinstances/README.md#getconnectorinstance) - Get connector instance
+* [DeleteConnectorInstance](docs/sdks/connectorinstances/README.md#deleteconnectorinstance) - Delete connector instance
+* [GetConnectorStats](docs/sdks/connectorinstances/README.md#getconnectorstats) - Get connector statistics
+* [ResyncConnector](docs/sdks/connectorinstances/README.md#resyncconnector) - Resync connector
+* [StopConnectorSync](docs/sdks/connectorinstances/README.md#stopconnectorsync) - Stop the running sync for a connector
+
+### [ConnectorOAuth](docs/sdks/connectoroauth/README.md)
+
+* [GetOAuthAuthorizationURL](docs/sdks/connectoroauth/README.md#getoauthauthorizationurl) - Get OAuth authorization URL
+* [HandleOAuthCallback](docs/sdks/connectoroauth/README.md#handleoauthcallback) - OAuth callback handler
+
+### [ConnectorRegistry](docs/sdks/connectorregistry/README.md)
+
+* [GetConnectorRegistry](docs/sdks/connectorregistry/README.md#getconnectorregistry) - List available connector types
+* [GetConnectorSchema](docs/sdks/connectorregistry/README.md#getconnectorschema) - Get connector configuration schema
+* [TestConnectorConnection](docs/sdks/connectorregistry/README.md#testconnectorconnection) - Test connector credentials before saving
+* [GetConnectorEgressIps](docs/sdks/connectorregistry/README.md#getconnectoregressips) - Get the IP addresses connectors connect from
+
 ### [Conversations](docs/sdks/conversations/README.md)
 
 * [CreateConversation](docs/sdks/conversations/README.md#createconversation) - Create conversation (non-streaming)
@@ -224,12 +267,12 @@ func main() {
 * [UpdateConversationTitle](docs/sdks/conversations/README.md#updateconversationtitle) - Update conversation title
 * [ArchiveConversation](docs/sdks/conversations/README.md#archiveconversation) - Archive conversation
 * [UnarchiveConversation](docs/sdks/conversations/README.md#unarchiveconversation) - Unarchive conversation
+* [PinConversation](docs/sdks/conversations/README.md#pinconversation) - Pin conversation
+* [UnpinConversation](docs/sdks/conversations/README.md#unpinconversation) - Unpin conversation
 * [RegenerateAnswer](docs/sdks/conversations/README.md#regenerateanswer) - Regenerate AI response
+* [ForkConversation](docs/sdks/conversations/README.md#forkconversation) - Fork conversation from a message
 * [CancelConversationStream](docs/sdks/conversations/README.md#cancelconversationstream) - Cancel an in-flight chat stream
 * [UpdateMessageFeedback](docs/sdks/conversations/README.md#updatemessagefeedback) - Submit feedback on AI response
-* [SetConversationProject](docs/sdks/conversations/README.md#setconversationproject) - Link or unlink a conversation to a project
-* [SetConversationProjectVisibility](docs/sdks/conversations/README.md#setconversationprojectvisibility) - Override a conversation's project visibility
-* [GetProjectConversations](docs/sdks/conversations/README.md#getprojectconversations) - List a project's conversations
 
 ### [KnowledgeBase](docs/sdks/knowledgebase/README.md)
 
@@ -241,6 +284,9 @@ func main() {
 * [GetRecordByID](docs/sdks/knowledgebase/README.md#getrecordbyid) - Get record by ID
 * [UpdateRecord](docs/sdks/knowledgebase/README.md#updaterecord) - Update record
 * [DeleteRecord](docs/sdks/knowledgebase/README.md#deleterecord) - Delete record
+* [RestoreRecord](docs/sdks/knowledgebase/README.md#restorerecord) - Restore a deleted record
+* [RestoreRecords](docs/sdks/knowledgebase/README.md#restorerecords) - Restore several deleted records
+* [ListTrash](docs/sdks/knowledgebase/README.md#listtrash) - List a collection's recently deleted items
 * [StreamRecordBuffer](docs/sdks/knowledgebase/README.md#streamrecordbuffer) - Stream record content
 * [CreateFolder](docs/sdks/knowledgebase/README.md#createfolder) - Create folder
 * [UpdateFolder](docs/sdks/knowledgebase/README.md#updatefolder) - Update folder
@@ -272,6 +318,17 @@ func main() {
 * [ListOAuthAppTokens](docs/sdks/oauthapps/README.md#listoauthapptokens) - List app tokens
 * [RevokeAllOAuthAppTokens](docs/sdks/oauthapps/README.md#revokealloauthapptokens) - Revoke all app tokens
 
+### [OAuthConfiguration](docs/sdks/oauthconfiguration/README.md)
+
+* [GetOAuthRegistry](docs/sdks/oauthconfiguration/README.md#getoauthregistry) - List OAuth-capable connector types
+* [GetOAuthConnectorType](docs/sdks/oauthconfiguration/README.md#getoauthconnectortype) - Get OAuth connector type details
+* [ListOAuthConfigs](docs/sdks/oauthconfiguration/README.md#listoauthconfigs) - List OAuth configurations
+* [ListOAuthConfigsByType](docs/sdks/oauthconfiguration/README.md#listoauthconfigsbytype) - List OAuth configs for connector type
+* [CreateOAuthConfig](docs/sdks/oauthconfiguration/README.md#createoauthconfig) - Create OAuth configuration
+* [GetOAuthConfig](docs/sdks/oauthconfiguration/README.md#getoauthconfig) - Get OAuth configuration
+* [UpdateOAuthConfig](docs/sdks/oauthconfiguration/README.md#updateoauthconfig) - Update OAuth configuration
+* [DeleteOAuthConfig](docs/sdks/oauthconfiguration/README.md#deleteoauthconfig) - Delete OAuth configuration
+
 ### [OAuthProvider](docs/sdks/oauthprovider/README.md)
 
 * [OauthToken](docs/sdks/oauthprovider/README.md#oauthtoken) - Exchange authorization code for tokens
@@ -300,27 +357,6 @@ func main() {
 * [RevokePersonalAccessToken](docs/sdks/personalaccesstokens/README.md#revokepersonalaccesstoken) - Revoke one of your own personal access tokens
 * [AdminListPersonalAccessTokens](docs/sdks/personalaccesstokens/README.md#adminlistpersonalaccesstokens) - Admin: list every active personal access token in the org
 * [AdminRevokePersonalAccessToken](docs/sdks/personalaccesstokens/README.md#adminrevokepersonalaccesstoken) - Admin: revoke any user's personal access token by id
-
-### [Projects](docs/sdks/projects/README.md)
-
-* [SetConversationProject](docs/sdks/projects/README.md#setconversationproject) - Link or unlink a conversation to a project
-* [SetConversationProjectVisibility](docs/sdks/projects/README.md#setconversationprojectvisibility) - Override a conversation's project visibility
-* [CreateProject](docs/sdks/projects/README.md#createproject) - Create a project
-* [ListProjects](docs/sdks/projects/README.md#listprojects) - List projects
-* [GetProjectByID](docs/sdks/projects/README.md#getprojectbyid) - Get a project
-* [UpdateProject](docs/sdks/projects/README.md#updateproject) - Update a project
-* [DeleteProject](docs/sdks/projects/README.md#deleteproject) - Delete a project
-* [ArchiveProject](docs/sdks/projects/README.md#archiveproject) - Archive a project
-* [UnarchiveProject](docs/sdks/projects/README.md#unarchiveproject) - Unarchive a project
-* [PinProject](docs/sdks/projects/README.md#pinproject) - Pin a project
-* [UnpinProject](docs/sdks/projects/README.md#unpinproject) - Unpin a project
-* [GetProjectConversations](docs/sdks/projects/README.md#getprojectconversations) - List a project's conversations
-* [EnsureProjectKnowledgeBase](docs/sdks/projects/README.md#ensureprojectknowledgebase) - Ensure (create-if-absent) the project's hidden file Collection
-* [ListProjectMembers](docs/sdks/projects/README.md#listprojectmembers) - List project members
-* [UpsertProjectMembers](docs/sdks/projects/README.md#upsertprojectmembers) - Add or update project members
-* [RemoveProjectMember](docs/sdks/projects/README.md#removeprojectmember) - Remove a project member
-* [SetAgentConversationProject](docs/sdks/projects/README.md#setagentconversationproject) - Link or unlink an agent conversation to a project
-* [SetAgentConversationProjectVisibility](docs/sdks/projects/README.md#setagentconversationprojectvisibility) - Override an agent conversation's project visibility
 
 ### [SemanticSearch](docs/sdks/semanticsearch/README.md)
 
@@ -499,8 +535,7 @@ For example, the `OauthToken` function may return the following errors:
 
 | Error Type                                    | Status Code | Content Type     |
 | --------------------------------------------- | ----------- | ---------------- |
-| apierrors.ErrorResponse                       | 400         | application/json |
-| apierrors.OAuthErrorResponse                  | 401         | application/json |
+| apierrors.OAuthErrorResponse                  | 400, 401    | application/json |
 | apierrors.OAuthClientManagementRateLimitError | 429         | application/json |
 | apierrors.APIError                            | 4XX, 5XX    | \*/\*            |
 
@@ -527,12 +562,6 @@ func main() {
 		GrantType: components.GrantTypeClientCredentials,
 	})
 	if err != nil {
-
-		var e *apierrors.ErrorResponse
-		if errors.As(err, &e) {
-			// handle error
-			log.Fatal(e.Error())
-		}
 
 		var e *apierrors.OAuthErrorResponse
 		if errors.As(err, &e) {
@@ -671,5 +700,31 @@ var (
 
 This can be a convenient way to configure timeouts, cookies, proxies, custom headers, and other low-level configuration.
 <!-- End Custom HTTP Client [http-client] -->
+
+<!-- Start Special Types [types] -->
+## Special Types
+
+This SDK defines the following custom types to assist with marshalling and unmarshalling data.
+
+### Date
+
+`types.Date` is a wrapper around time.Time that allows for JSON marshaling a date string formatted as "2006-01-02".
+
+#### Usage
+
+```go
+d1 := types.NewDate(time.Now()) // returns *types.Date
+
+d2 := types.DateFromTime(time.Now()) // returns types.Date
+
+d3, err := types.NewDateFromString("2019-01-01") // returns *types.Date, error
+
+d4, err := types.DateFromString("2019-01-01") // returns types.Date, error
+
+d5 := types.MustNewDateFromString("2019-01-01") // returns *types.Date and panics on error
+
+d6 := types.MustDateFromString("2019-01-01") // returns types.Date and panics on error
+```
+<!-- End Special Types [types] -->
 
 <!-- Placeholder for Future Speakeasy SDK Sections -->

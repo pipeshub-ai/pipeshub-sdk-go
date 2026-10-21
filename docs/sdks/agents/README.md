@@ -18,14 +18,13 @@ Custom AI agents with specialized capabilities and tool integrations
 * [StreamAgentConversation](#streamagentconversation) - Create agent conversation with streaming response
 * [StreamAgentConversationMessage](#streamagentconversationmessage) - Add message to agent conversation with streaming response
 * [RegenerateAgentConversationMessage](#regenerateagentconversationmessage) - Regenerate agent conversation message
+* [ForkAgentConversation](#forkagentconversation) - Fork agent conversation from a message
 * [CancelAgentConversationStream](#cancelagentconversationstream) - Cancel an in-flight agent chat stream
 * [UpdateAgentConversationMessageFeedback](#updateagentconversationmessagefeedback) - Submit feedback for an agent message
 * [AddAgentConversationMessage](#addagentconversationmessage) - Add message to agent conversation (non-streaming)
 * [ArchiveAgentConversation](#archiveagentconversation) - Archive an agent conversation
 * [UnarchiveAgentConversation](#unarchiveagentconversation) - Unarchive an agent conversation
 * [UpdateAgentConversationTitle](#updateagentconversationtitle) - Update agent conversation title
-* [SetAgentConversationProject](#setagentconversationproject) - Link or unlink an agent conversation to a project
-* [SetAgentConversationProjectVisibility](#setagentconversationprojectvisibility) - Override an agent conversation's project visibility
 * [DeleteAgentConversationByID](#deleteagentconversationbyid) - Delete an agent conversation
 * [GetAgentConversationByID](#getagentconversationbyid) - Get agent conversation by ID
 * [ListAgentConversations](#listagentconversations) - List agent conversations
@@ -990,6 +989,68 @@ func main() {
 | ------------------ | ------------------ | ------------------ |
 | apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
+## ForkAgentConversation
+
+Copy this agent conversation into a new private chat owned by the
+caller, including every message up to and including `messageId`. The
+original conversation is left unchanged.
+
+Only the owner of the conversation can fork it; anyone else gets 404.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="forkAgentConversation" method="post" path="/agents/{agentKey}/conversations/{conversationId}/message/{messageId}/fork" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Agents.ForkAgentConversation(ctx, "<value>", "<value>", "<value>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ForkConversationResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `agentKey`                                               | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `messageID`                                              | `string`                                                 | :heavy_check_mark:                                       | Inclusive last message to copy into the new chat         |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.ForkAgentConversationResponse](../../models/operations/forkagentconversationresponse.md), error**
+
+### Errors
+
+| Error Type         | Status Code        | Content Type       |
+| ------------------ | ------------------ | ------------------ |
+| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+
 ## CancelAgentConversationStream
 
 Cooperatively stop a `POST /agents/{agentKey}/conversations/stream`
@@ -1437,135 +1498,6 @@ func main() {
 | apierrors.ErrorResponse | 400, 401, 404           | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
-## SetAgentConversationProject
-
-Agent-conversation equivalent of
-`PUT /conversations/{conversationId}/project`. Set
-(`projectId: <id>`) or clear (`projectId: null`) the project this
-agent conversation belongs to. Initiator-only; linking requires at
-least viewer access to the target project.
-
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="setAgentConversationProject" method="put" path="/agents/{agentKey}/conversations/{conversationId}/project" -->
-```go
-package main
-
-import(
-	"context"
-	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := pipeshub.New(
-        pipeshub.WithSecurity(components.Security{
-            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
-        }),
-    )
-
-    res, err := s.Agents.SetAgentConversationProject(ctx, "<value>", "<value>", operations.SetAgentConversationProjectRequestBody{
-        ProjectID: pipeshub.Pointer("<value>"),
-    })
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.Object != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                                                                              | Type                                                                                                                   | Required                                                                                                               | Description                                                                                                            |
-| ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `ctx`                                                                                                                  | [context.Context](https://pkg.go.dev/context#Context)                                                                  | :heavy_check_mark:                                                                                                     | The context to use for the request.                                                                                    |
-| `agentKey`                                                                                                             | `string`                                                                                                               | :heavy_check_mark:                                                                                                     | N/A                                                                                                                    |
-| `conversationID`                                                                                                       | `string`                                                                                                               | :heavy_check_mark:                                                                                                     | N/A                                                                                                                    |
-| `body`                                                                                                                 | [operations.SetAgentConversationProjectRequestBody](../../models/operations/setagentconversationprojectrequestbody.md) | :heavy_check_mark:                                                                                                     | N/A                                                                                                                    |
-| `opts`                                                                                                                 | [][operations.Option](../../models/operations/option.md)                                                               | :heavy_minus_sign:                                                                                                     | The options for this request.                                                                                          |
-
-### Response
-
-**[*operations.SetAgentConversationProjectResponse](../../models/operations/setagentconversationprojectresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## SetAgentConversationProjectVisibility
-
-Agent-conversation equivalent of
-`PATCH /conversations/{conversationId}/project-visibility`.
-Initiator-only; requires the conversation to already be linked to a
-project.
-
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="setAgentConversationProjectVisibility" method="patch" path="/agents/{agentKey}/conversations/{conversationId}/project-visibility" -->
-```go
-package main
-
-import(
-	"context"
-	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := pipeshub.New(
-        pipeshub.WithSecurity(components.Security{
-            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
-        }),
-    )
-
-    res, err := s.Agents.SetAgentConversationProjectVisibility(ctx, "<value>", "<value>", operations.SetAgentConversationProjectVisibilityRequestBody{
-        Visibility: operations.SetAgentConversationProjectVisibilityVisibilityPrivate,
-    })
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.Object != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                                                                                                  | Type                                                                                                                                       | Required                                                                                                                                   | Description                                                                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ctx`                                                                                                                                      | [context.Context](https://pkg.go.dev/context#Context)                                                                                      | :heavy_check_mark:                                                                                                                         | The context to use for the request.                                                                                                        |
-| `agentKey`                                                                                                                                 | `string`                                                                                                                                   | :heavy_check_mark:                                                                                                                         | N/A                                                                                                                                        |
-| `conversationID`                                                                                                                           | `string`                                                                                                                                   | :heavy_check_mark:                                                                                                                         | N/A                                                                                                                                        |
-| `body`                                                                                                                                     | [operations.SetAgentConversationProjectVisibilityRequestBody](../../models/operations/setagentconversationprojectvisibilityrequestbody.md) | :heavy_check_mark:                                                                                                                         | N/A                                                                                                                                        |
-| `opts`                                                                                                                                     | [][operations.Option](../../models/operations/option.md)                                                                                   | :heavy_minus_sign:                                                                                                                         | The options for this request.                                                                                                              |
-
-### Response
-
-**[*operations.SetAgentConversationProjectVisibilityResponse](../../models/operations/setagentconversationprojectvisibilityresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
 ## DeleteAgentConversationByID
 
 Soft-deletes an agent conversation owned by the authenticated user.
@@ -1579,6 +1511,12 @@ This makes the operation idempotent:
 - deleting a nonexistent conversation returns success with `null`
 - deleting through a different `agentKey` returns success with `null`
 - deleting an already deleted conversation returns success with `null`
+
+**Artifacts:** before the conversation is marked deleted, every artifact
+the caller created in it is deleted for good (every version and stored
+file). Artifacts another participant created stay theirs. If the cleanup
+cannot be done the conversation is left in place and the error is
+returned (for example 503); repeating the request finishes it.
 
 
 ### Example Usage

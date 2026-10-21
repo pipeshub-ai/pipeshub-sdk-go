@@ -274,6 +274,13 @@ type Record struct {
 	// - EMPTY: File has no extractable content
 	//
 	ParsingStatus *ParsingStatus `json:"parsingStatus,omitzero"`
+	// True after the record is indexed (every COMPLETED write, including the upgrade
+	// backfill for records indexed earlier), and false once it is marked EMPTY. A later
+	// re-queue or a failed re-index leaves it as it is, so search keeps returning the
+	// previous indexed copy until the new version is indexed. Absent until the first
+	// COMPLETED or EMPTY write sets it.
+	//
+	HasIndexedCopy *bool `json:"hasIndexedCopy,omitzero"`
 	// Current indexing/processing status:
 	// - NOT_STARTED: Awaiting indexing
 	// - QUEUED: In indexing queue
@@ -460,6 +467,13 @@ func (r *Record) GetParsingStatus() *ParsingStatus {
 		return nil
 	}
 	return r.ParsingStatus
+}
+
+func (r *Record) GetHasIndexedCopy() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.HasIndexedCopy
 }
 
 func (r *Record) GetIndexingStatus() *IndexingStatus {

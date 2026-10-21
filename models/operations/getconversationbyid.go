@@ -457,36 +457,6 @@ func (r *ReferenceDatum) GetMetadata() map[string]string {
 	return r.Metadata
 }
 
-type AppliedFilters struct {
-	Apps []components.AppliedFilterNode `json:"apps,omitzero"`
-	Kb   []components.AppliedFilterNode `json:"kb,omitzero"`
-}
-
-func (a AppliedFilters) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(a, "", false)
-}
-
-func (a *AppliedFilters) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *AppliedFilters) GetApps() []components.AppliedFilterNode {
-	if a == nil {
-		return nil
-	}
-	return a.Apps
-}
-
-func (a *AppliedFilters) GetKb() []components.AppliedFilterNode {
-	if a == nil {
-		return nil
-	}
-	return a.Kb
-}
-
 type GetConversationByIDMetadata struct {
 	ProcessingTimeMs *float64 `json:"processingTimeMs,omitzero"`
 	ModelVersion     *string  `json:"modelVersion,omitzero"`
@@ -531,8 +501,12 @@ type Message struct {
 	// Reference IDs surfaced from tool responses, used for follow-up queries
 	ReferenceData []ReferenceDatum `json:"referenceData,omitzero"`
 	// AI model configuration recorded against a conversation or message.
-	ModelInfo      *components.ConversationModelInfo `json:"modelInfo,omitzero"`
-	AppliedFilters *AppliedFilters                   `json:"appliedFilters,omitzero"`
+	ModelInfo *components.ConversationModelInfo `json:"modelInfo,omitzero"`
+	// Rich filter state selected by the user, used for display and persistence only.
+	// This mirrors the active selection shown in the UI and is distinct from the
+	// machine-readable `filters` field used for retrieval scoping.
+	//
+	AppliedFilters *components.AppliedFilters `json:"appliedFilters,omitzero"`
 	// Files uploaded for this message turn (see
 	// `POST /conversations/attachments/upload`).
 	//
@@ -629,7 +603,7 @@ func (m *Message) GetModelInfo() *components.ConversationModelInfo {
 	return m.ModelInfo
 }
 
-func (m *Message) GetAppliedFilters() *AppliedFilters {
+func (m *Message) GetAppliedFilters() *components.AppliedFilters {
 	if m == nil {
 		return nil
 	}

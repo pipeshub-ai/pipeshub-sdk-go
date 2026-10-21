@@ -18,6 +18,11 @@ type OAuthErrorResponse struct {
 	// - `unsupported_grant_type` - Grant type not supported
 	// - `invalid_scope` - Requested scope is invalid or exceeds allowed
 	// - `access_denied` - User denied authorization
+	// - `invalid_target` - The requested subject cannot be acted as
+	//   (RFC 8693). Returned by the token-exchange grant for every
+	//   refusal about the person asked for, with one wording, so a
+	//   service token cannot tell "no such person" from "not on your
+	//   list". The real cause is in the delegation log.
 	//
 	Error_ components.ErrorEnum `json:"error"`
 	// Human-readable error description

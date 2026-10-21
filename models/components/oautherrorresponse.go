@@ -3,19 +3,25 @@
 package components
 
 // ErrorEnum - Error code. Common values:
-// - `invalid_request` - Missing or invalid parameter
-// - `invalid_client` - Client authentication failed
-// - `invalid_grant` - Invalid authorization code or refresh token
-// - `unauthorized_client` - Client not authorized for this grant type
-// - `unsupported_grant_type` - Grant type not supported
-// - `invalid_scope` - Requested scope is invalid or exceeds allowed
-// - `access_denied` - User denied authorization
+//   - `invalid_request` - Missing or invalid parameter
+//   - `invalid_client` - Client authentication failed
+//   - `invalid_grant` - Invalid authorization code or refresh token
+//   - `unauthorized_client` - Client not authorized for this grant type
+//   - `unsupported_grant_type` - Grant type not supported
+//   - `invalid_scope` - Requested scope is invalid or exceeds allowed
+//   - `access_denied` - User denied authorization
+//   - `invalid_target` - The requested subject cannot be acted as
+//     (RFC 8693). Returned by the token-exchange grant for every
+//     refusal about the person asked for, with one wording, so a
+//     service token cannot tell "no such person" from "not on your
+//     list". The real cause is in the delegation log.
 type ErrorEnum string
 
 const (
 	ErrorEnumInvalidRequest       ErrorEnum = "invalid_request"
 	ErrorEnumInvalidClient        ErrorEnum = "invalid_client"
 	ErrorEnumInvalidGrant         ErrorEnum = "invalid_grant"
+	ErrorEnumInvalidTarget        ErrorEnum = "invalid_target"
 	ErrorEnumUnauthorizedClient   ErrorEnum = "unauthorized_client"
 	ErrorEnumUnsupportedGrantType ErrorEnum = "unsupported_grant_type"
 	ErrorEnumInvalidScope         ErrorEnum = "invalid_scope"
@@ -31,7 +37,7 @@ func (e ErrorEnum) ToPointer() *ErrorEnum {
 func (e *ErrorEnum) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "invalid_request", "invalid_client", "invalid_grant", "unauthorized_client", "unsupported_grant_type", "invalid_scope", "access_denied", "server_error":
+		case "invalid_request", "invalid_client", "invalid_grant", "invalid_target", "unauthorized_client", "unsupported_grant_type", "invalid_scope", "access_denied", "server_error":
 			return true
 		}
 	}

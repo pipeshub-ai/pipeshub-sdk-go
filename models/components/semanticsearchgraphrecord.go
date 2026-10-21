@@ -63,6 +63,19 @@ type SemanticSearchGraphRecord struct {
 	Definition                  optionalnullable.OptionalNullable[string]   `json:"definition,omitzero"`
 	SourceTables                optionalnullable.OptionalNullable[[]string] `json:"sourceTables,omitzero"`
 	RowCount                    optionalnullable.OptionalNullable[float64]  `json:"rowCount,omitzero"`
+	// Where a ticket, pull request or project stands, in one short phrase, on
+	// `records` entries only: for example `Merged 2026-09-25 by alice`,
+	// `Closed without merging 2026-09-26`, or
+	// `DONE (Jira: Done), resolved 2026-06-06, assignee Bo, priority HIGH`.
+	// Dates are days in UTC. Absent for record types with no state of their own.
+	//
+	StatusSummary *string `json:"statusSummary,omitzero"`
+	// On `records` entries only: the records that name this one (`mentionedIn`) and
+	// that it names (`linksTo`) by web address or issue key, across connectors,
+	// limited to records the caller may read, at most 10 per relation. Absent when
+	// there are none.
+	//
+	LinkedRecords []SemanticSearchLinkedRecord `json:"linkedRecords,omitzero"`
 }
 
 func (s SemanticSearchGraphRecord) MarshalJSON() ([]byte, error) {
@@ -431,4 +444,18 @@ func (s *SemanticSearchGraphRecord) GetRowCount() optionalnullable.OptionalNulla
 		return nil
 	}
 	return s.RowCount
+}
+
+func (s *SemanticSearchGraphRecord) GetStatusSummary() *string {
+	if s == nil {
+		return nil
+	}
+	return s.StatusSummary
+}
+
+func (s *SemanticSearchGraphRecord) GetLinkedRecords() []SemanticSearchLinkedRecord {
+	if s == nil {
+		return nil
+	}
+	return s.LinkedRecords
 }

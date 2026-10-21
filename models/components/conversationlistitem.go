@@ -257,6 +257,12 @@ type ConversationListItem struct {
 	UpdatedAt          *time.Time                                `json:"updatedAt,omitzero"`
 	IsOwner            *bool                                     `json:"isOwner,omitzero"`
 	AccessLevel        *ConversationListItemAccessLevel          `json:"accessLevel,omitzero"`
+	// `true` when the owner pinned this conversation. Absent on
+	// conversations that are not pinned (never `false`). Set via
+	// `PATCH /conversations/{conversationId}/pin`. Only returned to the
+	// owner: lists with `source=shared` omit it.
+	//
+	IsPinned *bool `json:"isPinned,omitzero"`
 	// The project this conversation is linked to, if any. Set via
 	// `PUT /conversations/{conversationId}/project` or at creation
 	// time; absent on conversations that were never linked.
@@ -437,6 +443,13 @@ func (c *ConversationListItem) GetAccessLevel() *ConversationListItemAccessLevel
 		return nil
 	}
 	return c.AccessLevel
+}
+
+func (c *ConversationListItem) GetIsPinned() *bool {
+	if c == nil {
+		return nil
+	}
+	return c.IsPinned
 }
 
 func (c *ConversationListItem) GetProjectID() optionalnullable.OptionalNullable[string] {
