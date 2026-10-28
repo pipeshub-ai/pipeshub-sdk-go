@@ -1,5 +1,5 @@
 // Delete a connector instance and its records.
-// Needs PIPESHUB_BASE_URL, PIPESHUB_CLIENT_ID, PIPESHUB_CLIENT_SECRET, PIPESHUB_CONNECTOR_ID.
+// Needs PIPESHUB_BASE_URL, PIPESHUB_BEARER_AUTH, PIPESHUB_CONNECTOR_ID.
 //
 // Usage (from examples/): go run ./connectors/delete_connector_instance <path-to-.env>
 package main
@@ -26,17 +26,9 @@ func main() {
 	}
 
 	baseURL := strings.TrimRight(os.Getenv("PIPESHUB_BASE_URL"), "/") + "/api/v1"
-	tokenURL := os.Getenv("PIPESHUB_TOKEN_URL") // optional
-	if tokenURL == "" {
-		tokenURL = baseURL + "/oauth2/token"
-	}
 	client := pipeshub.New(
 		pipeshub.WithServerURL(baseURL),
-		pipeshub.WithSecurity(components.Security{Oauth2: &components.SchemeOauth2{
-			ClientID:     os.Getenv("PIPESHUB_CLIENT_ID"),
-			ClientSecret: os.Getenv("PIPESHUB_CLIENT_SECRET"),
-			TokenURL:     tokenURL,
-		}}),
+		pipeshub.WithSecurity(components.Security{BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH"))}),
 	)
 
 	res, err := client.ConnectorInstances.DeleteConnectorInstance(context.Background(), os.Getenv("PIPESHUB_CONNECTOR_ID"))
