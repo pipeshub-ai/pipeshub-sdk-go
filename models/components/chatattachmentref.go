@@ -6,6 +6,30 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
 
+// ChatAttachmentRefSource - How the attachment was produced: a file upload, or text pasted into the
+// composer and sent as a file. Stored on the saved message as sent.
+type ChatAttachmentRefSource string
+
+const (
+	ChatAttachmentRefSourceUpload    ChatAttachmentRefSource = "upload"
+	ChatAttachmentRefSourcePasteText ChatAttachmentRefSource = "paste-text"
+)
+
+func (e ChatAttachmentRefSource) ToPointer() *ChatAttachmentRefSource {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ChatAttachmentRefSource) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "upload", "paste-text":
+			return true
+		}
+	}
+	return false
+}
+
 // ChatAttachmentRef - Reference to an attachment produced by `POST /conversations/attachments/upload`
 // (or the equivalent agent route). Include in create/stream/message bodies
 // so the turn is sent with uploaded files.
@@ -20,6 +44,10 @@ type ChatAttachmentRef struct {
 	Extension *string `json:"extension,omitzero"`
 	// Optional synthetic record id used by the graph layer.
 	VirtualRecordID *string `json:"virtualRecordId,omitzero"`
+	// How the attachment was produced: a file upload, or text pasted into the
+	// composer and sent as a file. Stored on the saved message as sent.
+	//
+	Source *ChatAttachmentRefSource `json:"source,omitzero"`
 }
 
 func (c ChatAttachmentRef) MarshalJSON() ([]byte, error) {
@@ -66,4 +94,11 @@ func (c *ChatAttachmentRef) GetVirtualRecordID() *string {
 		return nil
 	}
 	return c.VirtualRecordID
+}
+
+func (c *ChatAttachmentRef) GetSource() *ChatAttachmentRefSource {
+	if c == nil {
+		return nil
+	}
+	return c.Source
 }

@@ -9,6 +9,10 @@ import (
 
 // UpdateFolderRequestBody - Request payload
 type UpdateFolderRequestBody struct {
+	// New name of the folder. Whitespace around it is removed first, so a name
+	// made only of whitespace is refused as empty.
+	// It cannot contain `/` or `\`, which folder paths use as separators.
+	//
 	FolderName string `json:"folderName"`
 }
 

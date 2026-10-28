@@ -7,6 +7,21 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
+type GetWebSearchProvidersRequest struct {
+	// Set to `true` to receive stored secrets instead of placeholders. Honoured only for an
+	// admin's own configuration where the deployment allows it (see `GET
+	// /configurationManager/secretReveal`); ignored for OAuth-app tokens and any other value.
+	//
+	Reveal *components.RevealStoredSecrets `queryParam:"style=form,explode=true,name=reveal"`
+}
+
+func (g *GetWebSearchProvidersRequest) GetReveal() *components.RevealStoredSecrets {
+	if g == nil {
+		return nil
+	}
+	return g.Reveal
+}
+
 type GetWebSearchProvidersResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Web search providers and settings retrieved

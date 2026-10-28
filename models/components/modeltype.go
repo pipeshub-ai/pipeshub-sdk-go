@@ -15,6 +15,7 @@ const (
 	ModelTypeImageGeneration ModelType = "imageGeneration"
 	ModelTypeTts             ModelType = "tts"
 	ModelTypeStt             ModelType = "stt"
+	ModelTypeDecision        ModelType = "decision"
 )
 
 func (e ModelType) ToPointer() *ModelType {
@@ -25,7 +26,7 @@ func (e ModelType) ToPointer() *ModelType {
 func (e *ModelType) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "llm", "embedding", "ocr", "slm", "reasoning", "multiModal", "imageGeneration", "tts", "stt":
+		case "llm", "embedding", "ocr", "slm", "reasoning", "multiModal", "imageGeneration", "tts", "stt", "decision":
 			return true
 		}
 	}

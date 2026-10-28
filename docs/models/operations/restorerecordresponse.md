@@ -1,0 +1,9 @@
+# RestoreRecordResponse
+
+
+## Fields
+
+| Field                                                                                             | Type                                                                                              | Required                                                                                          | Description                                                                                       |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                        | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                | :heavy_check_mark:                                                                                | N/A                                                                                               |
+| `RestoreRecordResponseSchema`                                                                     | [*components.RestoreRecordResponseSchema](../../models/components/restorerecordresponseschema.md) | :heavy_minus_sign:                                                                                | Record restored, with everything deleted along with it                                            |

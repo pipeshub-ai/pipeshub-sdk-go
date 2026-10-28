@@ -58,8 +58,16 @@ func (e *AgentConversationListItemSharedWithAccessLevel) IsExact() bool {
 }
 
 type AgentConversationListItemSharedWith struct {
+	ID          *string                                         `json:"_id,omitzero"`
 	UserID      *string                                         `json:"userId,omitzero"`
 	AccessLevel *AgentConversationListItemSharedWithAccessLevel `json:"accessLevel,omitzero"`
+}
+
+func (a *AgentConversationListItemSharedWith) GetID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ID
 }
 
 func (a *AgentConversationListItemSharedWith) GetUserID() *string {
@@ -77,6 +85,8 @@ func (a *AgentConversationListItemSharedWith) GetAccessLevel() *AgentConversatio
 }
 
 type AgentConversationListItemConversationError struct {
+	// Sub-document identifier auto-assigned by MongoDB.
+	ID        *string        `json:"_id,omitzero"`
 	Message   *string        `json:"message,omitzero"`
 	ErrorType *string        `json:"errorType,omitzero"`
 	Timestamp *time.Time     `json:"timestamp,omitzero"`
@@ -94,6 +104,13 @@ func (a *AgentConversationListItemConversationError) UnmarshalJSON(data []byte) 
 		return err
 	}
 	return nil
+}
+
+func (a *AgentConversationListItemConversationError) GetID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ID
 }
 
 func (a *AgentConversationListItemConversationError) GetMessage() *string {
@@ -250,6 +267,10 @@ type AgentConversationListItem struct {
 	// explicit share grant is attached to the serialized row.
 	//
 	AccessLevel *AgentConversationListItemAccessLevel `json:"accessLevel,omitzero"`
+	// Present on conversations the caller received via share. Identifies the
+	// conversation initiator (the only user who can share a chat).
+	//
+	SharedBy *ConversationSharedBy `json:"sharedBy,omitzero"`
 	// The project this agent conversation is linked to, if any.
 	ProjectID optionalnullable.OptionalNullable[string] `json:"projectId,omitzero"`
 	// Only meaningful when `projectId` is set. `project` exposes the
@@ -435,6 +456,13 @@ func (a *AgentConversationListItem) GetAccessLevel() *AgentConversationListItemA
 		return nil
 	}
 	return a.AccessLevel
+}
+
+func (a *AgentConversationListItem) GetSharedBy() *ConversationSharedBy {
+	if a == nil {
+		return nil
+	}
+	return a.SharedBy
 }
 
 func (a *AgentConversationListItem) GetProjectID() optionalnullable.OptionalNullable[string] {

@@ -11,7 +11,18 @@ type UpdateAgentRequest struct {
 	// Unique agent identifier
 	AgentKey string `pathParam:"style=simple,explode=false,name=agentKey"`
 	// Partial agent configuration fields to update
-	Body components.AgentUpdateRequest `request:"mediaType=application/json"`
+	Body *components.AgentUpdateRequest `request:"mediaType=application/json"`
+}
+
+func (u UpdateAgentRequest) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(u, "", false)
+}
+
+func (u *UpdateAgentRequest) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u *UpdateAgentRequest) GetAgentKey() string {
@@ -21,9 +32,9 @@ func (u *UpdateAgentRequest) GetAgentKey() string {
 	return u.AgentKey
 }
 
-func (u *UpdateAgentRequest) GetBody() components.AgentUpdateRequest {
+func (u *UpdateAgentRequest) GetBody() *components.AgentUpdateRequest {
 	if u == nil {
-		return components.AgentUpdateRequest{}
+		return nil
 	}
 	return u.Body
 }

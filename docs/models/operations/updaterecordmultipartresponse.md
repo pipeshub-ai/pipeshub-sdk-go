@@ -1,0 +1,9 @@
+# UpdateRecordMultipartResponse
+
+
+## Fields
+
+| Field                                                                                           | Type                                                                                            | Required                                                                                        | Description                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                      | [components.HTTPMetadata](../../models/components/httpmetadata.md)                              | :heavy_check_mark:                                                                              | N/A                                                                                             |
+| `UpdateRecordResponseSchema`                                                                    | [*components.UpdateRecordResponseSchema](../../models/components/updaterecordresponseschema.md) | :heavy_minus_sign:                                                                              | Record updated successfully                                                                     |

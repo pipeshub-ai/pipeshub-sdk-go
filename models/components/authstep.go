@@ -4,15 +4,19 @@ package components
 
 // AuthStep - A single step in multi-factor authentication flow
 type AuthStep struct {
-	// Order of the authentication step (1-3, must be unique across steps)
-	Order int64 `json:"order"`
-	// List of allowed authentication methods for this step. User can choose any one method from this list.
+	// Label of the step; must be unique across steps. Only checked to be a number: `0`,
+	// negative, fractional and values above 3 are accepted and stored as sent. Sign-in runs
+	// the steps in ascending `order`, and `GET /orgAuthConfig/authMethods` returns them
+	// renumbered 1, 2, 3 in that order.
+	//
+	Order float64 `json:"order"`
+	// List of allowed authentication methods for this step. User can choose any one method from this list. A method may appear only once in the whole policy.
 	AllowedMethods []AuthMethod `json:"allowedMethods"`
 }
 
-func (a *AuthStep) GetOrder() int64 {
+func (a *AuthStep) GetOrder() float64 {
 	if a == nil {
-		return 0
+		return 0.0
 	}
 	return a.Order
 }

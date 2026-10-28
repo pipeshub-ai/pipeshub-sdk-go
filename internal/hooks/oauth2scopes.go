@@ -6,7 +6,7 @@ package hooks
 // OAuth 2.0 authentication with fine-grained scopes.
 // Supports authorization_code (with PKCE) and client_credentials flows.
 // OAuth tokens are Bearer JWTs — use the same Authorization header as regular tokens.
-// For **client_credentials**, machine JWTs may use `userId === client_id`; the Node gateway resolves the OAuth app creator — see **OAuth Provider** tag.
+// For **client_credentials**, machine JWTs may use `userId === client_id`; the Node gateway resolves the application's token identity — the service account it is pointed at, or its creator for an application registered before that was required — see **OAuth Provider** tag.
 type OAuth2Scope string
 
 const (
@@ -104,6 +104,15 @@ const (
 	// Execute AI agents
 	OAuth2ScopeAgentExecute OAuth2Scope = "agent:execute"
 
+	// Read toolsets and their authentication status
+	OAuth2ScopeToolsetRead OAuth2Scope = "toolset:read"
+
+	// Add, configure and authenticate toolsets
+	OAuth2ScopeToolsetWrite OAuth2Scope = "toolset:write"
+
+	// Remove toolsets and their credentials
+	OAuth2ScopeToolsetDelete OAuth2Scope = "toolset:delete"
+
 	// Read connector configurations
 	OAuth2ScopeConnectorRead OAuth2Scope = "connector:read"
 
@@ -116,6 +125,9 @@ const (
 	// Delete connectors
 	OAuth2ScopeConnectorDelete OAuth2Scope = "connector:delete"
 
+	// Read indexed code repositories and their code graph
+	OAuth2ScopeCodeRead OAuth2Scope = "code:read"
+
 	// Read system configuration
 	OAuth2ScopeConfigRead OAuth2Scope = "config:read"
 
@@ -127,4 +139,19 @@ const (
 
 	// Create and manage crawling jobs
 	OAuth2ScopeCrawlWrite OAuth2Scope = "crawl:write"
+
+	// Read custom agent skills
+	OAuth2ScopeSkillRead OAuth2Scope = "skill:read"
+
+	// Create and manage custom agent skills
+	OAuth2ScopeSkillWrite OAuth2Scope = "skill:write"
+
+	// Read MCP servers and their tools
+	OAuth2ScopeMcpRead OAuth2Scope = "mcp:read"
+
+	// Add, configure and authenticate MCP servers
+	OAuth2ScopeMcpWrite OAuth2Scope = "mcp:write"
+
+	// Remove MCP servers and their credentials
+	OAuth2ScopeMcpDelete OAuth2Scope = "mcp:delete"
 )

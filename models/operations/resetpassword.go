@@ -9,8 +9,14 @@ import (
 
 // ResetPasswordRequest - Request payload
 type ResetPasswordRequest struct {
+	// The password the account has now. The validator treats it as optional; the handler then refuses a missing or empty value with `400`.
 	CurrentPassword string `json:"currentPassword"`
-	NewPassword     string `json:"newPassword"`
+	// The new password: at least 8 characters with an uppercase letter, a
+	// lowercase letter, a digit and one of `#?!@$%^&*-`, at most 72 bytes, and
+	// different from the current one. A value that breaks these rules is
+	// refused by the handler with `400`.
+	//
+	NewPassword string `json:"newPassword"`
 	// Cloudflare Turnstile CAPTCHA token (required when Turnstile is configured server-side)
 	CfTurnstileResponse *string `json:"cf-turnstile-response,omitzero"`
 }

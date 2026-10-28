@@ -8,7 +8,9 @@ import (
 )
 
 type CancelAgentConversationStreamRequestBody struct {
-	// The `runId` sent when the stream was started.
+	// The `runId` sent when the stream was started. Anything but a
+	// UUID string is refused with `VALIDATION_ERROR`.
+	//
 	RunID string `json:"runId"`
 }
 
@@ -50,12 +52,13 @@ func (c *CancelAgentConversationStreamRequest) GetBody() CancelAgentConversation
 
 // CancelAgentConversationStreamResponseBody - Cancellation requested, or the run had already finished.
 type CancelAgentConversationStreamResponseBody struct {
-	Cancelled *bool `json:"cancelled,omitzero"`
+	// `true` when a stop request was issued for `runId`; `false` when the run is unknown to an in-process registry or the request could not be published.
+	Cancelled bool `json:"cancelled"`
 }
 
-func (c *CancelAgentConversationStreamResponseBody) GetCancelled() *bool {
+func (c *CancelAgentConversationStreamResponseBody) GetCancelled() bool {
 	if c == nil {
-		return nil
+		return false
 	}
 	return c.Cancelled
 }

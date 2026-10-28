@@ -18,14 +18,13 @@ Custom AI agents with specialized capabilities and tool integrations
 * [StreamAgentConversation](#streamagentconversation) - Create agent conversation with streaming response
 * [StreamAgentConversationMessage](#streamagentconversationmessage) - Add message to agent conversation with streaming response
 * [RegenerateAgentConversationMessage](#regenerateagentconversationmessage) - Regenerate agent conversation message
+* [ForkAgentConversation](#forkagentconversation) - Fork agent conversation from a message
 * [CancelAgentConversationStream](#cancelagentconversationstream) - Cancel an in-flight agent chat stream
 * [UpdateAgentConversationMessageFeedback](#updateagentconversationmessagefeedback) - Submit feedback for an agent message
 * [AddAgentConversationMessage](#addagentconversationmessage) - Add message to agent conversation (non-streaming)
 * [ArchiveAgentConversation](#archiveagentconversation) - Archive an agent conversation
 * [UnarchiveAgentConversation](#unarchiveagentconversation) - Unarchive an agent conversation
 * [UpdateAgentConversationTitle](#updateagentconversationtitle) - Update agent conversation title
-* [SetAgentConversationProject](#setagentconversationproject) - Link or unlink an agent conversation to a project
-* [SetAgentConversationProjectVisibility](#setagentconversationprojectvisibility) - Override an agent conversation's project visibility
 * [DeleteAgentConversationByID](#deleteagentconversationbyid) - Delete an agent conversation
 * [GetAgentConversationByID](#getagentconversationbyid) - Get agent conversation by ID
 * [ListAgentConversations](#listagentconversations) - List agent conversations
@@ -49,6 +48,7 @@ The Node route supports only these query params: `page`, `limit`, `search`,
 
 The Python backend also understands `isDeleted`, but this gateway route
 does not forward it, so it is not part of the public API contract here.
+Any other query parameter is ignored, not refused.
 
 
 ### Example Usage
@@ -101,7 +101,8 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401                | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## CreateAgent
@@ -174,9 +175,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## GetAgent
 
@@ -185,7 +188,11 @@ Retrieve agent details by its unique key.
 **Gateway not-found behavior:**
 Unknown `agentKey`, lookup after soft-delete, and other AI-backend failures
 that return 404 from the Python query service are surfaced by the Node
-gateway as **HTTP 404** with an `ErrorResponse` body.
+gateway as **HTTP 404** with an `ErrorResponse` body. An agent the caller
+has no access to (another user's agent that is not shared) is also a
+`404`, not a `403`.
+
+The route reads no query parameter; any that is sent is ignored.
 
 
 ### Example Usage
@@ -250,7 +257,9 @@ Apply a partial update to an existing agent configuration.
 The Node gateway validates the request body via Zod middleware before
 forwarding to the Python agent service. The `agentKey` path param and
 the request body are both validated. Query parameters are ignored by
-the controller.
+the controller, and body fields the validator does not know are dropped
+rather than refused. The body may be omitted: an empty update succeeds
+and changes nothing.
 
 **Update semantics**
 
@@ -296,7 +305,7 @@ func main() {
         }),
     )
 
-    res, err := s.Agents.UpdateAgent(ctx, "customer-support-agent", components.AgentUpdateRequest{
+    res, err := s.Agents.UpdateAgent(ctx, "customer-support-agent", &components.AgentUpdateRequest{
         Name: pipeshub.Pointer("Renamed Agent"),
     })
     if err != nil {
@@ -310,12 +319,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                      | Type                                                                           | Required                                                                       | Description                                                                    | Example                                                                        |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| `ctx`                                                                          | [context.Context](https://pkg.go.dev/context#Context)                          | :heavy_check_mark:                                                             | The context to use for the request.                                            |                                                                                |
-| `agentKey`                                                                     | `string`                                                                       | :heavy_check_mark:                                                             | Unique agent identifier                                                        | customer-support-agent                                                         |
-| `body`                                                                         | [components.AgentUpdateRequest](../../models/components/agentupdaterequest.md) | :heavy_check_mark:                                                             | Partial agent configuration fields to update                                   |                                                                                |
-| `opts`                                                                         | [][operations.Option](../../models/operations/option.md)                       | :heavy_minus_sign:                                                             | The options for this request.                                                  |                                                                                |
+| Parameter                                                                       | Type                                                                            | Required                                                                        | Description                                                                     | Example                                                                         |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `ctx`                                                                           | [context.Context](https://pkg.go.dev/context#Context)                           | :heavy_check_mark:                                                              | The context to use for the request.                                             |                                                                                 |
+| `agentKey`                                                                      | `string`                                                                        | :heavy_check_mark:                                                              | Unique agent identifier                                                         | customer-support-agent                                                          |
+| `body`                                                                          | [*components.AgentUpdateRequest](../../models/components/agentupdaterequest.md) | :heavy_minus_sign:                                                              | Partial agent configuration fields to update                                    |                                                                                 |
+| `opts`                                                                          | [][operations.Option](../../models/operations/option.md)                        | :heavy_minus_sign:                                                              | The options for this request.                                                   |                                                                                 |
 
 ### Response
 
@@ -345,8 +354,11 @@ Only the agent owner may delete (`can_delete` on the permission check).
 All conversations with this agent will become inaccessible.
 
 **Gateway not-found behavior:**
-Unknown `agentKey`, deleting an already-deleted agent, and `GET /agents/{agentKey}`
+Unknown `agentKey`, deleting an already-deleted agent, deleting another
+user's agent that is not shared with the caller, and `GET /agents/{agentKey}`
 after delete return **HTTP 404** with an `ErrorResponse` body.
+
+The route reads neither a query nor a body; anything sent is ignored.
 
 
 ### Example Usage
@@ -398,7 +410,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 401, 404                | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
 | apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
@@ -444,12 +456,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `agentPage`                                              | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `agentLimit`                                             | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+| Parameter                                                                                                                                                            | Type                                                                                                                                                                 | Required                                                                                                                                                             | Description                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                | :heavy_check_mark:                                                                                                                                                   | The context to use for the request.                                                                                                                                  |
+| `agentPage`                                                                                                                                                          | `*int64`                                                                                                                                                             | :heavy_minus_sign:                                                                                                                                                   | 1-based page over agent groups. Values below 1 are read as 1 and a<br/>non-numeric value as the default; neither is refused.<br/>                                    |
+| `agentLimit`                                                                                                                                                         | `*int64`                                                                                                                                                             | :heavy_minus_sign:                                                                                                                                                   | Agent groups per page. Values are clamped to 1..100 and a non-numeric<br/>value is read as the default; neither is refused. Each group carries at<br/>most 5 conversations.<br/> |
+| `opts`                                                                                                                                                               | [][operations.Option](../../models/operations/option.md)                                                                                                             | :heavy_minus_sign:                                                                                                                                                   | The options for this request.                                                                                                                                        |
 
 ### Response
 
@@ -457,13 +469,21 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## ListAgentConversationArchives
 
-Paginated list of archived conversations for the given agent key.
+Paginated list of the caller's archived conversations for the given agent
+key. The `agentKey` is matched against the stored conversations only; the
+agent itself is not looked up.
+
+The query is strict: a parameter not listed here is refused with `400`
+(`VALIDATION_ERROR` on `query`, "These fields aren't accepted here").
+
 
 ### Example Usage
 
@@ -517,14 +537,15 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400                     | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## UploadAgentConversationChatAttachments
 
-Multipart upload of PDF, JPEG, or PNG files for agent chat. Same limits as assistant
-chat (`POST /conversations/attachments/upload`): up to 10 files, 5 MiB each. Proxies to
-the AI backend. Optional `conversationId` associates uploads with an existing agent thread.
+Multipart upload of chat attachment files (the MIME types listed on `files`) for
+agent chat: up to 10 files, 5 MiB each. Proxies to the AI backend. Optional
+`conversationId` associates uploads with an existing agent thread.
 
 
 ### Example Usage
@@ -578,9 +599,12 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type                                                               | Status Code                                                              | Content Type                                                             |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| apierrors.ErrorResponse                                                  | 400, 401, 403                                                            | application/json                                                         |
+| apierrors.UploadAgentConversationChatAttachmentsUnprocessableEntityError | 422                                                                      | application/json                                                         |
+| apierrors.ErrorResponse                                                  | 500                                                                      | application/json                                                         |
+| apierrors.APIError                                                       | 4XX, 5XX                                                                 | \*/\*                                                                    |
 
 ## DeleteAgentConversationChatAttachment
 
@@ -642,10 +666,11 @@ func main() {
 
 ### Errors
 
-| Error Type                                                     | Status Code                                                    | Content Type                                                   |
-| -------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
-| apierrors.DeleteAgentConversationChatAttachmentBadRequestError | 400                                                            | application/json                                               |
-| apierrors.APIError                                             | 4XX, 5XX                                                       | \*/\*                                                          |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## StreamAgentConversation
 
@@ -695,33 +720,41 @@ func main() {
             },
         },
         AppliedFilters: &components.AppliedFilters{
-            Apps: []components.AppliedFilterNode{
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("2605c882-61d4-4aa2-b480-a68c957c151d"),
-                    Name: pipeshub.Pointer("US Headlines, abcnews"),
-                    NodeType: pipeshub.Pointer("app"),
-                    Connector: pipeshub.Pointer("RSS"),
-                },
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("ed6d6cc4-70bd-4838-9aeb-488e910c833a"),
-                    Name: pipeshub.Pointer("ABC News RSS"),
-                    NodeType: pipeshub.Pointer("app"),
-                    Connector: pipeshub.Pointer("RSS"),
-                },
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("aeab9ddc-fb9b-47c8-ad98-bd4744e19555"),
-                    Name: pipeshub.Pointer("Hacker news rss"),
-                    NodeType: pipeshub.Pointer("app"),
-                    Connector: pipeshub.Pointer("RSS"),
-                },
+            Apps: []components.App{
+                components.CreateAppAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "2605c882-61d4-4aa2-b480-a68c957c151d",
+                        Name: "US Headlines, abcnews",
+                        NodeType: "app",
+                        Connector: "RSS",
+                    },
+                ),
+                components.CreateAppAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "ed6d6cc4-70bd-4838-9aeb-488e910c833a",
+                        Name: "ABC News RSS",
+                        NodeType: "app",
+                        Connector: "RSS",
+                    },
+                ),
+                components.CreateAppAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "aeab9ddc-fb9b-47c8-ad98-bd4744e19555",
+                        Name: "Hacker news rss",
+                        NodeType: "app",
+                        Connector: "RSS",
+                    },
+                ),
             },
-            Kb: []components.AppliedFilterNode{
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("8747da12-4724-4a95-ac92-827b88d79647"),
-                    Name: pipeshub.Pointer("Siddhant Ota's Private"),
-                    NodeType: pipeshub.Pointer("recordGroup"),
-                    Connector: pipeshub.Pointer("KB"),
-                },
+            Kb: []components.Kb{
+                components.CreateKbAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "8747da12-4724-4a95-ac92-827b88d79647",
+                        Name: "Siddhant Ota's Private",
+                        NodeType: "recordGroup",
+                        Connector: "KB",
+                    },
+                ),
             },
         },
         ChatMode: components.AgentStreamCreateConversationRequestChatModeQuick,
@@ -762,9 +795,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404, 409 | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## StreamAgentConversationMessage
 
@@ -812,27 +847,33 @@ func main() {
             },
         },
         AppliedFilters: &components.AppliedFilters{
-            Apps: []components.AppliedFilterNode{
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("2605c882-61d4-4aa2-b480-a68c957c151d"),
-                    Name: pipeshub.Pointer("US Headlines, abcnews"),
-                    NodeType: pipeshub.Pointer("app"),
-                    Connector: pipeshub.Pointer("RSS"),
-                },
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("ed6d6cc4-70bd-4838-9aeb-488e910c833a"),
-                    Name: pipeshub.Pointer("ABC News RSS"),
-                    NodeType: pipeshub.Pointer("app"),
-                    Connector: pipeshub.Pointer("RSS"),
-                },
+            Apps: []components.App{
+                components.CreateAppAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "2605c882-61d4-4aa2-b480-a68c957c151d",
+                        Name: "US Headlines, abcnews",
+                        NodeType: "app",
+                        Connector: "RSS",
+                    },
+                ),
+                components.CreateAppAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "ed6d6cc4-70bd-4838-9aeb-488e910c833a",
+                        Name: "ABC News RSS",
+                        NodeType: "app",
+                        Connector: "RSS",
+                    },
+                ),
             },
-            Kb: []components.AppliedFilterNode{
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("8747da12-4724-4a95-ac92-827b88d79647"),
-                    Name: pipeshub.Pointer("Siddhant Ota's Private"),
-                    NodeType: pipeshub.Pointer("recordGroup"),
-                    Connector: pipeshub.Pointer("KB"),
-                },
+            Kb: []components.Kb{
+                components.CreateKbAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "8747da12-4724-4a95-ac92-827b88d79647",
+                        Name: "Siddhant Ota's Private",
+                        NodeType: "recordGroup",
+                        Connector: "KB",
+                    },
+                ),
             },
         },
         ChatMode: components.AgentAddMessageStreamRequestChatModeQuick,
@@ -874,9 +915,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## RegenerateAgentConversationMessage
 
@@ -892,6 +935,7 @@ conversation and stream the new answer over Server-Sent Events.
 
 `chatMode: quick` is required. Other fields are optional and reuse
 the original model/context when omitted. The body supports:
+- `query` and `attachments` (an edited question and its files, as on the assistant endpoint)
 - `filters`
 - `chatMode`
 - `modelKey`
@@ -943,6 +987,7 @@ func main() {
     )
 
     res, err := s.Agents.RegenerateAgentConversationMessage(ctx, "<value>", "<value>", "<value>", components.AgentRegenerateRequest{
+        Answers: pipeshub.Pointer("User selections:\n1. \"Which region?\" → EU"),
         ModelKey: pipeshub.Pointer("05438a37-68f2-4641-a8dc-6c47e63278ca"),
         ModelName: pipeshub.Pointer("gpt-5.4-mini"),
         ModelFriendlyName: pipeshub.Pointer("mini"),
@@ -986,9 +1031,75 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+
+## ForkAgentConversation
+
+Copy this agent conversation into a new private chat owned by the
+caller, including every message up to and including `messageId`. The
+original conversation is left unchanged.
+
+Only the owner of the conversation can fork it; anyone else gets 404.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="forkAgentConversation" method="post" path="/agents/{agentKey}/conversations/{conversationId}/message/{messageId}/fork" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Agents.ForkAgentConversation(ctx, "<value>", "<value>", "<value>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ForkConversationResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `agentKey`                                               | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `messageID`                                              | `string`                                                 | :heavy_check_mark:                                       | Inclusive last message to copy into the new chat         |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.ForkAgentConversationResponse](../../models/operations/forkagentconversationresponse.md), error**
+
+### Errors
+
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## CancelAgentConversationStream
 
@@ -999,8 +1110,16 @@ or `.../messages/stream` run that is still generating, using the
 Same synchronous JSON ack contract as the assistant
 `POST /conversations/{conversationId}/cancel` — both forward to the
 same backend cancellation endpoint, since the run registry is keyed
-by `runId` alone. `{ cancelled: false }` covers a `runId` that
-already finished or was never registered.
+by `runId` alone.
+
+`cancelled` reports whether a stop request was issued, not whether a
+run was actually stopped. With the default shared (key-value backed)
+run registry, a `runId` that the answering worker does not hold is
+published for whichever worker owns it, and the answer is
+`{ cancelled: true }` even when the run already finished or was
+never registered. `{ cancelled: false }` is returned for such a
+`runId` only when the registry is in-process, or when the stop
+request could not be published.
 
 `runId` must belong to a run started on THIS `conversationId` — a
 `runId` that exists but was registered under a different
@@ -1060,9 +1179,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## UpdateAgentConversationMessageFeedback
 
@@ -1122,9 +1243,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## AddAgentConversationMessage
 
@@ -1191,27 +1314,33 @@ func main() {
             },
         },
         AppliedFilters: &components.AppliedFilters{
-            Apps: []components.AppliedFilterNode{
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("2605c882-61d4-4aa2-b480-a68c957c151d"),
-                    Name: pipeshub.Pointer("US Headlines, abcnews"),
-                    NodeType: pipeshub.Pointer("app"),
-                    Connector: pipeshub.Pointer("RSS"),
-                },
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("ed6d6cc4-70bd-4838-9aeb-488e910c833a"),
-                    Name: pipeshub.Pointer("ABC News RSS"),
-                    NodeType: pipeshub.Pointer("app"),
-                    Connector: pipeshub.Pointer("RSS"),
-                },
+            Apps: []components.App{
+                components.CreateAppAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "2605c882-61d4-4aa2-b480-a68c957c151d",
+                        Name: "US Headlines, abcnews",
+                        NodeType: "app",
+                        Connector: "RSS",
+                    },
+                ),
+                components.CreateAppAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "ed6d6cc4-70bd-4838-9aeb-488e910c833a",
+                        Name: "ABC News RSS",
+                        NodeType: "app",
+                        Connector: "RSS",
+                    },
+                ),
             },
-            Kb: []components.AppliedFilterNode{
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("8747da12-4724-4a95-ac92-827b88d79647"),
-                    Name: pipeshub.Pointer("Siddhant Ota's Private"),
-                    NodeType: pipeshub.Pointer("recordGroup"),
-                    Connector: pipeshub.Pointer("KB"),
-                },
+            Kb: []components.Kb{
+                components.CreateKbAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "8747da12-4724-4a95-ac92-827b88d79647",
+                        Name: "Siddhant Ota's Private",
+                        NodeType: "recordGroup",
+                        Connector: "KB",
+                    },
+                ),
             },
         },
         ChatMode: components.AgentAddMessageRequestChatModeQuick.ToPointer(),
@@ -1225,7 +1354,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    if res.AddMessageResponse != nil {
+    if res.AgentAddMessageResponse != nil {
         // handle response
     }
 }
@@ -1238,7 +1367,7 @@ func main() {
 | `ctx`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | The context to use for the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `agentKey`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | N/A                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `conversationID`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | N/A                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `body`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | [components.AgentAddMessageRequest](../../models/components/agentaddmessagerequest.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | The follow-up question, with optional scope, model and tool overrides.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | {<br/>"query": "can you elaborate on the latest headlines?",<br/>"modelKey": "5c1832f4-fa19-4167-b913-307fad3a6551",<br/>"modelName": "gpt-5.6-luna",<br/>"modelFriendlyName": "GPT 5.4 mini",<br/>"chatMode": "quick",<br/>"timezone": "Asia/Kolkata",<br/>"currentTime": "2026-05-19T12:58:01+05:30",<br/>"tools": [],<br/>"filters": {<br/>"apps": [<br/>"2605c882-61d4-4aa2-b480-a68c957c151d",<br/>"ed6d6cc4-70bd-4838-9aeb-488e910c833a"<br/>],<br/>"kb": [<br/>"8747da12-4724-4a95-ac92-827b88d79647"<br/>]<br/>},<br/>"appliedFilters": {<br/>"apps": [<br/>{<br/>"id": "2605c882-61d4-4aa2-b480-a68c957c151d",<br/>"name": "US Headlines, abcnews",<br/>"nodeType": "app",<br/>"connector": "RSS"<br/>},<br/>{<br/>"id": "ed6d6cc4-70bd-4838-9aeb-488e910c833a",<br/>"name": "ABC News RSS",<br/>"nodeType": "app",<br/>"connector": "RSS"<br/>}<br/>],<br/>"kb": [<br/>{<br/>"id": "8747da12-4724-4a95-ac92-827b88d79647",<br/>"name": "Siddhant Ota's Private",<br/>"nodeType": "recordGroup",<br/>"connector": "KB"<br/>}<br/>]<br/>}<br/>} |
+| `body`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | [components.AgentAddMessageRequest](../../models/components/agentaddmessagerequest.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | The follow-up question, with optional scope, model and tool overrides. A `query` that<br/>holds markup or a printf-style format specifier is refused with `400`<br/>`HTTP_BAD_REQUEST`, and so is one of only whitespace ("Query is required").<br/>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | {<br/>"query": "can you elaborate on the latest headlines?",<br/>"modelKey": "5c1832f4-fa19-4167-b913-307fad3a6551",<br/>"modelName": "gpt-5.6-luna",<br/>"modelFriendlyName": "GPT 5.4 mini",<br/>"chatMode": "quick",<br/>"timezone": "Asia/Kolkata",<br/>"currentTime": "2026-05-19T12:58:01+05:30",<br/>"tools": [],<br/>"filters": {<br/>"apps": [<br/>"2605c882-61d4-4aa2-b480-a68c957c151d",<br/>"ed6d6cc4-70bd-4838-9aeb-488e910c833a"<br/>],<br/>"kb": [<br/>"8747da12-4724-4a95-ac92-827b88d79647"<br/>]<br/>},<br/>"appliedFilters": {<br/>"apps": [<br/>{<br/>"id": "2605c882-61d4-4aa2-b480-a68c957c151d",<br/>"name": "US Headlines, abcnews",<br/>"nodeType": "app",<br/>"connector": "RSS"<br/>},<br/>{<br/>"id": "ed6d6cc4-70bd-4838-9aeb-488e910c833a",<br/>"name": "ABC News RSS",<br/>"nodeType": "app",<br/>"connector": "RSS"<br/>}<br/>],<br/>"kb": [<br/>{<br/>"id": "8747da12-4724-4a95-ac92-827b88d79647",<br/>"name": "Siddhant Ota's Private",<br/>"nodeType": "recordGroup",<br/>"connector": "KB"<br/>}<br/>]<br/>}<br/>} |
 | `opts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | [][operations.Option](../../models/operations/option.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | :heavy_minus_sign:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | The options for this request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ### Response
@@ -1249,14 +1378,16 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 404                | application/json        |
-| apierrors.ErrorResponse | 424                     | application/json        |
-| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 404, 424                | application/json        |
+| apierrors.ErrorResponse | 500, 503, 504           | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## ArchiveAgentConversation
 
-Marks the conversation as archived for the authenticated owner.
+Marks the conversation as archived for the authenticated owner. The route
+reads no query parameter and no body; anything sent is ignored.
+
 
 ### Example Usage
 
@@ -1308,12 +1439,15 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## UnarchiveAgentConversation
 
-Restores an archived agent conversation to the active list.
+Restores an archived agent conversation to the active list. The route
+reads no query parameter and no body; anything sent is ignored.
+
 
 ### Example Usage
 
@@ -1365,7 +1499,8 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## UpdateAgentConversationTitle
@@ -1375,10 +1510,10 @@ Updates the display title for an agent conversation owned by the caller.
 The controller looks up the conversation by `_id`, `orgId`, `userId`,
 `agentKey`, and `isDeleted: false`.
 
-The request body uses the shared title validator (`1..200` chars), and
-the controller trims the incoming title before saving it. A whitespace-only
-title can therefore still return HTTP 400 even if the raw string is
-non-empty.
+The request body uses the shared title validator (`1..200` chars) and the
+title is trimmed before it is saved; a whitespace-only title is refused
+with `400` (`VALIDATION_ERROR`). Unknown body fields are dropped and query
+parameters are ignored.
 
 
 ### Example Usage
@@ -1434,137 +1569,9 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
-
-## SetAgentConversationProject
-
-Agent-conversation equivalent of
-`PUT /conversations/{conversationId}/project`. Set
-(`projectId: <id>`) or clear (`projectId: null`) the project this
-agent conversation belongs to. Initiator-only; linking requires at
-least viewer access to the target project.
-
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="setAgentConversationProject" method="put" path="/agents/{agentKey}/conversations/{conversationId}/project" -->
-```go
-package main
-
-import(
-	"context"
-	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := pipeshub.New(
-        pipeshub.WithSecurity(components.Security{
-            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
-        }),
-    )
-
-    res, err := s.Agents.SetAgentConversationProject(ctx, "<value>", "<value>", operations.SetAgentConversationProjectRequestBody{
-        ProjectID: pipeshub.Pointer("<value>"),
-    })
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.Object != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                                                                              | Type                                                                                                                   | Required                                                                                                               | Description                                                                                                            |
-| ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `ctx`                                                                                                                  | [context.Context](https://pkg.go.dev/context#Context)                                                                  | :heavy_check_mark:                                                                                                     | The context to use for the request.                                                                                    |
-| `agentKey`                                                                                                             | `string`                                                                                                               | :heavy_check_mark:                                                                                                     | N/A                                                                                                                    |
-| `conversationID`                                                                                                       | `string`                                                                                                               | :heavy_check_mark:                                                                                                     | N/A                                                                                                                    |
-| `body`                                                                                                                 | [operations.SetAgentConversationProjectRequestBody](../../models/operations/setagentconversationprojectrequestbody.md) | :heavy_check_mark:                                                                                                     | N/A                                                                                                                    |
-| `opts`                                                                                                                 | [][operations.Option](../../models/operations/option.md)                                                               | :heavy_minus_sign:                                                                                                     | The options for this request.                                                                                          |
-
-### Response
-
-**[*operations.SetAgentConversationProjectResponse](../../models/operations/setagentconversationprojectresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## SetAgentConversationProjectVisibility
-
-Agent-conversation equivalent of
-`PATCH /conversations/{conversationId}/project-visibility`.
-Initiator-only; requires the conversation to already be linked to a
-project.
-
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="setAgentConversationProjectVisibility" method="patch" path="/agents/{agentKey}/conversations/{conversationId}/project-visibility" -->
-```go
-package main
-
-import(
-	"context"
-	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := pipeshub.New(
-        pipeshub.WithSecurity(components.Security{
-            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
-        }),
-    )
-
-    res, err := s.Agents.SetAgentConversationProjectVisibility(ctx, "<value>", "<value>", operations.SetAgentConversationProjectVisibilityRequestBody{
-        Visibility: operations.SetAgentConversationProjectVisibilityVisibilityPrivate,
-    })
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.Object != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                                                                                                  | Type                                                                                                                                       | Required                                                                                                                                   | Description                                                                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ctx`                                                                                                                                      | [context.Context](https://pkg.go.dev/context#Context)                                                                                      | :heavy_check_mark:                                                                                                                         | The context to use for the request.                                                                                                        |
-| `agentKey`                                                                                                                                 | `string`                                                                                                                                   | :heavy_check_mark:                                                                                                                         | N/A                                                                                                                                        |
-| `conversationID`                                                                                                                           | `string`                                                                                                                                   | :heavy_check_mark:                                                                                                                         | N/A                                                                                                                                        |
-| `body`                                                                                                                                     | [operations.SetAgentConversationProjectVisibilityRequestBody](../../models/operations/setagentconversationprojectvisibilityrequestbody.md) | :heavy_check_mark:                                                                                                                         | N/A                                                                                                                                        |
-| `opts`                                                                                                                                     | [][operations.Option](../../models/operations/option.md)                                                                                   | :heavy_minus_sign:                                                                                                                         | The options for this request.                                                                                                              |
-
-### Response
-
-**[*operations.SetAgentConversationProjectVisibilityResponse](../../models/operations/setagentconversationprojectvisibilityresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
 
 ## DeleteAgentConversationByID
 
@@ -1579,6 +1586,12 @@ This makes the operation idempotent:
 - deleting a nonexistent conversation returns success with `null`
 - deleting through a different `agentKey` returns success with `null`
 - deleting an already deleted conversation returns success with `null`
+
+**Artifacts:** before the conversation is marked deleted, every artifact
+the caller created in it is deleted for good (every version and stored
+file). Artifacts another participant created stay theirs. If the cleanup
+cannot be done the conversation is left in place and the error is
+returned (for example 503); repeating the request finishes it.
 
 
 ### Example Usage
@@ -1639,7 +1652,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401                | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
 | apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
@@ -1708,9 +1721,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## ListAgentConversations
 
@@ -1772,7 +1787,8 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401                | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## CreateAgentConversation
@@ -1840,33 +1856,41 @@ func main() {
             },
         },
         AppliedFilters: &components.AppliedFilters{
-            Apps: []components.AppliedFilterNode{
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("2605c882-61d4-4aa2-b480-a68c957c151d"),
-                    Name: pipeshub.Pointer("US Headlines, abcnews"),
-                    NodeType: pipeshub.Pointer("app"),
-                    Connector: pipeshub.Pointer("RSS"),
-                },
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("ed6d6cc4-70bd-4838-9aeb-488e910c833a"),
-                    Name: pipeshub.Pointer("ABC News RSS"),
-                    NodeType: pipeshub.Pointer("app"),
-                    Connector: pipeshub.Pointer("RSS"),
-                },
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("aeab9ddc-fb9b-47c8-ad98-bd4744e19555"),
-                    Name: pipeshub.Pointer("Hacker news rss"),
-                    NodeType: pipeshub.Pointer("app"),
-                    Connector: pipeshub.Pointer("RSS"),
-                },
+            Apps: []components.App{
+                components.CreateAppAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "2605c882-61d4-4aa2-b480-a68c957c151d",
+                        Name: "US Headlines, abcnews",
+                        NodeType: "app",
+                        Connector: "RSS",
+                    },
+                ),
+                components.CreateAppAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "ed6d6cc4-70bd-4838-9aeb-488e910c833a",
+                        Name: "ABC News RSS",
+                        NodeType: "app",
+                        Connector: "RSS",
+                    },
+                ),
+                components.CreateAppAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "aeab9ddc-fb9b-47c8-ad98-bd4744e19555",
+                        Name: "Hacker news rss",
+                        NodeType: "app",
+                        Connector: "RSS",
+                    },
+                ),
             },
-            Kb: []components.AppliedFilterNode{
-                components.AppliedFilterNode{
-                    ID: pipeshub.Pointer("8747da12-4724-4a95-ac92-827b88d79647"),
-                    Name: pipeshub.Pointer("Siddhant Ota's Private"),
-                    NodeType: pipeshub.Pointer("recordGroup"),
-                    Connector: pipeshub.Pointer("KB"),
-                },
+            Kb: []components.Kb{
+                components.CreateKbAppliedFilterNode(
+                    components.AppliedFilterNode{
+                        ID: "8747da12-4724-4a95-ac92-827b88d79647",
+                        Name: "Siddhant Ota's Private",
+                        NodeType: "recordGroup",
+                        Connector: "KB",
+                    },
+                ),
             },
         },
         ChatMode: components.AgentCreateConversationRequestChatModeQuick.ToPointer(),
@@ -1892,7 +1916,7 @@ func main() {
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ctx`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | The context to use for the request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `agentKey`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `string`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | N/A                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `body`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [components.AgentCreateConversationRequest](../../models/components/agentcreateconversationrequest.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | The first question, with optional scope, model, project and tool overrides.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | {<br/>"query": "what are some latest tech news?",<br/>"modelKey": "5c1832f4-fa19-4167-b913-307fad3a6551",<br/>"modelName": "gpt-5.6-luna",<br/>"modelFriendlyName": "GPT 5.4 mini",<br/>"chatMode": "quick",<br/>"timezone": "Asia/Kolkata",<br/>"currentTime": "2026-05-19T12:58:01+05:30",<br/>"tools": [],<br/>"filters": {<br/>"apps": [<br/>"2605c882-61d4-4aa2-b480-a68c957c151d",<br/>"ed6d6cc4-70bd-4838-9aeb-488e910c833a",<br/>"aeab9ddc-fb9b-47c8-ad98-bd4744e19555"<br/>],<br/>"kb": [<br/>"8747da12-4724-4a95-ac92-827b88d79647"<br/>]<br/>},<br/>"appliedFilters": {<br/>"apps": [<br/>{<br/>"id": "2605c882-61d4-4aa2-b480-a68c957c151d",<br/>"name": "US Headlines, abcnews",<br/>"nodeType": "app",<br/>"connector": "RSS"<br/>},<br/>{<br/>"id": "ed6d6cc4-70bd-4838-9aeb-488e910c833a",<br/>"name": "ABC News RSS",<br/>"nodeType": "app",<br/>"connector": "RSS"<br/>},<br/>{<br/>"id": "aeab9ddc-fb9b-47c8-ad98-bd4744e19555",<br/>"name": "Hacker news rss",<br/>"nodeType": "app",<br/>"connector": "RSS"<br/>}<br/>],<br/>"kb": [<br/>{<br/>"id": "8747da12-4724-4a95-ac92-827b88d79647",<br/>"name": "Siddhant Ota's Private",<br/>"nodeType": "recordGroup",<br/>"connector": "KB"<br/>}<br/>]<br/>}<br/>} |
+| `body`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [components.AgentCreateConversationRequest](../../models/components/agentcreateconversationrequest.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | The first question, with optional scope, model, project and tool overrides. A `query`<br/>that holds markup or a printf-style format specifier is refused with `400`<br/>`HTTP_BAD_REQUEST`, and so is one of only whitespace ("Query is required").<br/>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | {<br/>"query": "what are some latest tech news?",<br/>"modelKey": "5c1832f4-fa19-4167-b913-307fad3a6551",<br/>"modelName": "gpt-5.6-luna",<br/>"modelFriendlyName": "GPT 5.4 mini",<br/>"chatMode": "quick",<br/>"timezone": "Asia/Kolkata",<br/>"currentTime": "2026-05-19T12:58:01+05:30",<br/>"tools": [],<br/>"filters": {<br/>"apps": [<br/>"2605c882-61d4-4aa2-b480-a68c957c151d",<br/>"ed6d6cc4-70bd-4838-9aeb-488e910c833a",<br/>"aeab9ddc-fb9b-47c8-ad98-bd4744e19555"<br/>],<br/>"kb": [<br/>"8747da12-4724-4a95-ac92-827b88d79647"<br/>]<br/>},<br/>"appliedFilters": {<br/>"apps": [<br/>{<br/>"id": "2605c882-61d4-4aa2-b480-a68c957c151d",<br/>"name": "US Headlines, abcnews",<br/>"nodeType": "app",<br/>"connector": "RSS"<br/>},<br/>{<br/>"id": "ed6d6cc4-70bd-4838-9aeb-488e910c833a",<br/>"name": "ABC News RSS",<br/>"nodeType": "app",<br/>"connector": "RSS"<br/>},<br/>{<br/>"id": "aeab9ddc-fb9b-47c8-ad98-bd4744e19555",<br/>"name": "Hacker news rss",<br/>"nodeType": "app",<br/>"connector": "RSS"<br/>}<br/>],<br/>"kb": [<br/>{<br/>"id": "8747da12-4724-4a95-ac92-827b88d79647",<br/>"name": "Siddhant Ota's Private",<br/>"nodeType": "recordGroup",<br/>"connector": "KB"<br/>}<br/>]<br/>}<br/>} |
 | `opts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [][operations.Option](../../models/operations/option.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | :heavy_minus_sign:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | The options for this request.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ### Response
@@ -1903,7 +1927,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400                     | application/json        |
-| apierrors.ErrorResponse | 424                     | application/json        |
-| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 409      | application/json        |
+| apierrors.ErrorResponse | 404, 424                | application/json        |
+| apierrors.ErrorResponse | 500, 503, 504           | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |

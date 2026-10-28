@@ -92,6 +92,11 @@ type AgentListItem struct {
 	IsDeleted bool `json:"isDeleted"`
 	// Whether this agent is a service-account agent.
 	IsServiceAccount bool `json:"isServiceAccount"`
+	// The `userId` of the service account this agent searches knowledge
+	// as, or null when it searches as its creator. Only set on a
+	// service-account agent.
+	//
+	ServiceAccountUserID optionalnullable.OptionalNullable[string] `json:"serviceAccountUserId,omitzero"`
 	// Model entries configured on the agent.
 	//
 	// For `GET /agents`, the backend returns the stored normalized string
@@ -126,6 +131,11 @@ type AgentListItem struct {
 	WebSearch optionalnullable.OptionalNullable[AgentListItemWebSearch] `json:"webSearch,omitzero"`
 	// Agent-level reasoning effort used when a chat request omits its own. Null when unset.
 	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentListItemDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
+	// API toolset operations the agent may call, each `<toolsetId>:<operation>`
+	// (see `/api-toolsets`). A service-account agent may only use toolsets with a
+	// shared credential.
+	//
+	APIToolsetTools []string `json:"apiToolsetTools,omitzero"`
 	// When false, this agent omits user name/email/org from its system prompt.
 	SendUserContext *bool `json:"sendUserContext,omitzero"`
 	// Whether the agent is shared with the organization.
@@ -240,6 +250,13 @@ func (a *AgentListItem) GetIsServiceAccount() bool {
 	return a.IsServiceAccount
 }
 
+func (a *AgentListItem) GetServiceAccountUserID() optionalnullable.OptionalNullable[string] {
+	if a == nil {
+		return nil
+	}
+	return a.ServiceAccountUserID
+}
+
 func (a *AgentListItem) GetModels() []string {
 	if a == nil {
 		return []string{}
@@ -308,6 +325,13 @@ func (a *AgentListItem) GetDefaultReasoningEffort() optionalnullable.OptionalNul
 		return nil
 	}
 	return a.DefaultReasoningEffort
+}
+
+func (a *AgentListItem) GetAPIToolsetTools() []string {
+	if a == nil {
+		return nil
+	}
+	return a.APIToolsetTools
 }
 
 func (a *AgentListItem) GetSendUserContext() *bool {

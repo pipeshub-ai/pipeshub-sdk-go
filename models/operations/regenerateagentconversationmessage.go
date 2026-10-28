@@ -62,6 +62,9 @@ type RegenerateAgentConversationMessageResponse struct {
 	// agent/tool events may be emitted.
 	// Clients should ignore unknown event names.
 	//
+	// Two refusals about `answers` arrive the same way: `Answers can only replace the answers to a
+	// question card.` and `An edit cannot also replace the answers to a question card.`
+	//
 	AgentRegenerateSSEEvent *stream.EventStream[components.AgentRegenerateSSEEvent]
 }
 

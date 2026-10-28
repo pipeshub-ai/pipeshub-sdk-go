@@ -72,7 +72,8 @@ const (
 // without an explicit choice shouldn't default to the longest
 // lifetime. `"never"` is stored as a ~100-year expiry (the
 // underlying schema field is required and TTL-indexed, so there's
-// no literal null option).
+// no literal null option). Any other value, including `null` and the
+// string `"30"`, is a `400` validation error.
 type ExpiryDays struct {
 	ExpiryDaysEnum  *ExpiryDaysEnum  `queryParam:"inline" union:"member"`
 	ExpiryDaysNever *ExpiryDaysNever `queryParam:"inline" union:"member"`
@@ -163,6 +164,7 @@ func (u ExpiryDays) MarshalJSON() ([]byte, error) {
 }
 
 // CreatePatRequest - Request to create a personal access token (`createPatTokenSchema` in `pat.validators.ts`).
+// Fields not listed here are stripped by the validator and ignored.
 type CreatePatRequest struct {
 	// Label to help you recognize the token later
 	Name string `json:"name"`
@@ -175,9 +177,18 @@ type CreatePatRequest struct {
 	// without an explicit choice shouldn't default to the longest
 	// lifetime. `"never"` is stored as a ~100-year expiry (the
 	// underlying schema field is required and TTL-indexed, so there's
-	// no literal null option).
+	// no literal null option). Any other value, including `null` and the
+	// string `"30"`, is a `400` validation error.
 	//
 	ExpiryDays *ExpiryDays `json:"expiryDays,omitzero"`
+	// What a connected app may see: an OAuth app's limit is picked by its
+	// creator and holds for every user who connects it; a personal access
+	// token's by its owner. Search, chat, agent chat and every record read by
+	// id stay inside it, and inside the connecting user's own permissions.
+	// Omit it for everything the user can see. Sent, it must name at least one id and at
+	// most 50 in all, since it is signed into every token the app gets.
+	//
+	KnowledgeLimit *KnowledgeLimit `json:"knowledgeLimit,omitzero"`
 }
 
 func (c CreatePatRequest) MarshalJSON() ([]byte, error) {
@@ -210,4 +221,11 @@ func (c *CreatePatRequest) GetExpiryDays() *ExpiryDays {
 		return nil
 	}
 	return c.ExpiryDays
+}
+
+func (c *CreatePatRequest) GetKnowledgeLimit() *KnowledgeLimit {
+	if c == nil {
+		return nil
+	}
+	return c.KnowledgeLimit
 }

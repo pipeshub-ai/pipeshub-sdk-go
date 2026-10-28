@@ -3,10 +3,128 @@
 package components
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 	"time"
 )
+
+type CitationIDType string
+
+const (
+	CitationIDTypePersistedSemanticSearchCitation CitationIDType = "PersistedSemanticSearchCitation"
+	CitationIDTypeRedactedSource                  CitationIDType = "RedactedSource"
+	CitationIDTypeUnknown                         CitationIDType = "Unknown"
+)
+
+type CitationID struct {
+	PersistedSemanticSearchCitation *PersistedSemanticSearchCitation `queryParam:"inline" union:"member"`
+	RedactedSource                  *RedactedSource                  `queryParam:"inline" union:"member"`
+	UnknownRaw                      json.RawMessage                  `json:"-" union:"unknown"`
+
+	Type CitationIDType
+}
+
+func CreateCitationIDPersistedSemanticSearchCitation(persistedSemanticSearchCitation PersistedSemanticSearchCitation) CitationID {
+	typ := CitationIDTypePersistedSemanticSearchCitation
+
+	return CitationID{
+		PersistedSemanticSearchCitation: &persistedSemanticSearchCitation,
+		Type:                            typ,
+	}
+}
+
+func CreateCitationIDRedactedSource(redactedSource RedactedSource) CitationID {
+	typ := CitationIDTypeRedactedSource
+
+	return CitationID{
+		RedactedSource: &redactedSource,
+		Type:           typ,
+	}
+}
+
+func CreateCitationIDUnknown(raw json.RawMessage) CitationID {
+	return CitationID{
+		UnknownRaw: raw,
+		Type:       CitationIDTypeUnknown,
+	}
+}
+
+func (u CitationID) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u CitationID) IsUnknown() bool {
+	return u.Type == CitationIDTypeUnknown
+}
+
+func (u *CitationID) UnmarshalJSON(data []byte) error {
+	*u = CitationID{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var persistedSemanticSearchCitation PersistedSemanticSearchCitation = PersistedSemanticSearchCitation{}
+	if err := utils.UnmarshalJSON(data, &persistedSemanticSearchCitation, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  CitationIDTypePersistedSemanticSearchCitation,
+			Value: &persistedSemanticSearchCitation,
+		})
+	}
+
+	var redactedSource RedactedSource = RedactedSource{}
+	if err := utils.UnmarshalJSON(data, &redactedSource, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  CitationIDTypeRedactedSource,
+			Value: &redactedSource,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = CitationIDTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = CitationIDTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(CitationIDType)
+	switch best.Type {
+	case CitationIDTypePersistedSemanticSearchCitation:
+		u.PersistedSemanticSearchCitation = best.Value.(*PersistedSemanticSearchCitation)
+		return nil
+	case CitationIDTypeRedactedSource:
+		u.RedactedSource = best.Value.(*RedactedSource)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = CitationIDTypeUnknown
+	return nil
+}
+
+func (u CitationID) MarshalJSON() ([]byte, error) {
+	if u.PersistedSemanticSearchCitation != nil {
+		return utils.MarshalJSON(u.PersistedSemanticSearchCitation, "", true)
+	}
+
+	if u.RedactedSource != nil {
+		return utils.MarshalJSON(u.RedactedSource, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type CitationID: all fields are null")
+}
 
 // PersistedSemanticSearch - Persisted search document as returned to clients.
 // `records` is a string-valued map: each value is `JSON.stringify(<record>)`,
@@ -16,13 +134,16 @@ import (
 // `searchResponse.records` array on the POST `/search` response, which is
 // passed through from the retrieval service untouched.
 type PersistedSemanticSearch struct {
-	ID          string                            `json:"_id"`
-	V           int64                             `json:"__v"`
-	Query       string                            `json:"query"`
-	Limit       int64                             `json:"limit"`
-	OrgID       string                            `json:"orgId"`
-	UserID      string                            `json:"userId"`
-	CitationIds []PersistedSemanticSearchCitation `json:"citationIds"`
+	ID     string `json:"_id"`
+	V      int64  `json:"__v"`
+	Query  string `json:"query"`
+	Limit  int64  `json:"limit"`
+	OrgID  string `json:"orgId"`
+	UserID string `json:"userId"`
+	// For a search shared with the viewer, a hit the viewer cannot read is a
+	// `RedactedSource`.
+	//
+	CitationIds []CitationID `json:"citationIds"`
 	// Map of source-record id (or `_key`) to a JSON-stringified record object.
 	// Clients must `JSON.parse` each value before reading fields.
 	//
@@ -95,9 +216,9 @@ func (p *PersistedSemanticSearch) GetUserID() string {
 	return p.UserID
 }
 
-func (p *PersistedSemanticSearch) GetCitationIds() []PersistedSemanticSearchCitation {
+func (p *PersistedSemanticSearch) GetCitationIds() []CitationID {
 	if p == nil {
-		return []PersistedSemanticSearchCitation{}
+		return []CitationID{}
 	}
 	return p.CitationIds
 }

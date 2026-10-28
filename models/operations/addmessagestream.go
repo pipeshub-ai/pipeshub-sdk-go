@@ -36,6 +36,14 @@ type AddMessageStreamResponse struct {
 	// `text/event-stream` frames using the event vocabulary described
 	// on the schema below.
 	//
+	// The conversation is looked up only after the stream is open, so
+	// a conversation that does not exist, is deleted, belongs to
+	// another user or is an agent conversation is not answered `404`:
+	// the stream is `200` and carries a `CUSTOM` `conversation_created`
+	// frame echoing the path's `conversationId`, then a single
+	// `RUN_ERROR` with `message: "Conversation not found"` and
+	// `code: "internal_error"`.
+	//
 	ConversationMessageStreamSSEEvent *stream.EventStream[components.ConversationMessageStreamSSEEvent]
 }
 

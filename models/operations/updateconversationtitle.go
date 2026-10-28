@@ -11,7 +11,10 @@ import (
 
 // UpdateConversationTitleRequestBody - Request payload
 type UpdateConversationTitleRequestBody struct {
-	// New conversation title
+	// New conversation title. Surrounding whitespace is trimmed before
+	// validation, so a title of only whitespace is refused with `400`
+	// `VALIDATION_ERROR` ("Title is required").
+	//
 	Title string `json:"title"`
 }
 
@@ -99,6 +102,8 @@ func (e *UpdateConversationTitleAccessLevel) IsExact() bool {
 type UpdateConversationTitleSharedWith struct {
 	UserID      string                              `json:"userId"`
 	AccessLevel *UpdateConversationTitleAccessLevel `default:"read" json:"accessLevel"`
+	// Subdocument identifier auto-assigned by MongoDB.
+	ID *string `json:"_id,omitzero"`
 }
 
 func (u UpdateConversationTitleSharedWith) MarshalJSON() ([]byte, error) {
@@ -124,6 +129,13 @@ func (u *UpdateConversationTitleSharedWith) GetAccessLevel() *UpdateConversation
 		return nil
 	}
 	return u.AccessLevel
+}
+
+func (u *UpdateConversationTitleSharedWith) GetID() *string {
+	if u == nil {
+		return nil
+	}
+	return u.ID
 }
 
 type UpdateConversationTitleConversationError struct {

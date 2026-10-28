@@ -4,18 +4,19 @@ package components
 
 import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
 // ReIndexRecordGroupResponseSchema - Response returned by POST /knowledgeBase/reindex/record-group/{recordGroupId}.
 type ReIndexRecordGroupResponseSchema struct {
 	//lint:ignore U1000 accessed via reflection for JSON marshaling
-	success        bool                                      `const:"true" json:"success"`
-	Message        string                                    `json:"message"`
-	RecordGroupID  string                                    `json:"recordGroupId"`
-	Depth          int64                                     `json:"depth"`
-	Connector      optionalnullable.OptionalNullable[string] `json:"connector,omitzero"`
-	EventPublished bool                                      `json:"eventPublished"`
+	success       bool   `const:"true" json:"success"`
+	Message       string `json:"message"`
+	RecordGroupID string `json:"recordGroupId"`
+	Depth         int64  `json:"depth"`
+	// Id of the connector instance the record group belongs to
+	ConnectorID    string  `json:"connectorId"`
+	Connector      *string `json:"connector"`
+	EventPublished bool    `json:"eventPublished"`
 }
 
 func (r ReIndexRecordGroupResponseSchema) MarshalJSON() ([]byte, error) {
@@ -54,7 +55,14 @@ func (r *ReIndexRecordGroupResponseSchema) GetDepth() int64 {
 	return r.Depth
 }
 
-func (r *ReIndexRecordGroupResponseSchema) GetConnector() optionalnullable.OptionalNullable[string] {
+func (r *ReIndexRecordGroupResponseSchema) GetConnectorID() string {
+	if r == nil {
+		return ""
+	}
+	return r.ConnectorID
+}
+
+func (r *ReIndexRecordGroupResponseSchema) GetConnector() *string {
 	if r == nil {
 		return nil
 	}

@@ -3,77 +3,48 @@
 package operations
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"time"
 )
-
-type ListAgentConversationArchivesSortBy string
-
-const (
-	ListAgentConversationArchivesSortByCreatedAt      ListAgentConversationArchivesSortBy = "createdAt"
-	ListAgentConversationArchivesSortByLastActivityAt ListAgentConversationArchivesSortBy = "lastActivityAt"
-	ListAgentConversationArchivesSortByTitle          ListAgentConversationArchivesSortBy = "title"
-)
-
-func (e ListAgentConversationArchivesSortBy) ToPointer() *ListAgentConversationArchivesSortBy {
-	return &e
-}
-func (e *ListAgentConversationArchivesSortBy) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "createdAt":
-		fallthrough
-	case "lastActivityAt":
-		fallthrough
-	case "title":
-		*e = ListAgentConversationArchivesSortBy(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for ListAgentConversationArchivesSortBy: %v", v)
-	}
-}
-
-type ListAgentConversationArchivesSortOrder string
-
-const (
-	ListAgentConversationArchivesSortOrderAsc  ListAgentConversationArchivesSortOrder = "asc"
-	ListAgentConversationArchivesSortOrderDesc ListAgentConversationArchivesSortOrder = "desc"
-)
-
-func (e ListAgentConversationArchivesSortOrder) ToPointer() *ListAgentConversationArchivesSortOrder {
-	return &e
-}
-func (e *ListAgentConversationArchivesSortOrder) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "asc":
-		fallthrough
-	case "desc":
-		*e = ListAgentConversationArchivesSortOrder(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for ListAgentConversationArchivesSortOrder: %v", v)
-	}
-}
 
 type ListAgentConversationArchivesRequest struct {
-	AgentKey  string                                  `pathParam:"style=simple,explode=false,name=agentKey"`
-	Page      *int64                                  `default:"1" queryParam:"style=form,explode=true,name=page"`
-	Limit     *int64                                  `default:"20" queryParam:"style=form,explode=true,name=limit"`
-	SortBy    *ListAgentConversationArchivesSortBy    `queryParam:"style=form,explode=true,name=sortBy"`
-	SortOrder *ListAgentConversationArchivesSortOrder `queryParam:"style=form,explode=true,name=sortOrder"`
-	Search    *string                                 `queryParam:"style=form,explode=true,name=search"`
-	StartDate *time.Time                              `queryParam:"style=form,explode=true,name=startDate"`
-	EndDate   *time.Time                              `queryParam:"style=form,explode=true,name=endDate"`
+	AgentKey string `pathParam:"style=simple,explode=false,name=agentKey"`
+	// 1-based page number. A value below 1 or one that is not a number is
+	// read as `1`; neither is refused.
+	//
+	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Page size. A value outside 1..100 or one that is not a number is read
+	// as `20`; neither is refused.
+	//
+	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
+	// Sort field. Supported values are `createdAt`, `lastActivityAt` and
+	// `title`; any other value is accepted and ignored (the list is then
+	// sorted by `lastActivityAt`).
+	//
+	SortBy *string `queryParam:"style=form,explode=true,name=sortBy"`
+	// Sort direction, `asc` or `desc`; any other value is accepted and
+	// ignored (descending order).
+	//
+	SortOrder *string `queryParam:"style=form,explode=true,name=sortOrder"`
+	// Case-insensitive search over the conversation title and message
+	// content. A printf-style format specifier (`%s`, `%x`, ...) is refused
+	// with `VALIDATION_ERROR`; markup (HTML tags, `javascript:`, event
+	// handlers) is refused with `HTTP_BAD_REQUEST` by the sanitizer every
+	// route runs.
+	//
+	Search *string `queryParam:"style=form,explode=true,name=search"`
+	// Inclusive lower bound on `createdAt`, as an ISO 8601 date or
+	// date-time. The validator accepts any string JavaScript `Date` can
+	// parse (so also forms like `May 1 2026` or `2026/05/01`); one it
+	// cannot parse returns HTTP 400. An empty value is read as not sent.
+	//
+	StartDate *string `queryParam:"style=form,explode=true,name=startDate"`
+	// Inclusive upper bound on `createdAt`, as an ISO 8601 date or
+	// date-time. The validator accepts any string JavaScript `Date` can
+	// parse (so also forms like `May 1 2026` or `2026/05/01`); one it
+	// cannot parse returns HTTP 400. An empty value is read as not sent.
+	//
+	EndDate *string `queryParam:"style=form,explode=true,name=endDate"`
 }
 
 func (l ListAgentConversationArchivesRequest) MarshalJSON() ([]byte, error) {
@@ -108,14 +79,14 @@ func (l *ListAgentConversationArchivesRequest) GetLimit() *int64 {
 	return l.Limit
 }
 
-func (l *ListAgentConversationArchivesRequest) GetSortBy() *ListAgentConversationArchivesSortBy {
+func (l *ListAgentConversationArchivesRequest) GetSortBy() *string {
 	if l == nil {
 		return nil
 	}
 	return l.SortBy
 }
 
-func (l *ListAgentConversationArchivesRequest) GetSortOrder() *ListAgentConversationArchivesSortOrder {
+func (l *ListAgentConversationArchivesRequest) GetSortOrder() *string {
 	if l == nil {
 		return nil
 	}
@@ -129,14 +100,14 @@ func (l *ListAgentConversationArchivesRequest) GetSearch() *string {
 	return l.Search
 }
 
-func (l *ListAgentConversationArchivesRequest) GetStartDate() *time.Time {
+func (l *ListAgentConversationArchivesRequest) GetStartDate() *string {
 	if l == nil {
 		return nil
 	}
 	return l.StartDate
 }
 
-func (l *ListAgentConversationArchivesRequest) GetEndDate() *time.Time {
+func (l *ListAgentConversationArchivesRequest) GetEndDate() *string {
 	if l == nil {
 		return nil
 	}

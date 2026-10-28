@@ -45,7 +45,10 @@ func (c *CurrentNode) GetSubType() optionalnullable.OptionalNullable[string] {
 	return c.SubType
 }
 
-// ParentNode - Parent of `currentNode` when present; `null` when not applicable.
+// ParentNode - Parent of `currentNode` when present; `null` when not applicable,
+// and for a connected app whose limit leaves that parent out. For
+// such an app, `breadcrumbs` likewise names only the nodes inside
+// its limit.
 type ParentNode struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
@@ -83,19 +86,34 @@ func (p *ParentNode) GetSubType() optionalnullable.OptionalNullable[string] {
 }
 
 type KnowledgeHubNodesResponsePagination struct {
-	// Current page (1-indexed).
-	Page int64 `json:"page"`
+	// Current page (1-indexed). `null` when the request pages by `cursor`.
+	Page *int64 `json:"page"`
 	// Page size.
-	Limit      int64 `json:"limit"`
+	Limit int64 `json:"limit"`
+	// Items in the whole result. For a search by a connected app
+	// limited to spaces, folders or files, the matches found so far: it can
+	// grow from page to page and is final once `hasNext` is false.
+	//
 	TotalItems int64 `json:"totalItems"`
-	TotalPages int64 `json:"totalPages"`
-	HasNext    bool  `json:"hasNext"`
-	HasPrev    bool  `json:"hasPrev"`
+	// Number of pages. `null` when the request pages by `cursor`.
+	TotalPages *int64 `json:"totalPages"`
+	HasNext    bool   `json:"hasNext"`
+	HasPrev    bool   `json:"hasPrev"`
+	// Cursor for the next page; null on the last page.
+	NextCursor optionalnullable.OptionalNullable[string] `json:"nextCursor,omitzero"`
+	// Cursor for the previous page; null on the first page.
+	PrevCursor optionalnullable.OptionalNullable[string] `json:"prevCursor,omitzero"`
+	// 1-based index of the first item on this page, when known.
+	StartIndex optionalnullable.OptionalNullable[int64] `json:"startIndex,omitzero"`
+	// 1-based index of the last item on this page, when known.
+	EndIndex optionalnullable.OptionalNullable[int64] `json:"endIndex,omitzero"`
+	// Number of items on this page.
+	CurrentPageItems optionalnullable.OptionalNullable[int64] `json:"currentPageItems,omitzero"`
 }
 
-func (k *KnowledgeHubNodesResponsePagination) GetPage() int64 {
+func (k *KnowledgeHubNodesResponsePagination) GetPage() *int64 {
 	if k == nil {
-		return 0
+		return nil
 	}
 	return k.Page
 }
@@ -114,9 +132,9 @@ func (k *KnowledgeHubNodesResponsePagination) GetTotalItems() int64 {
 	return k.TotalItems
 }
 
-func (k *KnowledgeHubNodesResponsePagination) GetTotalPages() int64 {
+func (k *KnowledgeHubNodesResponsePagination) GetTotalPages() *int64 {
 	if k == nil {
-		return 0
+		return nil
 	}
 	return k.TotalPages
 }
@@ -133,6 +151,41 @@ func (k *KnowledgeHubNodesResponsePagination) GetHasPrev() bool {
 		return false
 	}
 	return k.HasPrev
+}
+
+func (k *KnowledgeHubNodesResponsePagination) GetNextCursor() optionalnullable.OptionalNullable[string] {
+	if k == nil {
+		return nil
+	}
+	return k.NextCursor
+}
+
+func (k *KnowledgeHubNodesResponsePagination) GetPrevCursor() optionalnullable.OptionalNullable[string] {
+	if k == nil {
+		return nil
+	}
+	return k.PrevCursor
+}
+
+func (k *KnowledgeHubNodesResponsePagination) GetStartIndex() optionalnullable.OptionalNullable[int64] {
+	if k == nil {
+		return nil
+	}
+	return k.StartIndex
+}
+
+func (k *KnowledgeHubNodesResponsePagination) GetEndIndex() optionalnullable.OptionalNullable[int64] {
+	if k == nil {
+		return nil
+	}
+	return k.EndIndex
+}
+
+func (k *KnowledgeHubNodesResponsePagination) GetCurrentPageItems() optionalnullable.OptionalNullable[int64] {
+	if k == nil {
+		return nil
+	}
+	return k.CurrentPageItems
 }
 
 // CreatedAt - Date range filter with optional inclusive bounds (epoch ms).
@@ -297,9 +350,15 @@ func (k *KnowledgeHubNodesResponseApplied) GetSortOrder() string {
 
 // KnowledgeHubNodesResponseAvailable - Populated when `include=availableFilters`; otherwise `null`.
 type KnowledgeHubNodesResponseAvailable struct {
-	NodeTypes      []FilterOption `json:"nodeTypes"`
-	RecordTypes    []FilterOption `json:"recordTypes"`
-	Origins        []FilterOption `json:"origins"`
+	NodeTypes   []FilterOption `json:"nodeTypes"`
+	RecordTypes []FilterOption `json:"recordTypes"`
+	Origins     []FilterOption `json:"origins"`
+	// The apps and collections to filter by, each with its own name. For a
+	// connected app with a limit, only those the limit covers whole: an app
+	// or collection it covers only in part (some of its spaces, folders or
+	// files) is not offered. The other option lists are fixed and name no
+	// source.
+	//
 	Connectors     []FilterOption `json:"connectors"`
 	IndexingStatus []FilterOption `json:"indexingStatus"`
 	SortBy         []FilterOption `json:"sortBy"`
@@ -459,6 +518,13 @@ type Permissions struct {
 	CanEdit              bool   `json:"canEdit"`
 	CanDelete            bool   `json:"canDelete"`
 	CanManagePermissions bool   `json:"canManagePermissions"`
+	// The caller's own role on the collection (knowledge base) this node is in, as
+	// restore and `GET /knowledgeBase/{kbId}/trash` check it: OWNER, WRITER,
+	// FILEORGANIZER, COMMENTER or READER. Unlike `role`, which ranks record
+	// permissions inside a folder, it is the same at every level of the collection.
+	// Null outside a collection.
+	//
+	CollectionRole optionalnullable.OptionalNullable[string] `json:"collectionRole,omitzero"`
 }
 
 func (p *Permissions) GetRole() string {
@@ -503,21 +569,42 @@ func (p *Permissions) GetCanManagePermissions() bool {
 	return p.CanManagePermissions
 }
 
+func (p *Permissions) GetCollectionRole() optionalnullable.OptionalNullable[string] {
+	if p == nil {
+		return nil
+	}
+	return p.CollectionRole
+}
+
 // KnowledgeHubNodesResponse - Response body for the Knowledge Hub nodes API. The deployed service
 // serialises optional values as JSON `null` and always includes the keys
 // listed in `required` (Swagger / clients will see stable shapes, not
 // omitted properties).
 type KnowledgeHubNodesResponse struct {
+	// Deepest a collection folder may be nested; a folder directly in the collection is depth 1.
+	MaxFolderDepth int64 `json:"maxFolderDepth"`
 	// Always `true` on HTTP 200. Failures use 4xx/5xx error envelopes, not this body shape.
 	//lint:ignore U1000 accessed via reflection for JSON marshaling
 	success bool `const:"true" json:"success"`
 	// Always `null` on HTTP 200.
 	Error *string `json:"error"`
+	// Status the connector service turns a failed lookup into. Always `null` on HTTP 200:
+	// a failure is answered with that status and the error envelope instead of this body.
+	//
+	ErrorCode optionalnullable.OptionalNullable[int64] `json:"errorCode,omitzero"`
+	// Full record documents keyed by record ID. Filled only for in-process callers
+	// (the agent's knowledge navigator); always `null` over HTTP.
+	//
+	TypedRecords optionalnullable.OptionalNullable[map[string]SemanticSearchGraphRecord] `json:"typed_records,omitzero"`
 	// Current parent node ID when browsing children; `null` at root.
 	ID *string `json:"id"`
 	// Node being browsed when `parentId` is in the path; `null` at root.
 	CurrentNode *CurrentNode `json:"currentNode"`
-	// Parent of `currentNode` when present; `null` when not applicable.
+	// Parent of `currentNode` when present; `null` when not applicable,
+	// and for a connected app whose limit leaves that parent out. For
+	// such an app, `breadcrumbs` likewise names only the nodes inside
+	// its limit.
+	//
 	ParentNode *ParentNode `json:"parentNode"`
 	// Page of nodes for the current browse or search.
 	Items      []KnowledgeHubNode                  `json:"items"`
@@ -542,6 +629,13 @@ func (k *KnowledgeHubNodesResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (k *KnowledgeHubNodesResponse) GetMaxFolderDepth() int64 {
+	if k == nil {
+		return 0
+	}
+	return k.MaxFolderDepth
+}
+
 func (k *KnowledgeHubNodesResponse) GetSuccess() bool {
 	return true
 }
@@ -551,6 +645,20 @@ func (k *KnowledgeHubNodesResponse) GetError() *string {
 		return nil
 	}
 	return k.Error
+}
+
+func (k *KnowledgeHubNodesResponse) GetErrorCode() optionalnullable.OptionalNullable[int64] {
+	if k == nil {
+		return nil
+	}
+	return k.ErrorCode
+}
+
+func (k *KnowledgeHubNodesResponse) GetTypedRecords() optionalnullable.OptionalNullable[map[string]SemanticSearchGraphRecord] {
+	if k == nil {
+		return nil
+	}
+	return k.TypedRecords
 }
 
 func (k *KnowledgeHubNodesResponse) GetID() *string {

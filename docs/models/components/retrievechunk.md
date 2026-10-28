@@ -1,0 +1,12 @@
+# RetrieveChunk
+
+
+## Fields
+
+| Field                                                                                | Type                                                                                 | Required                                                                             | Description                                                                          |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `ID`                                                                                 | `string`                                                                             | :heavy_check_mark:                                                                   | Stable for the same indexed block, for deduplication and caching.                    |
+| `Text`                                                                               | `string`                                                                             | :heavy_check_mark:                                                                   | N/A                                                                                  |
+| `Score`                                                                              | optionalnullable.OptionalNullable[`float64`]                                         | :heavy_minus_sign:                                                                   | N/A                                                                                  |
+| `Record`                                                                             | [components.RetrieveChunkRecord](../../models/components/retrievechunkrecord.md)     | :heavy_check_mark:                                                                   | N/A                                                                                  |
+| `Citation`                                                                           | [components.RetrieveChunkCitation](../../models/components/retrievechunkcitation.md) | :heavy_check_mark:                                                                   | N/A                                                                                  |

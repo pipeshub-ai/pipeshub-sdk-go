@@ -3,6 +3,8 @@
 package components
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 	"time"
@@ -55,6 +57,122 @@ func (e *AgentConversationDetailMessageContentFormat) IsExact() bool {
 		}
 	}
 	return false
+}
+
+type AgentConversationDetailMessageCitationUnionType string
+
+const (
+	AgentConversationDetailMessageCitationUnionTypeAgentConversationDetailMessageCitation AgentConversationDetailMessageCitationUnionType = "AgentConversationDetailMessageCitation"
+	AgentConversationDetailMessageCitationUnionTypeRedactedSource                         AgentConversationDetailMessageCitationUnionType = "RedactedSource"
+	AgentConversationDetailMessageCitationUnionTypeUnknown                                AgentConversationDetailMessageCitationUnionType = "Unknown"
+)
+
+type AgentConversationDetailMessageCitationUnion struct {
+	AgentConversationDetailMessageCitation *AgentConversationDetailMessageCitation `queryParam:"inline" union:"member"`
+	RedactedSource                         *RedactedSource                         `queryParam:"inline" union:"member"`
+	UnknownRaw                             json.RawMessage                         `json:"-" union:"unknown"`
+
+	Type AgentConversationDetailMessageCitationUnionType
+}
+
+func CreateAgentConversationDetailMessageCitationUnionAgentConversationDetailMessageCitation(agentConversationDetailMessageCitation AgentConversationDetailMessageCitation) AgentConversationDetailMessageCitationUnion {
+	typ := AgentConversationDetailMessageCitationUnionTypeAgentConversationDetailMessageCitation
+
+	return AgentConversationDetailMessageCitationUnion{
+		AgentConversationDetailMessageCitation: &agentConversationDetailMessageCitation,
+		Type:                                   typ,
+	}
+}
+
+func CreateAgentConversationDetailMessageCitationUnionRedactedSource(redactedSource RedactedSource) AgentConversationDetailMessageCitationUnion {
+	typ := AgentConversationDetailMessageCitationUnionTypeRedactedSource
+
+	return AgentConversationDetailMessageCitationUnion{
+		RedactedSource: &redactedSource,
+		Type:           typ,
+	}
+}
+
+func CreateAgentConversationDetailMessageCitationUnionUnknown(raw json.RawMessage) AgentConversationDetailMessageCitationUnion {
+	return AgentConversationDetailMessageCitationUnion{
+		UnknownRaw: raw,
+		Type:       AgentConversationDetailMessageCitationUnionTypeUnknown,
+	}
+}
+
+func (u AgentConversationDetailMessageCitationUnion) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u AgentConversationDetailMessageCitationUnion) IsUnknown() bool {
+	return u.Type == AgentConversationDetailMessageCitationUnionTypeUnknown
+}
+
+func (u *AgentConversationDetailMessageCitationUnion) UnmarshalJSON(data []byte) error {
+	*u = AgentConversationDetailMessageCitationUnion{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var agentConversationDetailMessageCitation AgentConversationDetailMessageCitation = AgentConversationDetailMessageCitation{}
+	if err := utils.UnmarshalJSON(data, &agentConversationDetailMessageCitation, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  AgentConversationDetailMessageCitationUnionTypeAgentConversationDetailMessageCitation,
+			Value: &agentConversationDetailMessageCitation,
+		})
+	}
+
+	var redactedSource RedactedSource = RedactedSource{}
+	if err := utils.UnmarshalJSON(data, &redactedSource, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  AgentConversationDetailMessageCitationUnionTypeRedactedSource,
+			Value: &redactedSource,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = AgentConversationDetailMessageCitationUnionTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = AgentConversationDetailMessageCitationUnionTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(AgentConversationDetailMessageCitationUnionType)
+	switch best.Type {
+	case AgentConversationDetailMessageCitationUnionTypeAgentConversationDetailMessageCitation:
+		u.AgentConversationDetailMessageCitation = best.Value.(*AgentConversationDetailMessageCitation)
+		return nil
+	case AgentConversationDetailMessageCitationUnionTypeRedactedSource:
+		u.RedactedSource = best.Value.(*RedactedSource)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = AgentConversationDetailMessageCitationUnionTypeUnknown
+	return nil
+}
+
+func (u AgentConversationDetailMessageCitationUnion) MarshalJSON() ([]byte, error) {
+	if u.AgentConversationDetailMessageCitation != nil {
+		return utils.MarshalJSON(u.AgentConversationDetailMessageCitation, "", true)
+	}
+
+	if u.RedactedSource != nil {
+		return utils.MarshalJSON(u.RedactedSource, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type AgentConversationDetailMessageCitationUnion: all fields are null")
 }
 
 // Confidence - AI confidence in the answer. Present only on `bot_response` messages,
@@ -158,6 +276,122 @@ func (a *AgentConversationDetailMessageReferenceDatum) GetMetadata() map[string]
 	return a.Metadata
 }
 
+type AgentConversationDetailMessageReferenceDatumUnionType string
+
+const (
+	AgentConversationDetailMessageReferenceDatumUnionTypeAgentConversationDetailMessageReferenceDatum AgentConversationDetailMessageReferenceDatumUnionType = "AgentConversationDetailMessage_referenceDatum"
+	AgentConversationDetailMessageReferenceDatumUnionTypeRedactedSource                               AgentConversationDetailMessageReferenceDatumUnionType = "RedactedSource"
+	AgentConversationDetailMessageReferenceDatumUnionTypeUnknown                                      AgentConversationDetailMessageReferenceDatumUnionType = "Unknown"
+)
+
+type AgentConversationDetailMessageReferenceDatumUnion struct {
+	AgentConversationDetailMessageReferenceDatum *AgentConversationDetailMessageReferenceDatum `queryParam:"inline" union:"member"`
+	RedactedSource                               *RedactedSource                               `queryParam:"inline" union:"member"`
+	UnknownRaw                                   json.RawMessage                               `json:"-" union:"unknown"`
+
+	Type AgentConversationDetailMessageReferenceDatumUnionType
+}
+
+func CreateAgentConversationDetailMessageReferenceDatumUnionAgentConversationDetailMessageReferenceDatum(agentConversationDetailMessageReferenceDatum AgentConversationDetailMessageReferenceDatum) AgentConversationDetailMessageReferenceDatumUnion {
+	typ := AgentConversationDetailMessageReferenceDatumUnionTypeAgentConversationDetailMessageReferenceDatum
+
+	return AgentConversationDetailMessageReferenceDatumUnion{
+		AgentConversationDetailMessageReferenceDatum: &agentConversationDetailMessageReferenceDatum,
+		Type: typ,
+	}
+}
+
+func CreateAgentConversationDetailMessageReferenceDatumUnionRedactedSource(redactedSource RedactedSource) AgentConversationDetailMessageReferenceDatumUnion {
+	typ := AgentConversationDetailMessageReferenceDatumUnionTypeRedactedSource
+
+	return AgentConversationDetailMessageReferenceDatumUnion{
+		RedactedSource: &redactedSource,
+		Type:           typ,
+	}
+}
+
+func CreateAgentConversationDetailMessageReferenceDatumUnionUnknown(raw json.RawMessage) AgentConversationDetailMessageReferenceDatumUnion {
+	return AgentConversationDetailMessageReferenceDatumUnion{
+		UnknownRaw: raw,
+		Type:       AgentConversationDetailMessageReferenceDatumUnionTypeUnknown,
+	}
+}
+
+func (u AgentConversationDetailMessageReferenceDatumUnion) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u AgentConversationDetailMessageReferenceDatumUnion) IsUnknown() bool {
+	return u.Type == AgentConversationDetailMessageReferenceDatumUnionTypeUnknown
+}
+
+func (u *AgentConversationDetailMessageReferenceDatumUnion) UnmarshalJSON(data []byte) error {
+	*u = AgentConversationDetailMessageReferenceDatumUnion{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var agentConversationDetailMessageReferenceDatum AgentConversationDetailMessageReferenceDatum = AgentConversationDetailMessageReferenceDatum{}
+	if err := utils.UnmarshalJSON(data, &agentConversationDetailMessageReferenceDatum, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  AgentConversationDetailMessageReferenceDatumUnionTypeAgentConversationDetailMessageReferenceDatum,
+			Value: &agentConversationDetailMessageReferenceDatum,
+		})
+	}
+
+	var redactedSource RedactedSource = RedactedSource{}
+	if err := utils.UnmarshalJSON(data, &redactedSource, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  AgentConversationDetailMessageReferenceDatumUnionTypeRedactedSource,
+			Value: &redactedSource,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = AgentConversationDetailMessageReferenceDatumUnionTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = AgentConversationDetailMessageReferenceDatumUnionTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(AgentConversationDetailMessageReferenceDatumUnionType)
+	switch best.Type {
+	case AgentConversationDetailMessageReferenceDatumUnionTypeAgentConversationDetailMessageReferenceDatum:
+		u.AgentConversationDetailMessageReferenceDatum = best.Value.(*AgentConversationDetailMessageReferenceDatum)
+		return nil
+	case AgentConversationDetailMessageReferenceDatumUnionTypeRedactedSource:
+		u.RedactedSource = best.Value.(*RedactedSource)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = AgentConversationDetailMessageReferenceDatumUnionTypeUnknown
+	return nil
+}
+
+func (u AgentConversationDetailMessageReferenceDatumUnion) MarshalJSON() ([]byte, error) {
+	if u.AgentConversationDetailMessageReferenceDatum != nil {
+		return utils.MarshalJSON(u.AgentConversationDetailMessageReferenceDatum, "", true)
+	}
+
+	if u.RedactedSource != nil {
+		return utils.MarshalJSON(u.RedactedSource, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type AgentConversationDetailMessageReferenceDatumUnion: all fields are null")
+}
+
 type AgentConversationDetailMessageMetadata struct {
 	ProcessingTimeMs *float64 `json:"processingTimeMs,omitzero"`
 	ModelVersion     *string  `json:"modelVersion,omitzero"`
@@ -189,11 +423,11 @@ func (a *AgentConversationDetailMessageMetadata) GetAiTransactionID() *string {
 // The response spreads the stored message document and replaces
 // `citations` with populated citation objects.
 type AgentConversationDetailMessage struct {
-	ID            *string                                      `json:"_id,omitzero"`
-	MessageType   *AgentConversationDetailMessageMessageType   `json:"messageType,omitzero"`
-	Content       *string                                      `json:"content,omitzero"`
-	ContentFormat *AgentConversationDetailMessageContentFormat `json:"contentFormat,omitzero"`
-	Citations     []AgentConversationDetailMessageCitation     `json:"citations,omitzero"`
+	ID            *string                                       `json:"_id,omitzero"`
+	MessageType   *AgentConversationDetailMessageMessageType    `json:"messageType,omitzero"`
+	Content       *string                                       `json:"content,omitzero"`
+	ContentFormat *AgentConversationDetailMessageContentFormat  `json:"contentFormat,omitzero"`
+	Citations     []AgentConversationDetailMessageCitationUnion `json:"citations,omitzero"`
 	// AI confidence in the answer. Present only on `bot_response` messages,
 	// and only when the model emitted a trailing confidence block.
 	//
@@ -205,7 +439,7 @@ type AgentConversationDetailMessage struct {
 	// Reference identifiers surfaced from tool responses, used to scope
 	// follow-up queries.
 	//
-	ReferenceData []AgentConversationDetailMessageReferenceDatum `json:"referenceData,omitzero"`
+	ReferenceData []AgentConversationDetailMessageReferenceDatumUnion `json:"referenceData,omitzero"`
 	// Files uploaded for this message turn (see
 	// `POST /agents/{agentKey}/conversations/attachments/upload`).
 	//
@@ -267,7 +501,7 @@ func (a *AgentConversationDetailMessage) GetContentFormat() *AgentConversationDe
 	return a.ContentFormat
 }
 
-func (a *AgentConversationDetailMessage) GetCitations() []AgentConversationDetailMessageCitation {
+func (a *AgentConversationDetailMessage) GetCitations() []AgentConversationDetailMessageCitationUnion {
 	if a == nil {
 		return nil
 	}
@@ -295,7 +529,7 @@ func (a *AgentConversationDetailMessage) GetFeedback() []MessageFeedback {
 	return a.Feedback
 }
 
-func (a *AgentConversationDetailMessage) GetReferenceData() []AgentConversationDetailMessageReferenceDatum {
+func (a *AgentConversationDetailMessage) GetReferenceData() []AgentConversationDetailMessageReferenceDatumUnion {
 	if a == nil {
 		return nil
 	}

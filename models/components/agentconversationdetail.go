@@ -30,8 +30,16 @@ func (e *AgentConversationDetailAccessLevel) IsExact() bool {
 }
 
 type AgentConversationDetailSharedWith struct {
+	ID          *string                             `json:"_id,omitzero"`
 	UserID      *string                             `json:"userId,omitzero"`
 	AccessLevel *AgentConversationDetailAccessLevel `json:"accessLevel,omitzero"`
+}
+
+func (a *AgentConversationDetailSharedWith) GetID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ID
 }
 
 func (a *AgentConversationDetailSharedWith) GetUserID() *string {
@@ -77,16 +85,23 @@ func (e *AgentConversationDetailStatus) IsExact() bool {
 // not the raw `AgentConversation` document shape: fields like `agentKey`,
 // `userId`, `orgId`, `conversationSource`, and root-level `messages`
 // metadata outside the selected slice are omitted.
+//
+// `sharedWith` is the owner's list of recipients, so it is present only for the
+// owner. A recipient gets `sharedBy` (who shared the chat) instead.
 type AgentConversationDetail struct {
 	ID         string                              `json:"id"`
 	Title      *string                             `json:"title,omitzero"`
 	Initiator  *string                             `json:"initiator,omitzero"`
 	CreatedAt  time.Time                           `json:"createdAt"`
 	IsShared   bool                                `json:"isShared"`
-	SharedWith []AgentConversationDetailSharedWith `json:"sharedWith"`
+	SharedWith []AgentConversationDetailSharedWith `json:"sharedWith,omitzero"`
 	Status     *AgentConversationDetailStatus      `json:"status,omitzero"`
 	FailReason *string                             `json:"failReason,omitzero"`
-	Messages   []AgentConversationDetailMessage    `json:"messages"`
+	// Present on conversations the caller received via share. Identifies the
+	// conversation initiator (the only user who can share a chat).
+	//
+	SharedBy *ConversationSharedBy            `json:"sharedBy,omitzero"`
+	Messages []AgentConversationDetailMessage `json:"messages"`
 	// AI model configuration recorded against a conversation or message.
 	ModelInfo *ConversationModelInfo `json:"modelInfo,omitzero"`
 	// Message pagination returned inside the `conversation` object. The
@@ -145,7 +160,7 @@ func (a *AgentConversationDetail) GetIsShared() bool {
 
 func (a *AgentConversationDetail) GetSharedWith() []AgentConversationDetailSharedWith {
 	if a == nil {
-		return []AgentConversationDetailSharedWith{}
+		return nil
 	}
 	return a.SharedWith
 }
@@ -162,6 +177,13 @@ func (a *AgentConversationDetail) GetFailReason() *string {
 		return nil
 	}
 	return a.FailReason
+}
+
+func (a *AgentConversationDetail) GetSharedBy() *ConversationSharedBy {
+	if a == nil {
+		return nil
+	}
+	return a.SharedBy
 }
 
 func (a *AgentConversationDetail) GetMessages() []AgentConversationDetailMessage {

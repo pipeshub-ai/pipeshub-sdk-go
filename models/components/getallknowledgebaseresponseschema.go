@@ -4,6 +4,7 @@ package components
 
 import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
 type GetAllKnowledgeBaseResponseSchemaUserRole string
@@ -23,6 +24,34 @@ func (e *GetAllKnowledgeBaseResponseSchemaUserRole) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "OWNER", "WRITER", "READER":
+			return true
+		}
+	}
+	return false
+}
+
+// GetAllKnowledgeBaseResponseSchemaStatus - The knowledge base's processing state. `DELETING` while it is being deleted (writes are
+// refused with 409). `IDLE`, `QUEUED`, `SYNCING` or `FULL_SYNCING` otherwise, or null on a
+// knowledge base that has not been processed yet.
+type GetAllKnowledgeBaseResponseSchemaStatus string
+
+const (
+	GetAllKnowledgeBaseResponseSchemaStatusIdle        GetAllKnowledgeBaseResponseSchemaStatus = "IDLE"
+	GetAllKnowledgeBaseResponseSchemaStatusQueued      GetAllKnowledgeBaseResponseSchemaStatus = "QUEUED"
+	GetAllKnowledgeBaseResponseSchemaStatusSyncing     GetAllKnowledgeBaseResponseSchemaStatus = "SYNCING"
+	GetAllKnowledgeBaseResponseSchemaStatusFullSyncing GetAllKnowledgeBaseResponseSchemaStatus = "FULL_SYNCING"
+	GetAllKnowledgeBaseResponseSchemaStatusDeleting    GetAllKnowledgeBaseResponseSchemaStatus = "DELETING"
+)
+
+func (e GetAllKnowledgeBaseResponseSchemaStatus) ToPointer() *GetAllKnowledgeBaseResponseSchemaStatus {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *GetAllKnowledgeBaseResponseSchemaStatus) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "IDLE", "QUEUED", "SYNCING", "FULL_SYNCING", "DELETING":
 			return true
 		}
 	}
@@ -72,7 +101,12 @@ type GetAllKnowledgeBaseResponseSchemaKnowledgeBase struct {
 	UpdatedAtTimestamp int64                                     `json:"updatedAtTimestamp"`
 	CreatedBy          string                                    `json:"createdBy"`
 	UserRole           GetAllKnowledgeBaseResponseSchemaUserRole `json:"userRole"`
-	Folders            []GetAllKnowledgeBaseResponseSchemaFolder `json:"folders"`
+	// The knowledge base's processing state. `DELETING` while it is being deleted (writes are
+	// refused with 409). `IDLE`, `QUEUED`, `SYNCING` or `FULL_SYNCING` otherwise, or null on a
+	// knowledge base that has not been processed yet.
+	//
+	Status  optionalnullable.OptionalNullable[GetAllKnowledgeBaseResponseSchemaStatus] `json:"status,omitzero"`
+	Folders []GetAllKnowledgeBaseResponseSchemaFolder                                  `json:"folders"`
 }
 
 func (g *GetAllKnowledgeBaseResponseSchemaKnowledgeBase) GetID() string {
@@ -122,6 +156,13 @@ func (g *GetAllKnowledgeBaseResponseSchemaKnowledgeBase) GetUserRole() GetAllKno
 		return GetAllKnowledgeBaseResponseSchemaUserRole("")
 	}
 	return g.UserRole
+}
+
+func (g *GetAllKnowledgeBaseResponseSchemaKnowledgeBase) GetStatus() optionalnullable.OptionalNullable[GetAllKnowledgeBaseResponseSchemaStatus] {
+	if g == nil {
+		return nil
+	}
+	return g.Status
 }
 
 func (g *GetAllKnowledgeBaseResponseSchemaKnowledgeBase) GetFolders() []GetAllKnowledgeBaseResponseSchemaFolder {

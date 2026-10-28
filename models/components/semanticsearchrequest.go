@@ -3,8 +3,61 @@
 package components
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
+
+// Timeline - Search a span of time period by period instead of ranking matches over the whole
+// span, for questions such as "how did this evolve" or "what changed between March
+// and May". A plain search returns the best matches overall, which bunch around one
+// moment; a timeline splits the span into up to 6 periods (calendar months, or weeks
+// within one month), searches each period on its own and beside one search of the
+// whole span, and returns the matches in date order, each labelled with its period.
+//
+// The value is the date records are placed by: `created` (when the record was
+// created at its source) or `modified` (its last change). The span is that date's
+// bounds (`createdAfter` / `createdBefore`, or `modifiedAfter` / `modifiedBefore`);
+// with no start it covers the year before the end, or further back to the earliest
+// of the best matches. Bounds on the other date apply to every period. `limit` is the
+// number of matches each period's own search asks for; matches from
+// the search of the whole span (up to 50) are added to the periods their records are
+// dated in, so a period can hold more than `limit`. Each search applies the same permissions
+// and filters as a plain search.
+//
+// Left out, a search whose bounds on one date have a start and cover more than 31
+// days (a missing end is today) runs as a timeline on that date, and
+// `timeline.automatic` is `true`; any other search is a plain ranked search. `off`
+// is always a plain ranked search. A server whose `TIMELINE_SUMMARIES` setting is
+// `false` ignores the field and never runs a timeline.
+type Timeline string
+
+const (
+	TimelineCreated  Timeline = "created"
+	TimelineModified Timeline = "modified"
+	TimelineOff      Timeline = "off"
+)
+
+func (e Timeline) ToPointer() *Timeline {
+	return &e
+}
+func (e *Timeline) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "created":
+		fallthrough
+	case "modified":
+		fallthrough
+	case "off":
+		*e = Timeline(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Timeline: %v", v)
+	}
+}
 
 // SemanticSearchRequest - Request body for performing semantic search across the enterprise knowledge base.
 //
@@ -18,21 +71,114 @@ import (
 // **Filtering:**
 //
 // Use filters to narrow search scope to specific apps or knowledge bases.
+//
+// **Date bounds** (`createdAfter`, `createdBefore`, `modifiedAfter`, `modifiedBefore`)
+// match when a record was written or last changed, not when an event it describes
+// happened. With any of them set, and while the server's `DATE_FILTER_SAFETY_NET` setting
+// is on (the default), the same search also runs once without dates, and its best matches
+// that the bounds left out come back apart from the results, in
+// `searchResponse.outsideDates`. With the setting off, no such search runs and
+// `outsideDates` is omitted.
 type SemanticSearchRequest struct {
 	// Natural language search query. The system understands
-	// semantic meaning, not just keywords.
+	// semantic meaning, not just keywords. A query containing HTML
+	// markup or a printf-style format specifier (`%s`, `%x`, `%n`) is
+	// refused with `400` `HTTP_BAD_REQUEST`.
 	//
 	Query string `json:"query"`
-	// App connector instance ids and knowledge-base / record-group ids that narrow retrieval
-	// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
-	// For **agent** chat streams, send explicit id lists, or **omit** `filters` (and `tools`)
-	// to let the service use the agent’s stored knowledge and tool configuration. Sending
-	// `{ "apps": [], "kb": [] }` on an agent stream means **no** knowledge sources for that
-	// turn (it is not “full org default”).
+	// What retrieval is narrowed to for a turn: whole apps, and selections below app
+	// level (record groups, folders, records). The keys are a union. For **org assistant**
+	// chat streams, send explicit lists. For **agent** chat streams, send explicit id lists,
+	// or **omit** `filters` (and `tools`) to let the service use the agent’s stored knowledge
+	// and tool configuration. Sending `{ "apps": [], "kb": [] }` on an agent stream means
+	// **no** knowledge sources for that turn (it is not “full org default”).
+	//
+	// A selection below app level is the whole scope of the turn: with `recordGroups`,
+	// `records` or `recordsExact` present, an absent or empty `apps` / `kb` means none of
+	// them. A selected node that does not exist or that the caller cannot read contributes
+	// nothing; when nothing valid remains the turn searches nothing. `/search` answers 404
+	// for that; a chat turn is not failed, its search simply finds nothing.
+	// At most 200 ids may be sent in one request, counted across all keys, and every id must
+	// be a valid UUID. A key this schema does not list is refused with 400; the message names
+	// the key and lists the allowed ones. A value of the wrong type is refused with 400 too.
+	//
+	// A selection that covers more than the configured number of nodes (50,000 by default),
+	// or that touches a source still being prepared for folder-level search, is refused:
+	// `/search` and the non-streaming chat routes answer 422 with the message, and a chat
+	// stream ends with an error frame (`RUN_ERROR`, or `error` on the legacy protocol)
+	// whose `code` is `selection_too_large` or `selection_not_ready` and whose `message`
+	// says what to change. No model call is made for such a turn.
 	//
 	Filters *Filters `json:"filters,omitzero"`
-	// Maximum number of results to return
+	// For a ranked search, the maximum number of passages (entries of `searchResults`) the
+	// response holds, counted after query expansion and section expansion, so it holds at
+	// any number of queries. `records` lists only the records those passages come from. A
+	// search run as a timeline is not cut to `limit` as a whole: `limit` is what each
+	// period's own search asks for, and a period can hold more (see `timeline`). When the
+	// timeline was chosen automatically (`timeline` left out), each period asks for at most
+	// 10, whatever `limit` is.
+	//
+	// Left out, it is `10`. A numeric string (`"2"`) is accepted and read as a number; a
+	// fractional number is refused with `400 VALIDATION_ERROR`.
+	//
 	Limit *int64 `default:"10" json:"limit"`
+	// Only records the source created on or after this date. `YYYY-MM-DD` (the whole
+	// day, UTC) or an ISO 8601 datetime with a timezone offset. A date that is not
+	// one of these, or in the future, is a `400` that says why.
+	//
+	CreatedAfter *string `json:"createdAfter,omitzero"`
+	// Only records the source created on or before this date. A `YYYY-MM-DD` value
+	// includes that whole day.
+	//
+	CreatedBefore *string `json:"createdBefore,omitzero"`
+	// Only records last changed in the source on or after this date. Same format as
+	// `createdAfter`.
+	//
+	ModifiedAfter *string `json:"modifiedAfter,omitzero"`
+	// Only records last changed in the source on or before this date. Same format as
+	// `createdBefore`. Records with no source date are left out whenever a bound on
+	// that date is set.
+	//
+	ModifiedBefore *string `json:"modifiedBefore,omitzero"`
+	// Whether the AI model's rewrite of the query and its expanded variants are
+	// searched as well. The query as sent is always searched, so an exact code or
+	// name in it is never lost to the rewrite. Set it to `false` to search the query
+	// exactly as sent and nothing else, with no
+	// model call: faster, and suited to callers that write their own queries, such
+	// as an agent. The results can differ from a search with the rewrite.
+	//
+	RewriteQuery *bool `default:"true" json:"rewriteQuery"`
+	// Search a span of time period by period instead of ranking matches over the whole
+	// span, for questions such as "how did this evolve" or "what changed between March
+	// and May". A plain search returns the best matches overall, which bunch around one
+	// moment; a timeline splits the span into up to 6 periods (calendar months, or weeks
+	// within one month), searches each period on its own and beside one search of the
+	// whole span, and returns the matches in date order, each labelled with its period.
+	//
+	// The value is the date records are placed by: `created` (when the record was
+	// created at its source) or `modified` (its last change). The span is that date's
+	// bounds (`createdAfter` / `createdBefore`, or `modifiedAfter` / `modifiedBefore`);
+	// with no start it covers the year before the end, or further back to the earliest
+	// of the best matches. Bounds on the other date apply to every period. `limit` is the
+	// number of matches each period's own search asks for; matches from
+	// the search of the whole span (up to 50) are added to the periods their records are
+	// dated in, so a period can hold more than `limit`. Each search applies the same permissions
+	// and filters as a plain search.
+	//
+	// Left out, a search whose bounds on one date have a start and cover more than 31
+	// days (a missing end is today) runs as a timeline on that date, and
+	// `timeline.automatic` is `true`; any other search is a plain ranked search. `off`
+	// is always a plain ranked search. A server whose `TIMELINE_SUMMARIES` setting is
+	// `false` ignores the field and never runs a timeline.
+	//
+	Timeline *Timeline `json:"timeline,omitzero"`
+	// Whether the search is saved to the caller's search history (`GET /search`)
+	// with a citation for each match. Set it to `false` for searches that are not
+	// the user's own, such as an agent searching on their behalf: nothing is
+	// stored and the response has no `searchId`. A server older than this field
+	// ignores it and saves the search.
+	//
+	SaveHistory *bool `default:"true" json:"saveHistory"`
 }
 
 func (s SemanticSearchRequest) MarshalJSON() ([]byte, error) {
@@ -65,4 +211,53 @@ func (s *SemanticSearchRequest) GetLimit() *int64 {
 		return nil
 	}
 	return s.Limit
+}
+
+func (s *SemanticSearchRequest) GetCreatedAfter() *string {
+	if s == nil {
+		return nil
+	}
+	return s.CreatedAfter
+}
+
+func (s *SemanticSearchRequest) GetCreatedBefore() *string {
+	if s == nil {
+		return nil
+	}
+	return s.CreatedBefore
+}
+
+func (s *SemanticSearchRequest) GetModifiedAfter() *string {
+	if s == nil {
+		return nil
+	}
+	return s.ModifiedAfter
+}
+
+func (s *SemanticSearchRequest) GetModifiedBefore() *string {
+	if s == nil {
+		return nil
+	}
+	return s.ModifiedBefore
+}
+
+func (s *SemanticSearchRequest) GetRewriteQuery() *bool {
+	if s == nil {
+		return nil
+	}
+	return s.RewriteQuery
+}
+
+func (s *SemanticSearchRequest) GetTimeline() *Timeline {
+	if s == nil {
+		return nil
+	}
+	return s.Timeline
+}
+
+func (s *SemanticSearchRequest) GetSaveHistory() *bool {
+	if s == nil {
+		return nil
+	}
+	return s.SaveHistory
 }

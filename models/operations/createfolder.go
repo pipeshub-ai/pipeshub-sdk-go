@@ -9,7 +9,10 @@ import (
 
 // CreateFolderRequestBody - Request payload
 type CreateFolderRequestBody struct {
-	// Name of the folder
+	// Name of the folder. Whitespace around it is removed first, so a name made
+	// only of whitespace is refused as empty.
+	// It cannot contain `/` or `\`, which folder paths use as separators.
+	//
 	FolderName string `json:"folderName"`
 }
 
@@ -23,7 +26,9 @@ func (c *CreateFolderRequestBody) GetFolderName() string {
 type CreateFolderRequest struct {
 	// Knowledge base ID
 	KbID string `pathParam:"style=simple,explode=false,name=kbId"`
-	// Parent folder ID. Omit to create at the knowledge base root.
+	// Parent folder ID. Omit to create at the knowledge base root. An id that is not a
+	// folder of this knowledge base (unknown, or a file) is answered `404`.
+	//
 	FolderID *string `queryParam:"style=form,explode=true,name=folderId"`
 	// Request payload
 	Body CreateFolderRequestBody `request:"mediaType=application/json"`

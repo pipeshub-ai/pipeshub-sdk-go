@@ -9,7 +9,7 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
-// ListOAuthAppsStatus - Filter by status
+// ListOAuthAppsStatus - Filter by status. `revoked` always yields an empty page, because an app only becomes revoked by being deleted and deleted apps are never listed.
 type ListOAuthAppsStatus string
 
 const (
@@ -46,7 +46,7 @@ type ListOAuthAppsRequest struct {
 	// Items per page (defaults to `20` when omitted or empty; max 100).
 	//
 	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
-	// Filter by status
+	// Filter by status. `revoked` always yields an empty page, because an app only becomes revoked by being deleted and deleted apps are never listed.
 	Status *ListOAuthAppsStatus `queryParam:"style=form,explode=true,name=status"`
 	// Search by app name or description (case-insensitive)
 	Search *string `queryParam:"style=form,explode=true,name=search"`

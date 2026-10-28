@@ -38,6 +38,52 @@ func (e *UpdateOAuthAppRequestAllowedGrantType) UnmarshalJSON(data []byte) error
 	}
 }
 
+// UpdateOAuthAppRequestKnowledgeLimit - `null` lifts the limit. A change that takes anything away revokes
+// the app's outstanding tokens, so users connect again. A change
+// that only adds (a lift included) keeps them: each token, and each
+// refresh of it, stays at the limit its user agreed to, and the new
+// items reach a user once they connect again.
+type UpdateOAuthAppRequestKnowledgeLimit struct {
+	// Whole connectors and collections.
+	Apps []string `json:"apps,omitzero"`
+	// Record groups (a drive, space or project), with the groups nested in them.
+	RecordGroups []string `json:"recordGroups,omitzero"`
+	// Folders or records, with everything under them.
+	Records []string `json:"records,omitzero"`
+}
+
+func (u UpdateOAuthAppRequestKnowledgeLimit) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(u, "", false)
+}
+
+func (u *UpdateOAuthAppRequestKnowledgeLimit) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UpdateOAuthAppRequestKnowledgeLimit) GetApps() []string {
+	if u == nil {
+		return nil
+	}
+	return u.Apps
+}
+
+func (u *UpdateOAuthAppRequestKnowledgeLimit) GetRecordGroups() []string {
+	if u == nil {
+		return nil
+	}
+	return u.RecordGroups
+}
+
+func (u *UpdateOAuthAppRequestKnowledgeLimit) GetRecords() []string {
+	if u == nil {
+		return nil
+	}
+	return u.Records
+}
+
 // UpdateOAuthAppRequest - Request to update an OAuth app (`updateAppSchema` in `oauth.validators.ts`).
 //
 // All fields are optional — include only fields that should change. URL fields (`homepageUrl`, `privacyPolicyUrl`, `termsOfServiceUrl`) accept `null` to clear them (nullable in Zod).
@@ -50,15 +96,33 @@ type UpdateOAuthAppRequest struct {
 	Description *string `json:"description,omitzero"`
 	// Allowed redirect URIs (up to 10). Required when `authorization_code` grant type is enabled.
 	// Preserved in the database even if `authorization_code` is removed from grant types.
+	// Each URI must parse as a URL (`VALIDATION_ERROR` otherwise), and the service then refuses with
+	// `400 OAUTH_INVALID_REDIRECT_URI` any URI that is not `https:` and whose host is not `localhost` or
+	// `127.0.0.1` (any scheme is let through on those two hosts), or that carries a fragment.
+	// The one exception is the literal `cursor://anysphere.cursor-mcp/oauth/callback`.
+	// Both checks use WHATWG `new URL()`, so the scheme and a `localhost` host match in any case,
+	// `https:` may be followed by any number of `/` or `\` (or none), and surrounding whitespace is
+	// allowed and trimmed before the URI is stored; the URI is otherwise stored as sent. `https://`
+	// with no host does not parse. The pattern approximates these rules.
 	//
-	RedirectUris         []string                                  `json:"redirectUris,omitzero"`
-	AllowedGrantTypes    []UpdateOAuthAppRequestAllowedGrantType   `json:"allowedGrantTypes,omitzero"`
-	AllowedScopes        []string                                  `json:"allowedScopes,omitzero"`
-	HomepageURL          optionalnullable.OptionalNullable[string] `json:"homepageUrl,omitzero"`
-	PrivacyPolicyURL     optionalnullable.OptionalNullable[string] `json:"privacyPolicyUrl,omitzero"`
+	RedirectUris      []string                                `json:"redirectUris,omitzero"`
+	AllowedGrantTypes []UpdateOAuthAppRequestAllowedGrantType `json:"allowedGrantTypes,omitzero"`
+	AllowedScopes     []string                                `json:"allowedScopes,omitzero"`
+	// `null` clears it. Must parse as a URL (`z.string().url()`); the pattern is the closest JSON Schema can say.
+	HomepageURL optionalnullable.OptionalNullable[string] `json:"homepageUrl,omitzero"`
+	// `null` clears it. Must parse as a URL (`z.string().url()`); the pattern is the closest JSON Schema can say.
+	PrivacyPolicyURL optionalnullable.OptionalNullable[string] `json:"privacyPolicyUrl,omitzero"`
+	// `null` clears it. Must parse as a URL (`z.string().url()`); the pattern is the closest JSON Schema can say.
 	TermsOfServiceURL    optionalnullable.OptionalNullable[string] `json:"termsOfServiceUrl,omitzero"`
 	AccessTokenLifetime  *int64                                    `json:"accessTokenLifetime,omitzero"`
 	RefreshTokenLifetime *int64                                    `json:"refreshTokenLifetime,omitzero"`
+	// `null` lifts the limit. A change that takes anything away revokes
+	// the app's outstanding tokens, so users connect again. A change
+	// that only adds (a lift included) keeps them: each token, and each
+	// refresh of it, stays at the limit its user agreed to, and the new
+	// items reach a user once they connect again.
+	//
+	KnowledgeLimit optionalnullable.OptionalNullable[UpdateOAuthAppRequestKnowledgeLimit] `json:"knowledgeLimit,omitzero"`
 }
 
 func (u UpdateOAuthAppRequest) MarshalJSON() ([]byte, error) {
@@ -140,4 +204,11 @@ func (u *UpdateOAuthAppRequest) GetRefreshTokenLifetime() *int64 {
 		return nil
 	}
 	return u.RefreshTokenLifetime
+}
+
+func (u *UpdateOAuthAppRequest) GetKnowledgeLimit() optionalnullable.OptionalNullable[UpdateOAuthAppRequestKnowledgeLimit] {
+	if u == nil {
+		return nil
+	}
+	return u.KnowledgeLimit
 }

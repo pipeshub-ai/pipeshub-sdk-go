@@ -10,8 +10,16 @@ import (
 type StreamRecordBufferRequest struct {
 	// Record ID
 	RecordID string `pathParam:"style=simple,explode=false,name=recordId"`
-	// Target format for conversion
+	// Target format for conversion. Only `application/pdf` has an effect, and only for
+	// documents that can be converted. Sending it more than once is refused with `400`.
+	//
 	ConvertTo *string `queryParam:"style=form,explode=true,name=convertTo"`
+	// Registry version to pin ARTIFACT record content to. Omit to stream
+	// the latest version. Ignored for non-artifact records. Must be written as digits
+	// only; anything else (`-1`, `1.5`, an empty value) or sending it more than once is
+	// refused with `400`.
+	//
+	Version *int64 `queryParam:"style=form,explode=true,name=version"`
 }
 
 func (s *StreamRecordBufferRequest) GetRecordID() string {
@@ -28,9 +36,20 @@ func (s *StreamRecordBufferRequest) GetConvertTo() *string {
 	return s.ConvertTo
 }
 
+func (s *StreamRecordBufferRequest) GetVersion() *int64 {
+	if s == nil {
+		return nil
+	}
+	return s.Version
+}
+
 type StreamRecordBufferResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// File content stream
+	// The file's content, with the file's own MIME type (`text/plain`, `text/markdown`,
+	// `text/csv`, `text/html` and `application/json` for the text files uploads produce;
+	// any other stored type is passed through as well). A JSON file is sent exactly as it
+	// was uploaded.
+	//
 	// The Close method must be called on this field, even if it is not used, to prevent resource leaks.
 	ResponseStream io.ReadCloser
 }

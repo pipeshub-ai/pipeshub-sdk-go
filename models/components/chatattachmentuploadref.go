@@ -9,7 +9,10 @@ type ChatAttachmentUploadRef struct {
 	RecordID string `json:"recordId"`
 	// Original filename stored for the attachment.
 	RecordName string `json:"recordName"`
-	// MIME type of the uploaded file.
+	// MIME type of the stored file. For an image whose bytes are a JPEG or a PNG it is
+	// `image/jpeg` or `image/png` as the bytes say, whatever type was declared; other
+	// files keep the declared type. Files, images included, are stored as sent.
+	//
 	MimeType string `json:"mimeType"`
 	// File extension derived by the backend.
 	Extension string `json:"extension"`

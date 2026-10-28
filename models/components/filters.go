@@ -3,25 +3,545 @@
 package components
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
 
-// Filters - App connector instance ids and knowledge-base / record-group ids that narrow retrieval
-// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
-// For **agent** chat streams, send explicit id lists, or **omit** `filters` (and `tools`)
-// to let the service use the agent’s stored knowledge and tool configuration. Sending
-// `{ "apps": [], "kb": [] }` on an agent stream means **no** knowledge sources for that
-// turn (it is not “full org default”).
+type NamedEntityKind string
+
+const (
+	NamedEntityKindPerson        NamedEntityKind = "person"
+	NamedEntityKindPersonType    NamedEntityKind = "person_type"
+	NamedEntityKindOrganization  NamedEntityKind = "organization"
+	NamedEntityKindEvent         NamedEntityKind = "event"
+	NamedEntityKindProduct       NamedEntityKind = "product"
+	NamedEntityKindSkill         NamedEntityKind = "skill"
+	NamedEntityKindLocation      NamedEntityKind = "location"
+	NamedEntityKindCity          NamedEntityKind = "city"
+	NamedEntityKindState         NamedEntityKind = "state"
+	NamedEntityKindCountryRegion NamedEntityKind = "country_region"
+	NamedEntityKindAddress       NamedEntityKind = "address"
+	NamedEntityKindDate          NamedEntityKind = "date"
+	NamedEntityKindDateRange     NamedEntityKind = "date_range"
+	NamedEntityKindDateTime      NamedEntityKind = "date_time"
+	NamedEntityKindDuration      NamedEntityKind = "duration"
+	NamedEntityKindCurrency      NamedEntityKind = "currency"
+	NamedEntityKindPercentage    NamedEntityKind = "percentage"
+	NamedEntityKindAge           NamedEntityKind = "age"
+	NamedEntityKindDimension     NamedEntityKind = "dimension"
+	NamedEntityKindEmail         NamedEntityKind = "email"
+	NamedEntityKindURL           NamedEntityKind = "url"
+	NamedEntityKindPhone         NamedEntityKind = "phone"
+	NamedEntityKindIP            NamedEntityKind = "ip"
+)
+
+func (e NamedEntityKind) ToPointer() *NamedEntityKind {
+	return &e
+}
+func (e *NamedEntityKind) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "person":
+		fallthrough
+	case "person_type":
+		fallthrough
+	case "organization":
+		fallthrough
+	case "event":
+		fallthrough
+	case "product":
+		fallthrough
+	case "skill":
+		fallthrough
+	case "location":
+		fallthrough
+	case "city":
+		fallthrough
+	case "state":
+		fallthrough
+	case "country_region":
+		fallthrough
+	case "address":
+		fallthrough
+	case "date":
+		fallthrough
+	case "date_range":
+		fallthrough
+	case "date_time":
+		fallthrough
+	case "duration":
+		fallthrough
+	case "currency":
+		fallthrough
+	case "percentage":
+		fallthrough
+	case "age":
+		fallthrough
+	case "dimension":
+		fallthrough
+	case "email":
+		fallthrough
+	case "url":
+		fallthrough
+	case "phone":
+		fallthrough
+	case "ip":
+		*e = NamedEntityKind(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for NamedEntityKind: %v", v)
+	}
+}
+
+type FromType string
+
+const (
+	FromTypeInteger FromType = "integer"
+	FromTypeStr     FromType = "str"
+)
+
+type From struct {
+	Integer *int64  `queryParam:"inline" union:"member"`
+	Str     *string `queryParam:"inline" union:"member"`
+
+	Type FromType
+}
+
+func CreateFromInteger(integer int64) From {
+	typ := FromTypeInteger
+
+	return From{
+		Integer: &integer,
+		Type:    typ,
+	}
+}
+
+func CreateFromStr(str string) From {
+	typ := FromTypeStr
+
+	return From{
+		Str:  &str,
+		Type: typ,
+	}
+}
+
+func (u *From) UnmarshalJSON(data []byte) (err error) {
+	previous := *u
+	*u = From{}
+	defer func() {
+		if err != nil {
+			*u = previous
+		}
+	}()
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var integer int64 = int64(0)
+	if err := utils.UnmarshalJSON(data, &integer, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  FromTypeInteger,
+			Value: &integer,
+		})
+	}
+
+	var str string = ""
+	if err := utils.UnmarshalJSON(data, &str, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  FromTypeStr,
+			Value: &str,
+		})
+	}
+
+	if len(candidates) == 0 {
+		return fmt.Errorf("could not unmarshal `%s` into any supported union types for From", string(data))
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		return fmt.Errorf("could not unmarshal `%s` into any supported union types for From", string(data))
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(FromType)
+	switch best.Type {
+	case FromTypeInteger:
+		u.Integer = best.Value.(*int64)
+		return nil
+	case FromTypeStr:
+		u.Str = best.Value.(*string)
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal `%s` into any supported union types for From", string(data))
+}
+
+func (u From) MarshalJSON() ([]byte, error) {
+	if u.Integer != nil {
+		return utils.MarshalJSON(u.Integer, "", true)
+	}
+
+	if u.Str != nil {
+		return utils.MarshalJSON(u.Str, "", true)
+	}
+
+	return nil, errors.New("could not marshal union type From: all fields are null")
+}
+
+type ToType string
+
+const (
+	ToTypeInteger ToType = "integer"
+	ToTypeStr     ToType = "str"
+)
+
+type To struct {
+	Integer *int64  `queryParam:"inline" union:"member"`
+	Str     *string `queryParam:"inline" union:"member"`
+
+	Type ToType
+}
+
+func CreateToInteger(integer int64) To {
+	typ := ToTypeInteger
+
+	return To{
+		Integer: &integer,
+		Type:    typ,
+	}
+}
+
+func CreateToStr(str string) To {
+	typ := ToTypeStr
+
+	return To{
+		Str:  &str,
+		Type: typ,
+	}
+}
+
+func (u *To) UnmarshalJSON(data []byte) (err error) {
+	previous := *u
+	*u = To{}
+	defer func() {
+		if err != nil {
+			*u = previous
+		}
+	}()
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var integer int64 = int64(0)
+	if err := utils.UnmarshalJSON(data, &integer, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  ToTypeInteger,
+			Value: &integer,
+		})
+	}
+
+	var str string = ""
+	if err := utils.UnmarshalJSON(data, &str, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  ToTypeStr,
+			Value: &str,
+		})
+	}
+
+	if len(candidates) == 0 {
+		return fmt.Errorf("could not unmarshal `%s` into any supported union types for To", string(data))
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		return fmt.Errorf("could not unmarshal `%s` into any supported union types for To", string(data))
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(ToType)
+	switch best.Type {
+	case ToTypeInteger:
+		u.Integer = best.Value.(*int64)
+		return nil
+	case ToTypeStr:
+		u.Str = best.Value.(*string)
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal `%s` into any supported union types for To", string(data))
+}
+
+func (u To) MarshalJSON() ([]byte, error) {
+	if u.Integer != nil {
+		return utils.MarshalJSON(u.Integer, "", true)
+	}
+
+	if u.Str != nil {
+		return utils.MarshalJSON(u.Str, "", true)
+	}
+
+	return nil, errors.New("could not marshal union type To: all fields are null")
+}
+
+// MentionedDate - Overlap with a date the record mentions; half-open, `from` must not be after `to`.
+type MentionedDate struct {
+	From *From `json:"from,omitzero"`
+	To   *To   `json:"to,omitzero"`
+}
+
+func (m *MentionedDate) GetFrom() *From {
+	if m == nil {
+		return nil
+	}
+	return m.From
+}
+
+func (m *MentionedDate) GetTo() *To {
+	if m == nil {
+		return nil
+	}
+	return m.To
+}
+
+// Amount - `min` must not be after `max`.
+type Amount struct {
+	Min *float64 `json:"min,omitzero"`
+	Max *float64 `json:"max,omitzero"`
+	// ISO 4217 code, case-insensitive.
+	Currency *string `json:"currency,omitzero"`
+}
+
+func (a *Amount) GetMin() *float64 {
+	if a == nil {
+		return nil
+	}
+	return a.Min
+}
+
+func (a *Amount) GetMax() *float64 {
+	if a == nil {
+		return nil
+	}
+	return a.Max
+}
+
+func (a *Amount) GetCurrency() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Currency
+}
+
+// Quantity - In SI units of the dimension. `min` must not be after `max`.
+type Quantity struct {
+	Min *float64 `json:"min,omitzero"`
+	Max *float64 `json:"max,omitzero"`
+	// For example `length`, `weight`, `speed`, `temperature`, `age`.
+	Dimension *string `json:"dimension,omitzero"`
+}
+
+func (q *Quantity) GetMin() *float64 {
+	if q == nil {
+		return nil
+	}
+	return q.Min
+}
+
+func (q *Quantity) GetMax() *float64 {
+	if q == nil {
+		return nil
+	}
+	return q.Max
+}
+
+func (q *Quantity) GetDimension() *string {
+	if q == nil {
+		return nil
+	}
+	return q.Dimension
+}
+
+// Percent - Fractions (0.125 is 12.5%). `min` must not be after `max`.
+type Percent struct {
+	Min *float64 `json:"min,omitzero"`
+	Max *float64 `json:"max,omitzero"`
+}
+
+func (p *Percent) GetMin() *float64 {
+	if p == nil {
+		return nil
+	}
+	return p.Min
+}
+
+func (p *Percent) GetMax() *float64 {
+	if p == nil {
+		return nil
+	}
+	return p.Max
+}
+
+// EntityFilters - **Experimental** named-entity constraints (Labs flag `ENABLE_NAMED_ENTITY_EXTRACTION`, or `HIGH_ACCURACY_MODE`).
+// Every constraint must hold for the same record: an amount and a date match a record
+// that mentions both, not one entity that is both. `name`/`entityIds` match entity nodes;
+// `mentionedDate`, `amount`, `quantity` and `percent` match typed values the record
+// mentions (any date mentioned, not a role such as "signed on"). A kind of a typed
+// constraint's own kind narrows it (`currency` with `amount`); other kinds are a
+// constraint of their own. Only records the caller may read are considered: every empty
+// result reads the same.
+//
+// An unusable filter (unknown kind, bad currency, a range whose low end is above its high
+// end, or a blank name) fails request validation with 400, including on conversation
+// requests. On `POST /search`, a valid filter matching too many readable records is
+// refused with 422. Conversation operations apply a valid filter to every search behind
+// the answer; if retrieval refuses it, the request does not fail and the answer says why
+// the filter could not be applied.
+type EntityFilters struct {
+	// Lowercase, as listed. The server trims and lowercases each kind before checking it.
+	Kinds []NamedEntityKind `json:"kinds,omitzero"`
+	// Case-insensitive prefix of an entity name; surrounding blanks are trimmed and a blank name is refused.
+	Name *string `json:"name,omitzero"`
+	// Entity node ids, as returned by entity search. Typed values have no id.
+	EntityIds []string `json:"entityIds,omitzero"`
+	// Overlap with a date the record mentions; half-open, `from` must not be after `to`.
+	MentionedDate *MentionedDate `json:"mentionedDate,omitzero"`
+	// `min` must not be after `max`.
+	Amount *Amount `json:"amount,omitzero"`
+	// In SI units of the dimension. `min` must not be after `max`.
+	Quantity *Quantity `json:"quantity,omitzero"`
+	// Fractions (0.125 is 12.5%). `min` must not be after `max`.
+	Percent *Percent `json:"percent,omitzero"`
+}
+
+func (e EntityFilters) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(e, "", false)
+}
+
+func (e *EntityFilters) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &e, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *EntityFilters) GetKinds() []NamedEntityKind {
+	if e == nil {
+		return nil
+	}
+	return e.Kinds
+}
+
+func (e *EntityFilters) GetName() *string {
+	if e == nil {
+		return nil
+	}
+	return e.Name
+}
+
+func (e *EntityFilters) GetEntityIds() []string {
+	if e == nil {
+		return nil
+	}
+	return e.EntityIds
+}
+
+func (e *EntityFilters) GetMentionedDate() *MentionedDate {
+	if e == nil {
+		return nil
+	}
+	return e.MentionedDate
+}
+
+func (e *EntityFilters) GetAmount() *Amount {
+	if e == nil {
+		return nil
+	}
+	return e.Amount
+}
+
+func (e *EntityFilters) GetQuantity() *Quantity {
+	if e == nil {
+		return nil
+	}
+	return e.Quantity
+}
+
+func (e *EntityFilters) GetPercent() *Percent {
+	if e == nil {
+		return nil
+	}
+	return e.Percent
+}
+
+// Filters - What retrieval is narrowed to for a turn: whole apps, and selections below app
+// level (record groups, folders, records). The keys are a union. For **org assistant**
+// chat streams, send explicit lists. For **agent** chat streams, send explicit id lists,
+// or **omit** `filters` (and `tools`) to let the service use the agent’s stored knowledge
+// and tool configuration. Sending `{ "apps": [], "kb": [] }` on an agent stream means
+// **no** knowledge sources for that turn (it is not “full org default”).
+//
+// A selection below app level is the whole scope of the turn: with `recordGroups`,
+// `records` or `recordsExact` present, an absent or empty `apps` / `kb` means none of
+// them. A selected node that does not exist or that the caller cannot read contributes
+// nothing; when nothing valid remains the turn searches nothing. `/search` answers 404
+// for that; a chat turn is not failed, its search simply finds nothing.
+// At most 200 ids may be sent in one request, counted across all keys, and every id must
+// be a valid UUID. A key this schema does not list is refused with 400; the message names
+// the key and lists the allowed ones. A value of the wrong type is refused with 400 too.
+//
+// A selection that covers more than the configured number of nodes (50,000 by default),
+// or that touches a source still being prepared for folder-level search, is refused:
+// `/search` and the non-streaming chat routes answer 422 with the message, and a chat
+// stream ends with an error frame (`RUN_ERROR`, or `error` on the legacy protocol)
+// whose `code` is `selection_too_large` or `selection_not_ready` and whose `message`
+// says what to change. No model call is made for such a turn.
 type Filters struct {
-	// Connector instance ids to scope retrieval for this turn. Each element
-	// must be a valid UUID (connector app id, KB app id, record-group id, etc.).
-	// Gateway validation matches Zod `appOrKbIdSchema`.
+	// Whole apps: connector instance ids and collection (knowledge base) ids.
+	// Each element must be a valid UUID.
 	//
 	Apps []string `json:"apps,omitzero"`
-	// Knowledge-base app ids to scope retrieval for this turn.
+	// Older name for collection ids; treated the same as `apps`.
 	// Each element must be a valid UUID.
 	//
 	Kb []string `json:"kb,omitzero"`
+	// Record group ids (a drive, a space, a project). Each selects the group, the
+	// groups nested in it and every record that belongs to them.
+	// Each element must be a valid UUID.
+	//
+	RecordGroups []string `json:"recordGroups,omitzero"`
+	// Folder or record ids. Each selects the node and everything under it
+	// (child items and attachments).
+	// Each element must be a valid UUID.
+	//
+	Records []string `json:"records,omitzero"`
+	// Record ids selected alone, without what is under them.
+	// Each element must be a valid UUID.
+	//
+	RecordsExact []string `json:"recordsExact,omitzero"`
+	// **Experimental** named-entity constraints (Labs flag `ENABLE_NAMED_ENTITY_EXTRACTION`, or `HIGH_ACCURACY_MODE`).
+	// Every constraint must hold for the same record: an amount and a date match a record
+	// that mentions both, not one entity that is both. `name`/`entityIds` match entity nodes;
+	// `mentionedDate`, `amount`, `quantity` and `percent` match typed values the record
+	// mentions (any date mentioned, not a role such as "signed on"). A kind of a typed
+	// constraint's own kind narrows it (`currency` with `amount`); other kinds are a
+	// constraint of their own. Only records the caller may read are considered: every empty
+	// result reads the same.
+	//
+	// An unusable filter (unknown kind, bad currency, a range whose low end is above its high
+	// end, or a blank name) fails request validation with 400, including on conversation
+	// requests. On `POST /search`, a valid filter matching too many readable records is
+	// refused with 422. Conversation operations apply a valid filter to every search behind
+	// the answer; if retrieval refuses it, the request does not fail and the answer says why
+	// the filter could not be applied.
+	//
+	EntityFilters *EntityFilters `json:"entityFilters,omitzero"`
 }
 
 func (f Filters) MarshalJSON() ([]byte, error) {
@@ -47,4 +567,32 @@ func (f *Filters) GetKb() []string {
 		return nil
 	}
 	return f.Kb
+}
+
+func (f *Filters) GetRecordGroups() []string {
+	if f == nil {
+		return nil
+	}
+	return f.RecordGroups
+}
+
+func (f *Filters) GetRecords() []string {
+	if f == nil {
+		return nil
+	}
+	return f.Records
+}
+
+func (f *Filters) GetRecordsExact() []string {
+	if f == nil {
+		return nil
+	}
+	return f.RecordsExact
+}
+
+func (f *Filters) GetEntityFilters() *EntityFilters {
+	if f == nil {
+		return nil
+	}
+	return f.EntityFilters
 }

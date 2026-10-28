@@ -39,12 +39,22 @@ func newWebSearch(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hooks *h
 // OAuth tokens must include the `config:read` scope. Admin role is not required.
 //
 // **API keys:** for anyone who isn't an org admin, each provider's `configuration.apiKey`
-// comes back as the placeholder `****************`. Admins get the stored key, unless the
+// comes back as the placeholder `****************`, and so does `configuration.baseUrl`
+// (admins always get the stored address). Admins get the stored key, unless the
 // server hides secrets from everyone (`HIDE_SECRET_CONFIG=true`). When updating a provider,
 // sending the placeholder back keeps the stored key.
 //
+// The built-in `duckduckgo` entry (never stored, empty `configuration`) is always listed
+// first; it is the default when no stored provider is. With nothing stored, `message` is
+// `No web search providers found` and the settings are the defaults. Of the query
+// string only `reveal` is read.
+//
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
-func (s *WebSearch) GetWebSearchProviders(ctx context.Context, opts ...operations.Option) (*operations.GetWebSearchProvidersResponse, error) {
+func (s *WebSearch) GetWebSearchProviders(ctx context.Context, reveal *components.RevealStoredSecrets, opts ...operations.Option) (*operations.GetWebSearchProvidersResponse, error) {
+	request := operations.GetWebSearchProvidersRequest{
+		Reveal: reveal,
+	}
+
 	o := operations.Options{}
 	supportedOptions := []string{
 		operations.SupportedOptionRetries,
@@ -95,6 +105,10 @@ func (s *WebSearch) GetWebSearchProviders(ctx context.Context, opts ...operation
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
+		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
 
 	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
 		return nil, err
@@ -224,9 +238,36 @@ func (s *WebSearch) GetWebSearchProviders(ctx context.Context, opts ...operation
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
+	case httpRes.StatusCode == 400:
+		fallthrough
 	case httpRes.StatusCode == 401:
 		fallthrough
 	case httpRes.StatusCode == 403:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)

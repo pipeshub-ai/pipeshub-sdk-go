@@ -45,6 +45,7 @@ custom := components.ConnectorNameEnum("custom_value")
 | `ConnectorNameEnumConfluenceDataCenterPersonal` | CONFLUENCE DATA CENTER PERSONAL                 |
 | `ConnectorNameEnumJira`                         | JIRA                                            |
 | `ConnectorNameEnumJiraPersonal`                 | JIRA PERSONAL                                   |
+| `ConnectorNameEnumJiraCloudPersonal`            | JIRA CLOUD PERSONAL                             |
 | `ConnectorNameEnumJiraDataCenter`               | JIRA DATA CENTER                                |
 | `ConnectorNameEnumJiraDataCenterPersonal`       | JIRA DATA CENTER PERSONAL                       |
 | `ConnectorNameEnumBox`                          | BOX                                             |
@@ -65,6 +66,7 @@ custom := components.ConnectorNameEnum("custom_value")
 | `ConnectorNameEnumAzureFiles`                   | AZURE FILES                                     |
 | `ConnectorNameEnumLinear`                       | LINEAR                                          |
 | `ConnectorNameEnumZammad`                       | ZAMMAD                                          |
+| `ConnectorNameEnumZendesk`                      | ZENDESK                                         |
 | `ConnectorNameEnumZoom`                         | ZOOM                                            |
 | `ConnectorNameEnumGitlab`                       | GITLAB                                          |
 | `ConnectorNameEnumGitlabPersonal`               | GITLAB PERSONAL                                 |
@@ -78,3 +80,6 @@ custom := components.ConnectorNameEnum("custom_value")
 | `ConnectorNameEnumDatabaseSandbox`              | DATABASE_SANDBOX                                |
 | `ConnectorNameEnumImageGeneration`              | IMAGE_GENERATION                                |
 | `ConnectorNameEnumAttachments`                  | ATTACHMENTS                                     |
+| `ConnectorNameEnumDemo`                         | DEMO                                            |
+| `ConnectorNameEnumSmb`                          | SMB                                             |
+| `ConnectorNameEnumCifs`                         | CIFS                                            |

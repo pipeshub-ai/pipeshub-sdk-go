@@ -28,6 +28,14 @@ type AdminPatListItem struct {
 	// token; absent if the token has never been used.
 	//
 	LastUsedAt *time.Time `json:"lastUsedAt,omitzero"`
+	// What a connected app may see: an OAuth app's limit is picked by its
+	// creator and holds for every user who connects it; a personal access
+	// token's by its owner. Search, chat, agent chat and every record read by
+	// id stay inside it, and inside the connecting user's own permissions.
+	// Omit it for everything the user can see. Sent, it must name at least one id and at
+	// most 50 in all, since it is signed into every token the app gets.
+	//
+	KnowledgeLimit *KnowledgeLimit `json:"knowledgeLimit,omitzero"`
 	// ID of the user who created this token
 	UserID string `json:"userId"`
 	// Owner's email. Populated even when `ownerDeleted` is true
@@ -95,6 +103,13 @@ func (a *AdminPatListItem) GetLastUsedAt() *time.Time {
 		return nil
 	}
 	return a.LastUsedAt
+}
+
+func (a *AdminPatListItem) GetKnowledgeLimit() *KnowledgeLimit {
+	if a == nil {
+		return nil
+	}
+	return a.KnowledgeLimit
 }
 
 func (a *AdminPatListItem) GetUserID() string {

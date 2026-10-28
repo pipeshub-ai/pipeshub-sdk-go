@@ -7,4 +7,4 @@ Cancellation requested, or the run had already finished.
 
 | Field              | Type               | Required           | Description        |
 | ------------------ | ------------------ | ------------------ | ------------------ |
-| `Cancelled`        | `*bool`            | :heavy_minus_sign: | N/A                |
+| `Cancelled`        | `bool`             | :heavy_check_mark: | N/A                |

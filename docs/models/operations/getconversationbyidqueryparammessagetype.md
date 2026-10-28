@@ -1,6 +1,8 @@
 # GetConversationByIDQueryParamMessageType
 
-Filter messages by type
+Checked against the listed values (`400` otherwise) but not
+applied: every message type is returned.
+
 
 ## Example Usage
 
@@ -22,3 +24,4 @@ value := operations.GetConversationByIDQueryParamMessageTypeUserQuery
 | `GetConversationByIDQueryParamMessageTypeError`       | error                                                 |
 | `GetConversationByIDQueryParamMessageTypeFeedback`    | feedback                                              |
 | `GetConversationByIDQueryParamMessageTypeSystem`      | system                                                |
+| `GetConversationByIDQueryParamMessageTypeToolCall`    | tool_call                                             |

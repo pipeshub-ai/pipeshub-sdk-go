@@ -43,7 +43,10 @@ type OAuthIntrospectRequest struct {
 	TokenTypeHint *OAuthIntrospectRequestTokenTypeHint `form:"name=token_type_hint" json:"token_type_hint,omitzero"`
 	// Client ID
 	ClientID string `form:"name=client_id" json:"client_id"`
-	// Client secret
+	// Client secret. Not checked by the validator, but client authentication cannot succeed
+	// without it: when it is missing the route answers `{active: false}` even for a live token, for public and confidential clients
+	// alike. A wrong secret is `401 invalid_client`.
+	//
 	ClientSecret *string `form:"name=client_secret" json:"client_secret,omitzero"`
 }
 

@@ -9,6 +9,32 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 )
 
+// ModelDefaultReasoningEffort - The model's own reasoning effort, read from its stored configuration. It applies only when the chat request sets no `reasoningEffort` and the agent has no `defaultReasoningEffort`. Omitted when nothing valid is stored; `none` is a legacy value that runs as `low`.
+type ModelDefaultReasoningEffort string
+
+const (
+	ModelDefaultReasoningEffortNone   ModelDefaultReasoningEffort = "none"
+	ModelDefaultReasoningEffortLow    ModelDefaultReasoningEffort = "low"
+	ModelDefaultReasoningEffortMedium ModelDefaultReasoningEffort = "medium"
+	ModelDefaultReasoningEffortHigh   ModelDefaultReasoningEffort = "high"
+	ModelDefaultReasoningEffortMax    ModelDefaultReasoningEffort = "max"
+)
+
+func (e ModelDefaultReasoningEffort) ToPointer() *ModelDefaultReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ModelDefaultReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
+
 type Model struct {
 	ModelKey     *string `json:"modelKey,omitzero"`
 	ModelName    *string `json:"modelName,omitzero"`
@@ -21,6 +47,8 @@ type Model struct {
 	//
 	ModelType         *string `json:"modelType,omitzero"`
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
+	// The model's own reasoning effort, read from its stored configuration. It applies only when the chat request sets no `reasoningEffort` and the agent has no `defaultReasoningEffort`. Omitted when nothing valid is stored; `none` is a legacy value that runs as `low`.
+	DefaultReasoningEffort *ModelDefaultReasoningEffort `json:"defaultReasoningEffort,omitzero"`
 }
 
 func (m Model) MarshalJSON() ([]byte, error) {
@@ -88,6 +116,13 @@ func (m *Model) GetModelFriendlyName() *string {
 		return nil
 	}
 	return m.ModelFriendlyName
+}
+
+func (m *Model) GetDefaultReasoningEffort() *ModelDefaultReasoningEffort {
+	if m == nil {
+		return nil
+	}
+	return m.DefaultReasoningEffort
 }
 
 type ModelUnionType string
@@ -310,6 +345,11 @@ type Agent struct {
 	WebSearch optionalnullable.OptionalNullable[AgentWebSearch] `json:"webSearch,omitzero"`
 	// Agent-level reasoning effort used when a chat request omits its own. Null when unset.
 	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
+	// API toolset operations the agent may call, each `<toolsetId>:<operation>`
+	// (see `/api-toolsets`). A service-account agent may only use toolsets with a
+	// shared credential.
+	//
+	APIToolsetTools []string `json:"apiToolsetTools,omitzero"`
 	// When true (default), the agent's system prompt includes the current
 	// user's name, email, and organization. When false, the agent relies
 	// on tools, actions, and knowledge sources without that profile data.
@@ -329,6 +369,11 @@ type Agent struct {
 	IsDeleted bool `json:"isDeleted"`
 	// Whether this agent is a service-account agent.
 	IsServiceAccount bool `json:"isServiceAccount"`
+	// The `userId` of the service account this agent searches knowledge
+	// as, or null when it searches as its creator. Only set on a
+	// service-account agent.
+	//
+	ServiceAccountUserID optionalnullable.OptionalNullable[string] `json:"serviceAccountUserId,omitzero"`
 	// How the user can access this agent.
 	AccessType string `json:"access_type"`
 	// Effective role of the current user on this agent.
@@ -480,6 +525,13 @@ func (a *Agent) GetDefaultReasoningEffort() optionalnullable.OptionalNullable[Ag
 	return a.DefaultReasoningEffort
 }
 
+func (a *Agent) GetAPIToolsetTools() []string {
+	if a == nil {
+		return nil
+	}
+	return a.APIToolsetTools
+}
+
 func (a *Agent) GetSendUserContext() *bool {
 	if a == nil {
 		return nil
@@ -534,6 +586,13 @@ func (a *Agent) GetIsServiceAccount() bool {
 		return false
 	}
 	return a.IsServiceAccount
+}
+
+func (a *Agent) GetServiceAccountUserID() optionalnullable.OptionalNullable[string] {
+	if a == nil {
+		return nil
+	}
+	return a.ServiceAccountUserID
 }
 
 func (a *Agent) GetAccessType() string {

@@ -10,13 +10,20 @@ import (
 )
 
 // AddMessageRequestChatMode - Optional execution mode for non-stream consumers of this shared
-// request schema.
+// request schema. `deep`, `quick`, `verification` and `auto` are
+// legacy values: still accepted, they run as `internal_search`.
+// The streaming routes accept only `agent`, `internal_search` and
+// `web_search`. `agent:<mode>` is refused.
 type AddMessageRequestChatMode string
 
 const (
 	AddMessageRequestChatModeAgent          AddMessageRequestChatMode = "agent"
 	AddMessageRequestChatModeInternalSearch AddMessageRequestChatMode = "internal_search"
 	AddMessageRequestChatModeWebSearch      AddMessageRequestChatMode = "web_search"
+	AddMessageRequestChatModeDeep           AddMessageRequestChatMode = "deep"
+	AddMessageRequestChatModeQuick          AddMessageRequestChatMode = "quick"
+	AddMessageRequestChatModeVerification   AddMessageRequestChatMode = "verification"
+	AddMessageRequestChatModeAuto           AddMessageRequestChatMode = "auto"
 )
 
 func (e AddMessageRequestChatMode) ToPointer() *AddMessageRequestChatMode {
@@ -33,6 +40,14 @@ func (e *AddMessageRequestChatMode) UnmarshalJSON(data []byte) error {
 	case "internal_search":
 		fallthrough
 	case "web_search":
+		fallthrough
+	case "deep":
+		fallthrough
+	case "quick":
+		fallthrough
+	case "verification":
+		fallthrough
+	case "auto":
 		*e = AddMessageRequestChatMode(v)
 		return nil
 	default:
@@ -68,16 +83,99 @@ func (e *AddMessageRequestProtocol) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// AddMessageRequest - Request body for adding a message to an existing conversation
+// AddMessageRequestKeywordSearchBudget - How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+type AddMessageRequestKeywordSearchBudget string
+
+const (
+	AddMessageRequestKeywordSearchBudgetShort AddMessageRequestKeywordSearchBudget = "short"
+	AddMessageRequestKeywordSearchBudgetFull  AddMessageRequestKeywordSearchBudget = "full"
+)
+
+func (e AddMessageRequestKeywordSearchBudget) ToPointer() *AddMessageRequestKeywordSearchBudget {
+	return &e
+}
+func (e *AddMessageRequestKeywordSearchBudget) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "short":
+		fallthrough
+	case "full":
+		*e = AddMessageRequestKeywordSearchBudget(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AddMessageRequestKeywordSearchBudget: %v", v)
+	}
+}
+
+// AddMessageRequestReasoningEffort - How hard a reasoning model should think for this turn. Saved in
+// the conversation's `modelInfo`.
+type AddMessageRequestReasoningEffort string
+
+const (
+	AddMessageRequestReasoningEffortNone   AddMessageRequestReasoningEffort = "none"
+	AddMessageRequestReasoningEffortLow    AddMessageRequestReasoningEffort = "low"
+	AddMessageRequestReasoningEffortMedium AddMessageRequestReasoningEffort = "medium"
+	AddMessageRequestReasoningEffortHigh   AddMessageRequestReasoningEffort = "high"
+	AddMessageRequestReasoningEffortMax    AddMessageRequestReasoningEffort = "max"
+)
+
+func (e AddMessageRequestReasoningEffort) ToPointer() *AddMessageRequestReasoningEffort {
+	return &e
+}
+func (e *AddMessageRequestReasoningEffort) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "none":
+		fallthrough
+	case "low":
+		fallthrough
+	case "medium":
+		fallthrough
+	case "high":
+		fallthrough
+	case "max":
+		*e = AddMessageRequestReasoningEffort(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AddMessageRequestReasoningEffort: %v", v)
+	}
+}
+
+// AddMessageRequest - Request body for adding a message to an existing conversation.
+// Fields not listed here are dropped by the gateway's validator, not refused.
 type AddMessageRequest struct {
-	// The follow-up question or message content
+	// The follow-up question or message content. Held to the same
+	// 100,000-character limit as the first message of a conversation.
+	//
 	Query string `json:"query"`
-	// App connector instance ids and knowledge-base / record-group ids that narrow retrieval
-	// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
-	// For **agent** chat streams, send explicit id lists, or **omit** `filters` (and `tools`)
-	// to let the service use the agent’s stored knowledge and tool configuration. Sending
-	// `{ "apps": [], "kb": [] }` on an agent stream means **no** knowledge sources for that
-	// turn (it is not “full org default”).
+	// What retrieval is narrowed to for a turn: whole apps, and selections below app
+	// level (record groups, folders, records). The keys are a union. For **org assistant**
+	// chat streams, send explicit lists. For **agent** chat streams, send explicit id lists,
+	// or **omit** `filters` (and `tools`) to let the service use the agent’s stored knowledge
+	// and tool configuration. Sending `{ "apps": [], "kb": [] }` on an agent stream means
+	// **no** knowledge sources for that turn (it is not “full org default”).
+	//
+	// A selection below app level is the whole scope of the turn: with `recordGroups`,
+	// `records` or `recordsExact` present, an absent or empty `apps` / `kb` means none of
+	// them. A selected node that does not exist or that the caller cannot read contributes
+	// nothing; when nothing valid remains the turn searches nothing. `/search` answers 404
+	// for that; a chat turn is not failed, its search simply finds nothing.
+	// At most 200 ids may be sent in one request, counted across all keys, and every id must
+	// be a valid UUID. A key this schema does not list is refused with 400; the message names
+	// the key and lists the allowed ones. A value of the wrong type is refused with 400 too.
+	//
+	// A selection that covers more than the configured number of nodes (50,000 by default),
+	// or that touches a source still being prepared for folder-level search, is refused:
+	// `/search` and the non-streaming chat routes answer 422 with the message, and a chat
+	// stream ends with an error frame (`RUN_ERROR`, or `error` on the legacy protocol)
+	// whose `code` is `selection_too_large` or `selection_not_ready` and whose `message`
+	// says what to change. No model call is made for such a turn.
 	//
 	Filters *Filters `json:"filters,omitzero"`
 	// Rich filter state selected by the user, used for display and persistence only.
@@ -89,14 +187,20 @@ type AddMessageRequest struct {
 	// `POST /conversations/attachments/upload`).
 	//
 	Attachments []ChatAttachmentRef `json:"attachments,omitzero"`
-	// Override the model for this specific message
+	// Override the model for this specific message. When neither
+	// `modelKey` nor `modelName` is sent, the organization's default
+	// model answers and is saved in the message's `modelInfo`.
+	//
 	ModelKey *string `json:"modelKey,omitzero"`
 	// Display name of the model
 	ModelName *string `json:"modelName,omitzero"`
 	// Friendly display name of the model
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	// Optional execution mode for non-stream consumers of this shared
-	// request schema.
+	// request schema. `deep`, `quick`, `verification` and `auto` are
+	// legacy values: still accepted, they run as `internal_search`.
+	// The streaming routes accept only `agent`, `internal_search` and
+	// `web_search`. `agent:<mode>` is refused.
 	//
 	ChatMode *AddMessageRequestChatMode `json:"chatMode,omitzero"`
 	// IANA timezone identifier from the client (top-level field).
@@ -124,11 +228,28 @@ type AddMessageRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Opt in to measurement frames on this stream: CUSTOM `retrieval_context` events naming the records and blocks that reached the model, and one CUSTOM `run_usage` event carrying the run's token totals and loop outcome. Identifiers only, never block text. Does not change the answer.
+	IncludeRetrievalContext *bool `default:"false" json:"includeRetrievalContext"`
+	// How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+	KeywordSearchBudget *AddMessageRequestKeywordSearchBudget `json:"keywordSearchBudget,omitzero"`
+	// The person's answer to a tool approval card. The web app sends it with the query
+	// `Tool approval: allow` or `Tool approval: deny`, and the request carries on the turn that
+	// stopped on the card: the saved call runs (when allowed) and its result answers the call
+	// the model made, in the same reply. The call is the one saved server-side when the card was
+	// shown (answerable for 15 minutes, settled once, bound to the asking user and
+	// conversation); only its id and the answer travel here. A reply that answered a card
+	// can't be regenerated.
+	//
+	ToolApproval *ToolApprovalAnswer `json:"toolApproval,omitzero"`
 	// Client-generated identifier for this run. Send it here to enable
 	// `POST /conversations/{conversationId}/cancel {runId}` while the
 	// stream is still generating.
 	//
 	RunID *string `json:"runId,omitzero"`
+	// How hard a reasoning model should think for this turn. Saved in
+	// the conversation's `modelInfo`.
+	//
+	ReasoningEffort *AddMessageRequestReasoningEffort `json:"reasoningEffort,omitzero"`
 }
 
 func (a AddMessageRequest) MarshalJSON() ([]byte, error) {
@@ -233,9 +354,37 @@ func (a *AddMessageRequest) GetAgentCapabilities() *AgentCapabilities {
 	return a.AgentCapabilities
 }
 
+func (a *AddMessageRequest) GetIncludeRetrievalContext() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.IncludeRetrievalContext
+}
+
+func (a *AddMessageRequest) GetKeywordSearchBudget() *AddMessageRequestKeywordSearchBudget {
+	if a == nil {
+		return nil
+	}
+	return a.KeywordSearchBudget
+}
+
+func (a *AddMessageRequest) GetToolApproval() *ToolApprovalAnswer {
+	if a == nil {
+		return nil
+	}
+	return a.ToolApproval
+}
+
 func (a *AddMessageRequest) GetRunID() *string {
 	if a == nil {
 		return nil
 	}
 	return a.RunID
+}
+
+func (a *AddMessageRequest) GetReasoningEffort() *AddMessageRequestReasoningEffort {
+	if a == nil {
+		return nil
+	}
+	return a.ReasoningEffort
 }

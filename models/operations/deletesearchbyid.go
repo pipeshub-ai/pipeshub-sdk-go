@@ -7,16 +7,18 @@ import (
 	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"time"
 )
 
-// DeleteSearchByIDShared - Additional `isShared` filter (`'true'` / `'false'`). The row is
-// only deleted if it also matches this value.
+// DeleteSearchByIDShared - Additional `isShared` filter. `'true'` / `'1'` and `'false'` / `'0'`,
+// case-insensitive; anything else is refused with `400`. The row is only deleted if
+// it matches.
 type DeleteSearchByIDShared string
 
 const (
 	DeleteSearchByIDSharedTrue  DeleteSearchByIDShared = "true"
 	DeleteSearchByIDSharedFalse DeleteSearchByIDShared = "false"
+	DeleteSearchByIDSharedOne   DeleteSearchByIDShared = "1"
+	DeleteSearchByIDSharedZero  DeleteSearchByIDShared = "0"
 )
 
 func (e DeleteSearchByIDShared) ToPointer() *DeleteSearchByIDShared {
@@ -31,6 +33,10 @@ func (e *DeleteSearchByIDShared) UnmarshalJSON(data []byte) error {
 	case "true":
 		fallthrough
 	case "false":
+		fallthrough
+	case "1":
+		fallthrough
+	case "0":
 		*e = DeleteSearchByIDShared(v)
 		return nil
 	default:
@@ -41,35 +47,26 @@ func (e *DeleteSearchByIDShared) UnmarshalJSON(data []byte) error {
 type DeleteSearchByIDRequest struct {
 	// ObjectId of the persisted search row to delete.
 	SearchID string `pathParam:"style=simple,explode=false,name=searchId"`
-	// Additional substring filter against `title` / `messages.content`.
-	// The row is only deleted if the `searchId` row also matches this
-	// filter; otherwise `404`. Special regex characters are escaped;
-	// values over 1000 chars or tripping the XSS guard yield `400`.
+	// Validated, then dropped: a stored search has no title to match, so the row is
+	// deleted whatever this says. More than 1000 characters, or HTML markup, is refused
+	// with `400`.
 	//
 	Search *string `queryParam:"style=form,explode=true,name=search"`
-	// Additional `isShared` filter (`'true'` / `'false'`). The row is
-	// only deleted if it also matches this value.
+	// Additional `isShared` filter. `'true'` / `'1'` and `'false'` / `'0'`,
+	// case-insensitive; anything else is refused with `400`. The row is only deleted if
+	// it matches.
 	//
 	Shared *DeleteSearchByIDShared `queryParam:"style=form,explode=true,name=shared"`
-	// ISO 8601 lower bound for `createdAt`. The row is only deleted
-	// if its `createdAt` is on or after this value.
+	// ISO 8601 date or date-time lower bound for `createdAt`. The row is only deleted if
+	// it was created on or after it. A value JavaScript's `Date` cannot parse is refused
+	// with `400`.
 	//
-	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
-	// ISO 8601 upper bound for `createdAt`. The row is only deleted
-	// if its `createdAt` is on or before this value.
+	StartDate *string `queryParam:"style=form,explode=true,name=startDate"`
+	// ISO 8601 date or date-time upper bound for `createdAt`. The row is only deleted if
+	// it was created on or before it. A value JavaScript's `Date` cannot parse is refused
+	// with `400`.
 	//
-	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
-}
-
-func (d DeleteSearchByIDRequest) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(d, "", false)
-}
-
-func (d *DeleteSearchByIDRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
-		return err
-	}
-	return nil
+	EndDate *string `queryParam:"style=form,explode=true,name=endDate"`
 }
 
 func (d *DeleteSearchByIDRequest) GetSearchID() string {
@@ -93,14 +90,14 @@ func (d *DeleteSearchByIDRequest) GetShared() *DeleteSearchByIDShared {
 	return d.Shared
 }
 
-func (d *DeleteSearchByIDRequest) GetStartDate() *time.Time {
+func (d *DeleteSearchByIDRequest) GetStartDate() *string {
 	if d == nil {
 		return nil
 	}
 	return d.StartDate
 }
 
-func (d *DeleteSearchByIDRequest) GetEndDate() *time.Time {
+func (d *DeleteSearchByIDRequest) GetEndDate() *string {
 	if d == nil {
 		return nil
 	}

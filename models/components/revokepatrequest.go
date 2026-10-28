@@ -7,7 +7,11 @@ package components
 // is optional; `reason`, if present, is stored on the revocation for
 // auditing.
 type RevokePatRequest struct {
-	Reason *string `json:"reason,omitzero"`
+	// Stored on the revocation for auditing. There is no body validator:
+	// a `reason` that is not a string is ignored rather than refused, and
+	// the revocation goes ahead with the default reason.
+	//
+	Reason *string `json:"reason,omitzero" form:"name=reason"`
 }
 
 func (r *RevokePatRequest) GetReason() *string {

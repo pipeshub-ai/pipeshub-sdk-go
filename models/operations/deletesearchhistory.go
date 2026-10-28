@@ -7,16 +7,17 @@ import (
 	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"time"
 )
 
-// DeleteSearchHistoryShared - Restrict the deletion to rows with this `isShared` value
-// (`'true'` / `'false'`).
+// DeleteSearchHistoryShared - Restrict the deletion to rows with this `isShared` value. `'true'` / `'1'` and
+// `'false'` / `'0'`, case-insensitive; anything else is refused with `400`.
 type DeleteSearchHistoryShared string
 
 const (
 	DeleteSearchHistorySharedTrue  DeleteSearchHistoryShared = "true"
 	DeleteSearchHistorySharedFalse DeleteSearchHistoryShared = "false"
+	DeleteSearchHistorySharedOne   DeleteSearchHistoryShared = "1"
+	DeleteSearchHistorySharedZero  DeleteSearchHistoryShared = "0"
 )
 
 func (e DeleteSearchHistoryShared) ToPointer() *DeleteSearchHistoryShared {
@@ -31,6 +32,10 @@ func (e *DeleteSearchHistoryShared) UnmarshalJSON(data []byte) error {
 	case "true":
 		fallthrough
 	case "false":
+		fallthrough
+	case "1":
+		fallthrough
+	case "0":
 		*e = DeleteSearchHistoryShared(v)
 		return nil
 	default:
@@ -39,33 +44,22 @@ func (e *DeleteSearchHistoryShared) UnmarshalJSON(data []byte) error {
 }
 
 type DeleteSearchHistoryRequest struct {
-	// Restrict the deletion to rows whose `title` or `messages.content`
-	// matches this case-insensitive substring. Special regex characters
-	// are escaped before the lookup; values over 1000 chars are
-	// rejected with `400`.
+	// Validated, then dropped: a stored search has no title to match, so it never narrows
+	// the deletion. More than 1000 characters, or HTML markup, is refused with `400`.
 	//
 	Search *string `queryParam:"style=form,explode=true,name=search"`
-	// Restrict the deletion to rows with this `isShared` value
-	// (`'true'` / `'false'`).
+	// Restrict the deletion to rows with this `isShared` value. `'true'` / `'1'` and
+	// `'false'` / `'0'`, case-insensitive; anything else is refused with `400`.
 	//
 	Shared *DeleteSearchHistoryShared `queryParam:"style=form,explode=true,name=shared"`
-	// ISO 8601 lower bound for `createdAt`. Combined with `endDate`
-	// to scope which rows are deleted.
+	// ISO 8601 date or date-time lower bound for `createdAt`. A value JavaScript's `Date`
+	// cannot parse is refused with `400`.
 	//
-	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
-	// ISO 8601 upper bound for `createdAt`.
-	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
-}
-
-func (d DeleteSearchHistoryRequest) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(d, "", false)
-}
-
-func (d *DeleteSearchHistoryRequest) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &d, "", false, nil); err != nil {
-		return err
-	}
-	return nil
+	StartDate *string `queryParam:"style=form,explode=true,name=startDate"`
+	// ISO 8601 date or date-time upper bound for `createdAt`. A value JavaScript's `Date`
+	// cannot parse is refused with `400`.
+	//
+	EndDate *string `queryParam:"style=form,explode=true,name=endDate"`
 }
 
 func (d *DeleteSearchHistoryRequest) GetSearch() *string {
@@ -82,14 +76,14 @@ func (d *DeleteSearchHistoryRequest) GetShared() *DeleteSearchHistoryShared {
 	return d.Shared
 }
 
-func (d *DeleteSearchHistoryRequest) GetStartDate() *time.Time {
+func (d *DeleteSearchHistoryRequest) GetStartDate() *string {
 	if d == nil {
 		return nil
 	}
 	return d.StartDate
 }
 
-func (d *DeleteSearchHistoryRequest) GetEndDate() *time.Time {
+func (d *DeleteSearchHistoryRequest) GetEndDate() *string {
 	if d == nil {
 		return nil
 	}

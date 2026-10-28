@@ -24,6 +24,7 @@ custom := components.AgentCreateToolsetName("custom_value")
 | `AgentCreateToolsetNameClickup`              | clickup                                      |
 | `AgentCreateToolsetNameConfluence`           | confluence                                   |
 | `AgentCreateToolsetNameConfluencedatacenter` | confluencedatacenter                         |
+| `AgentCreateToolsetNameDocs`                 | docs                                         |
 | `AgentCreateToolsetNameDrive`                | drive                                        |
 | `AgentCreateToolsetNameGithub`               | github                                       |
 | `AgentCreateToolsetNameGmail`                | gmail                                        |
@@ -36,6 +37,7 @@ custom := components.AgentCreateToolsetName("custom_value")
 | `AgentCreateToolsetNameRedshift`             | redshift                                     |
 | `AgentCreateToolsetNameSalesforce`           | salesforce                                   |
 | `AgentCreateToolsetNameSharepoint`           | sharepoint                                   |
+| `AgentCreateToolsetNameSheets`               | sheets                                       |
 | `AgentCreateToolsetNameSlack`                | slack                                        |
 | `AgentCreateToolsetNameTeams`                | teams                                        |
 | `AgentCreateToolsetNameZoom`                 | zoom                                         |

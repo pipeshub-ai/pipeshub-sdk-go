@@ -11,6 +11,7 @@ type OauthUserInfoResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// User information
 	OAuthUserInfoResponse *components.OAuthUserInfoResponse
+	Headers               map[string][]string
 }
 
 func (o OauthUserInfoResponse) MarshalJSON() ([]byte, error) {
@@ -36,4 +37,11 @@ func (o *OauthUserInfoResponse) GetOAuthUserInfoResponse() *components.OAuthUser
 		return nil
 	}
 	return o.OAuthUserInfoResponse
+}
+
+func (o *OauthUserInfoResponse) GetHeaders() map[string][]string {
+	if o == nil {
+		return map[string][]string{}
+	}
+	return o.Headers
 }

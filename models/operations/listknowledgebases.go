@@ -9,7 +9,7 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
-// ListKnowledgeBasesSortBy - Field to sort by.
+// ListKnowledgeBasesSortBy - Field to sort by. An empty value is read as the default.
 type ListKnowledgeBasesSortBy string
 
 const (
@@ -70,19 +70,29 @@ func (e *ListKnowledgeBasesSortOrder) UnmarshalJSON(data []byte) error {
 }
 
 type ListKnowledgeBasesRequest struct {
-	// Page number (1-indexed). Omitted values default to 1.
+	// Page number (1-indexed). Omitted or empty values default to 1. A page past the last
+	// one returns an empty list. The value is read with JavaScript `parseInt`, so text after
+	// leading digits is ignored (`1abc` is page 1); send a plain integer.
+	//
 	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
-	// Results per page (max 100). Omitted values default to 20.
+	// Results per page (max 100). Omitted or empty values default to 20. Read with
+	// JavaScript `parseInt` like `page`.
+	//
 	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
-	// Search KB names (max 1000 chars). Rejected if it contains HTML/script tags,
-	// event handlers, `javascript:`, or format specifiers (validated in Zod + controller).
+	// Search KB names (max 1000 chars after trimming). Rejected with `400` if it contains
+	// HTML/script tags, event handlers or `javascript:` (`HTTP_BAD_REQUEST`), or a
+	// printf-style format specifier (`VALIDATION_ERROR`). The format-specifier check
+	// also catches ordinary text such as `50% discount` (`%`, a space, then a letter
+	// like `d`). A value longer than 1000 characters is answered `500`.
 	//
 	Search *string `queryParam:"style=form,explode=true,name=search"`
-	// Comma-separated permission roles to filter by. Each token must be one of:
-	// OWNER, WRITER, READER.
+	// Comma-separated permission roles to filter by. Each token must be exactly one of
+	// OWNER, WRITER, READER: upper case, with no space around the commas. Empty tokens
+	// (`OWNER,,WRITER,`) are dropped, but a value with no role at all (`,`) is rejected.
+	// An empty value is read as not sent.
 	//
 	Permissions *string `queryParam:"style=form,explode=true,name=permissions"`
-	// Field to sort by.
+	// Field to sort by. An empty value is read as the default.
 	SortBy *ListKnowledgeBasesSortBy `default:"name" queryParam:"style=form,explode=true,name=sortBy"`
 	// Sort direction.
 	SortOrder *ListKnowledgeBasesSortOrder `default:"asc" queryParam:"style=form,explode=true,name=sortOrder"`

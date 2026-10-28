@@ -5,13 +5,10 @@ package components
 type AllowedMethod string
 
 const (
-	AllowedMethodSamlSso   AllowedMethod = "samlSso"
 	AllowedMethodOtp       AllowedMethod = "otp"
 	AllowedMethodPassword  AllowedMethod = "password"
 	AllowedMethodGoogle    AllowedMethod = "google"
 	AllowedMethodMicrosoft AllowedMethod = "microsoft"
-	AllowedMethodAzureAd   AllowedMethod = "azureAd"
-	AllowedMethodOauth     AllowedMethod = "oauth"
 )
 
 func (e AllowedMethod) ToPointer() *AllowedMethod {
@@ -22,7 +19,7 @@ func (e AllowedMethod) ToPointer() *AllowedMethod {
 func (e *AllowedMethod) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "samlSso", "otp", "password", "google", "microsoft", "azureAd", "oauth":
+		case "otp", "password", "google", "microsoft":
 			return true
 		}
 	}
@@ -37,7 +34,11 @@ type InitAuthResponse struct {
 	AllowedMethods []AllowedMethod `json:"allowedMethods"`
 	// Response message
 	Message string `json:"message"`
-	// Configuration for external authentication providers (returned when those methods are allowed)
+	// Settings of the external sign-in providers among the allowed methods, keyed by provider.
+	// A provider is listed whenever its settings can be read, which is also the case when
+	// nothing has been saved for it yet: its entry is then an empty object. Only `google`
+	// and `microsoft` have a sign-in flow.
+	//
 	AuthProviders AuthProviders `json:"authProviders"`
 	// True when at least one allowed external provider has JIT provisioning enabled
 	JitEnabled bool `json:"jitEnabled"`

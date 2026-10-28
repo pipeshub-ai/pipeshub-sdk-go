@@ -12,10 +12,13 @@ import (
 type SearchArchivedConversationsRequest struct {
 	// Search term to match against conversation titles and message content (max 1000 chars)
 	Search string `queryParam:"style=form,explode=true,name=search"`
-	// Page number (1-indexed)
-	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
-	// Items per page
-	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
+	// Page number (1-indexed). The validator accepts any number, so a fraction such
+	// as `1.5` is not refused; it is truncated (`1.5` reads as page 1).
+	//
+	Page *float64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Items per page. A fraction is not refused; it is truncated (`5.5` reads as 5).
+	//
+	Limit *float64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
 }
 
 func (s SearchArchivedConversationsRequest) MarshalJSON() ([]byte, error) {
@@ -36,14 +39,14 @@ func (s *SearchArchivedConversationsRequest) GetSearch() string {
 	return s.Search
 }
 
-func (s *SearchArchivedConversationsRequest) GetPage() *int64 {
+func (s *SearchArchivedConversationsRequest) GetPage() *float64 {
 	if s == nil {
 		return nil
 	}
 	return s.Page
 }
 
-func (s *SearchArchivedConversationsRequest) GetLimit() *int64 {
+func (s *SearchArchivedConversationsRequest) GetLimit() *float64 {
 	if s == nil {
 		return nil
 	}
@@ -75,12 +78,40 @@ func (e *SearchArchivedConversationsStatus) IsExact() bool {
 	return false
 }
 
+// SearchArchivedConversationsReasoningEffort - Reasoning effort requested when the conversation was created, when one was set.
+type SearchArchivedConversationsReasoningEffort string
+
+const (
+	SearchArchivedConversationsReasoningEffortNone   SearchArchivedConversationsReasoningEffort = "none"
+	SearchArchivedConversationsReasoningEffortLow    SearchArchivedConversationsReasoningEffort = "low"
+	SearchArchivedConversationsReasoningEffortMedium SearchArchivedConversationsReasoningEffort = "medium"
+	SearchArchivedConversationsReasoningEffortHigh   SearchArchivedConversationsReasoningEffort = "high"
+	SearchArchivedConversationsReasoningEffortMax    SearchArchivedConversationsReasoningEffort = "max"
+)
+
+func (e SearchArchivedConversationsReasoningEffort) ToPointer() *SearchArchivedConversationsReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *SearchArchivedConversationsReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
+
 type SearchArchivedConversationsModelInfo struct {
 	ModelKey          *string `json:"modelKey,omitzero"`
 	ModelName         *string `json:"modelName,omitzero"`
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	ModelProvider     *string `json:"modelProvider,omitzero"`
 	ChatMode          *string `json:"chatMode,omitzero"`
+	// Reasoning effort requested when the conversation was created, when one was set.
+	ReasoningEffort *SearchArchivedConversationsReasoningEffort `json:"reasoningEffort,omitzero"`
 }
 
 func (s *SearchArchivedConversationsModelInfo) GetModelKey() *string {
@@ -118,6 +149,13 @@ func (s *SearchArchivedConversationsModelInfo) GetChatMode() *string {
 	return s.ChatMode
 }
 
+func (s *SearchArchivedConversationsModelInfo) GetReasoningEffort() *SearchArchivedConversationsReasoningEffort {
+	if s == nil {
+		return nil
+	}
+	return s.ReasoningEffort
+}
+
 type SearchArchivedConversationsSharedWithAccessLevel string
 
 const (
@@ -143,6 +181,8 @@ func (e *SearchArchivedConversationsSharedWithAccessLevel) IsExact() bool {
 type SearchArchivedConversationsSharedWith struct {
 	UserID      *string                                           `json:"userId,omitzero"`
 	AccessLevel *SearchArchivedConversationsSharedWithAccessLevel `json:"accessLevel,omitzero"`
+	// Subdocument identifier auto-assigned by MongoDB.
+	ID *string `json:"_id,omitzero"`
 }
 
 func (s *SearchArchivedConversationsSharedWith) GetUserID() *string {
@@ -159,7 +199,16 @@ func (s *SearchArchivedConversationsSharedWith) GetAccessLevel() *SearchArchived
 	return s.AccessLevel
 }
 
+func (s *SearchArchivedConversationsSharedWith) GetID() *string {
+	if s == nil {
+		return nil
+	}
+	return s.ID
+}
+
 type SearchArchivedConversationsConversationError struct {
+	// Sub-document identifier auto-assigned by MongoDB.
+	ID        *string        `json:"_id,omitzero"`
 	Message   *string        `json:"message,omitzero"`
 	ErrorType *string        `json:"errorType,omitzero"`
 	Timestamp *time.Time     `json:"timestamp,omitzero"`
@@ -177,6 +226,13 @@ func (s *SearchArchivedConversationsConversationError) UnmarshalJSON(data []byte
 		return err
 	}
 	return nil
+}
+
+func (s *SearchArchivedConversationsConversationError) GetID() *string {
+	if s == nil {
+		return nil
+	}
+	return s.ID
 }
 
 func (s *SearchArchivedConversationsConversationError) GetMessage() *string {
@@ -296,6 +352,8 @@ func (e *SearchArchivedConversationsSource) IsExact() bool {
 // `Conversation` but omits `messages` to keep list payloads small.
 // Fetch a single conversation to retrieve its messages.
 type SearchArchivedConversationsConversation struct {
+	// Agent identifier — present only when `source` is `agent`
+	AgentKey   *string                                 `json:"agentKey,omitzero"`
 	ID         *string                                 `json:"_id,omitzero"`
 	UserID     *string                                 `json:"userId,omitzero"`
 	OrgID      *string                                 `json:"orgId,omitzero"`
@@ -322,6 +380,12 @@ type SearchArchivedConversationsConversation struct {
 	UpdatedAt          *time.Time                                     `json:"updatedAt,omitzero"`
 	IsOwner            *bool                                          `json:"isOwner,omitzero"`
 	AccessLevel        *SearchArchivedConversationsAccessLevel        `json:"accessLevel,omitzero"`
+	// `true` when the owner pinned this conversation. Absent on
+	// conversations that are not pinned (never `false`). Set via
+	// `PATCH /conversations/{conversationId}/pin`. Only returned to the
+	// owner: lists with `source=shared` omit it.
+	//
+	IsPinned *bool `json:"isPinned,omitzero"`
 	// The project this conversation is linked to, if any. Set via
 	// `PUT /conversations/{conversationId}/project` or at creation
 	// time; absent on conversations that were never linked.
@@ -339,8 +403,6 @@ type SearchArchivedConversationsConversation struct {
 	SharedBy *components.ConversationSharedBy `json:"sharedBy,omitzero"`
 	// Origin collection of the conversation
 	Source *SearchArchivedConversationsSource `json:"source,omitzero"`
-	// Agent identifier — present only when `source` is `agent`
-	AgentKey *string `json:"agentKey,omitzero"`
 	// Timestamp when the conversation was archived
 	ArchivedAt *time.Time `json:"archivedAt,omitzero"`
 }
@@ -354,6 +416,13 @@ func (s *SearchArchivedConversationsConversation) UnmarshalJSON(data []byte) err
 		return err
 	}
 	return nil
+}
+
+func (s *SearchArchivedConversationsConversation) GetAgentKey() *string {
+	if s == nil {
+		return nil
+	}
+	return s.AgentKey
 }
 
 func (s *SearchArchivedConversationsConversation) GetID() *string {
@@ -510,6 +579,13 @@ func (s *SearchArchivedConversationsConversation) GetAccessLevel() *SearchArchiv
 	return s.AccessLevel
 }
 
+func (s *SearchArchivedConversationsConversation) GetIsPinned() *bool {
+	if s == nil {
+		return nil
+	}
+	return s.IsPinned
+}
+
 func (s *SearchArchivedConversationsConversation) GetProjectID() optionalnullable.OptionalNullable[string] {
 	if s == nil {
 		return nil
@@ -536,13 +612,6 @@ func (s *SearchArchivedConversationsConversation) GetSource() *SearchArchivedCon
 		return nil
 	}
 	return s.Source
-}
-
-func (s *SearchArchivedConversationsConversation) GetAgentKey() *string {
-	if s == nil {
-		return nil
-	}
-	return s.AgentKey
 }
 
 func (s *SearchArchivedConversationsConversation) GetArchivedAt() *time.Time {

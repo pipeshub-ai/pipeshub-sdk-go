@@ -40,6 +40,32 @@ func (e *ConversationStatus) IsExact() bool {
 	return false
 }
 
+// ConversationReasoningEffort - Reasoning effort requested for the turn, when one was set.
+type ConversationReasoningEffort string
+
+const (
+	ConversationReasoningEffortNone   ConversationReasoningEffort = "none"
+	ConversationReasoningEffortLow    ConversationReasoningEffort = "low"
+	ConversationReasoningEffortMedium ConversationReasoningEffort = "medium"
+	ConversationReasoningEffortHigh   ConversationReasoningEffort = "high"
+	ConversationReasoningEffortMax    ConversationReasoningEffort = "max"
+)
+
+func (e ConversationReasoningEffort) ToPointer() *ConversationReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ConversationReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
+
 // ConversationModelInfo1 - AI model configuration used
 type ConversationModelInfo1 struct {
 	ModelKey  *string `json:"modelKey,omitzero"`
@@ -48,6 +74,8 @@ type ConversationModelInfo1 struct {
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	ModelProvider     *string `json:"modelProvider,omitzero"`
 	ChatMode          *string `json:"chatMode,omitzero"`
+	// Reasoning effort requested for the turn, when one was set.
+	ReasoningEffort *ConversationReasoningEffort `json:"reasoningEffort,omitzero"`
 }
 
 func (c *ConversationModelInfo1) GetModelKey() *string {
@@ -85,6 +113,13 @@ func (c *ConversationModelInfo1) GetChatMode() *string {
 	return c.ChatMode
 }
 
+func (c *ConversationModelInfo1) GetReasoningEffort() *ConversationReasoningEffort {
+	if c == nil {
+		return nil
+	}
+	return c.ReasoningEffort
+}
+
 // #region class-body-conversationmodelinfo1
 // #endregion class-body-conversationmodelinfo1
 
@@ -113,6 +148,8 @@ func (e *ConversationSharedWithAccessLevel) IsExact() bool {
 type ConversationSharedWith struct {
 	UserID      *string                            `json:"userId,omitzero"`
 	AccessLevel *ConversationSharedWithAccessLevel `json:"accessLevel,omitzero"`
+	// Subdocument identifier auto-assigned by MongoDB.
+	ID *string `json:"_id,omitzero"`
 }
 
 func (c *ConversationSharedWith) GetUserID() *string {
@@ -129,7 +166,16 @@ func (c *ConversationSharedWith) GetAccessLevel() *ConversationSharedWithAccessL
 	return c.AccessLevel
 }
 
+func (c *ConversationSharedWith) GetID() *string {
+	if c == nil {
+		return nil
+	}
+	return c.ID
+}
+
 type ConversationConversationError struct {
+	// Sub-document identifier auto-assigned by MongoDB.
+	ID        *string        `json:"_id,omitzero"`
 	Message   string         `json:"message"`
 	ErrorType *string        `json:"errorType,omitzero"`
 	Timestamp *time.Time     `json:"timestamp,omitzero"`
@@ -147,6 +193,13 @@ func (c *ConversationConversationError) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (c *ConversationConversationError) GetID() *string {
+	if c == nil {
+		return nil
+	}
+	return c.ID
 }
 
 func (c *ConversationConversationError) GetMessage() string {
@@ -320,6 +373,12 @@ type Conversation struct {
 	// conversation initiator (the only user who can share a chat).
 	//
 	SharedBy *ConversationSharedBy `json:"sharedBy,omitzero"`
+	// Only on agent conversations (returned by `GET /conversations?source=shared`). Open
+	// them with `GET /agents/{agentKey}/conversations/{conversationId}`.
+	//
+	AgentKey *string `json:"agentKey,omitzero"`
+	// Mongoose document version key.
+	V *int64 `json:"__v,omitzero"`
 }
 
 func (c Conversation) MarshalJSON() ([]byte, error) {
@@ -513,4 +572,18 @@ func (c *Conversation) GetSharedBy() *ConversationSharedBy {
 		return nil
 	}
 	return c.SharedBy
+}
+
+func (c *Conversation) GetAgentKey() *string {
+	if c == nil {
+		return nil
+	}
+	return c.AgentKey
+}
+
+func (c *Conversation) GetV() *int64 {
+	if c == nil {
+		return nil
+	}
+	return c.V
 }

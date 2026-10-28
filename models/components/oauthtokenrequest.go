@@ -8,15 +8,24 @@ import (
 )
 
 // GrantType - OAuth grant type:
-// - `authorization_code`: Exchange auth code for tokens
-// - `client_credentials`: Machine-to-machine auth
-// - `refresh_token`: Get new access token using refresh token
+//   - `authorization_code`: Exchange auth code for tokens
+//   - `client_credentials`: Machine-to-machine auth
+//   - `refresh_token`: Get new access token using refresh token
+//   - `urn:ietf:params:oauth:grant-type:device_code`: Poll for the tokens of a device
+//     authorization (RFC 8628) started with `POST /oauth2/device_authorization`
+//   - `urn:ietf:params:oauth:grant-type:token-exchange`: Service-account
+//     delegation (RFC 8693). Exchanges a service token for a
+//     short-lived token that acts as one named person. Enterprise
+//     edition; kept in this enum because the request shape is the same
+//     wherever the grant is offered.
 type GrantType string
 
 const (
-	GrantTypeAuthorizationCode GrantType = "authorization_code"
-	GrantTypeClientCredentials GrantType = "client_credentials"
-	GrantTypeRefreshToken      GrantType = "refresh_token"
+	GrantTypeAuthorizationCode                        GrantType = "authorization_code"
+	GrantTypeClientCredentials                        GrantType = "client_credentials"
+	GrantTypeRefreshToken                             GrantType = "refresh_token"
+	GrantTypeUrnIetfParamsOauthGrantTypeDeviceCode    GrantType = "urn:ietf:params:oauth:grant-type:device_code"
+	GrantTypeUrnIetfParamsOauthGrantTypeTokenExchange GrantType = "urn:ietf:params:oauth:grant-type:token-exchange"
 )
 
 func (e GrantType) ToPointer() *GrantType {
@@ -33,6 +42,10 @@ func (e *GrantType) UnmarshalJSON(data []byte) error {
 	case "client_credentials":
 		fallthrough
 	case "refresh_token":
+		fallthrough
+	case "urn:ietf:params:oauth:grant-type:device_code":
+		fallthrough
+	case "urn:ietf:params:oauth:grant-type:token-exchange":
 		*e = GrantType(v)
 		return nil
 	default:
@@ -47,13 +60,24 @@ type OAuthTokenRequest struct {
 	// - `authorization_code`: Exchange auth code for tokens
 	// - `client_credentials`: Machine-to-machine auth
 	// - `refresh_token`: Get new access token using refresh token
+	// - `urn:ietf:params:oauth:grant-type:device_code`: Poll for the tokens of a device
+	//   authorization (RFC 8628) started with `POST /oauth2/device_authorization`
+	// - `urn:ietf:params:oauth:grant-type:token-exchange`: Service-account
+	//   delegation (RFC 8693). Exchanges a service token for a
+	//   short-lived token that acts as one named person. Enterprise
+	//   edition; kept in this enum because the request shape is the same
+	//   wherever the grant is offered.
 	//
 	GrantType GrantType `form:"name=grant_type" json:"grant_type"`
 	// Authorization code (required for authorization_code grant)
 	Code *string `form:"name=code" json:"code,omitzero"`
 	// Redirect URI (required for authorization_code grant)
 	RedirectURI *string `form:"name=redirect_uri" json:"redirect_uri,omitzero"`
-	// Client ID (can also be sent via Basic auth header)
+	// The `device_code` from `POST /oauth2/device_authorization` (required for the device_code
+	// grant; without it the answer is `400 invalid_grant`)
+	//
+	DeviceCode *string `form:"name=device_code" json:"device_code,omitzero"`
+	// Client ID (can also be sent via Basic auth header, which then takes precedence)
 	ClientID *string `form:"name=client_id" json:"client_id,omitzero"`
 	// Client secret (can also be sent via Basic auth header)
 	ClientSecret *string `form:"name=client_secret" json:"client_secret,omitzero"`
@@ -65,6 +89,21 @@ type OAuthTokenRequest struct {
 	// Must be 43-128 characters from [A-Za-z0-9-._~]
 	//
 	CodeVerifier *string `form:"name=code_verifier" json:"code_verifier,omitzero"`
+	// The service token being exchanged (token-exchange grant only).
+	// This is the only authentication the grant has: no `client_id` or
+	// `client_secret` is sent, because the service token already carries
+	// a verified identity and the scopes that bound it.
+	//
+	SubjectToken *string `form:"name=subject_token" json:"subject_token,omitzero"`
+	// Optional. Must be `urn:ietf:params:oauth:token-type:access_token`
+	// when sent (token-exchange grant only).
+	//
+	SubjectTokenType *string `form:"name=subject_token_type" json:"subject_token_type,omitzero"`
+	// The person to act as, by user id or email address (token-exchange
+	// grant only). Must be on the service account's allow-list, and must
+	// not be an administrator.
+	//
+	RequestedSubject *string `form:"name=requested_subject" json:"requested_subject,omitzero"`
 }
 
 func (o *OAuthTokenRequest) GetGrantType() GrantType {
@@ -86,6 +125,13 @@ func (o *OAuthTokenRequest) GetRedirectURI() *string {
 		return nil
 	}
 	return o.RedirectURI
+}
+
+func (o *OAuthTokenRequest) GetDeviceCode() *string {
+	if o == nil {
+		return nil
+	}
+	return o.DeviceCode
 }
 
 func (o *OAuthTokenRequest) GetClientID() *string {
@@ -121,4 +167,25 @@ func (o *OAuthTokenRequest) GetCodeVerifier() *string {
 		return nil
 	}
 	return o.CodeVerifier
+}
+
+func (o *OAuthTokenRequest) GetSubjectToken() *string {
+	if o == nil {
+		return nil
+	}
+	return o.SubjectToken
+}
+
+func (o *OAuthTokenRequest) GetSubjectTokenType() *string {
+	if o == nil {
+		return nil
+	}
+	return o.SubjectTokenType
+}
+
+func (o *OAuthTokenRequest) GetRequestedSubject() *string {
+	if o == nil {
+		return nil
+	}
+	return o.RequestedSubject
 }

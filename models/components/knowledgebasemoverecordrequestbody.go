@@ -2,10 +2,10 @@
 
 package components
 
-// KnowledgeBaseMoveRecordRequestBody - Request body for PUT /knowledgeBase/{kbId}/record/{recordId}/move (moveRecord).
+// KnowledgeBaseMoveRecordRequestBody - Request body for PUT /knowledgeBase/{kbId}/record/{recordId}/move (moveRecord). Fields other than `newParentId` are dropped by the validator, not refused.
 type KnowledgeBaseMoveRecordRequestBody struct {
 	// Target folder ID, or null to move the record to the knowledge base root
-	NewParentID *string `json:"newParentId"`
+	NewParentID *string `json:"newParentId" form:"name=newParentId"`
 }
 
 func (k *KnowledgeBaseMoveRecordRequestBody) GetNewParentID() *string {

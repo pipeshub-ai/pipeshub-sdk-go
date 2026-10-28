@@ -3,23 +3,24 @@
 package components
 
 // AuthMethodType - Type of authentication method:
-// - `password`: Email/password authentication
-// - `otp`: One-time password via email (6-digit, expires in 10 minutes)
-// - `google`: Google OAuth 2.0
-// - `microsoft`: Microsoft OAuth 2.0
-// - `azureAd`: Azure Active Directory
-// - `samlSso`: SAML 2.0 Single Sign-On
-// - `oauth`: Generic OAuth 2.0 provider
+//   - `password`: Email/password authentication
+//   - `otp`: One-time password via email (6-digit, expires in 10 minutes)
+//   - `google`: Google OAuth 2.0
+//   - `microsoft`: Microsoft OAuth 2.0
+//   - `github`: accepted and stored, but no sign-in flow implements it:
+//     `/userAccount/initAuth` never lists it and `/userAccount/authenticate` answers `400`
+//
+// `samlSso`, `oauth` (removed in 1.0) and `azureAd` (now `microsoft`) are refused when a
+// policy is saved. A stored policy that still names one is read without it (`azureAd`
+// reads as `microsoft`), with `password` added to the first step.
 type AuthMethodType string
 
 const (
-	AuthMethodTypeSamlSso   AuthMethodType = "samlSso"
 	AuthMethodTypeOtp       AuthMethodType = "otp"
 	AuthMethodTypePassword  AuthMethodType = "password"
 	AuthMethodTypeGoogle    AuthMethodType = "google"
 	AuthMethodTypeMicrosoft AuthMethodType = "microsoft"
-	AuthMethodTypeAzureAd   AuthMethodType = "azureAd"
-	AuthMethodTypeOauth     AuthMethodType = "oauth"
+	AuthMethodTypeGithub    AuthMethodType = "github"
 )
 
 func (e AuthMethodType) ToPointer() *AuthMethodType {
@@ -30,7 +31,7 @@ func (e AuthMethodType) ToPointer() *AuthMethodType {
 func (e *AuthMethodType) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "samlSso", "otp", "password", "google", "microsoft", "azureAd", "oauth":
+		case "otp", "password", "google", "microsoft", "github":
 			return true
 		}
 	}
@@ -44,9 +45,12 @@ type AuthMethod struct {
 	// - `otp`: One-time password via email (6-digit, expires in 10 minutes)
 	// - `google`: Google OAuth 2.0
 	// - `microsoft`: Microsoft OAuth 2.0
-	// - `azureAd`: Azure Active Directory
-	// - `samlSso`: SAML 2.0 Single Sign-On
-	// - `oauth`: Generic OAuth 2.0 provider
+	// - `github`: accepted and stored, but no sign-in flow implements it:
+	//   `/userAccount/initAuth` never lists it and `/userAccount/authenticate` answers `400`
+	//
+	// `samlSso`, `oauth` (removed in 1.0) and `azureAd` (now `microsoft`) are refused when a
+	// policy is saved. A stored policy that still names one is read without it (`azureAd`
+	// reads as `microsoft`), with `password` added to the first step.
 	//
 	Type AuthMethodType `json:"type"`
 }

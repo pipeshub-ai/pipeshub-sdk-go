@@ -65,6 +65,22 @@ type OAuthAppWithSecret struct {
 	AccessTokenLifetime int64 `json:"accessTokenLifetime"`
 	// Refresh token lifetime in seconds
 	RefreshTokenLifetime int64 `json:"refreshTokenLifetime"`
+	// What a connected app may see: an OAuth app's limit is picked by its
+	// creator and holds for every user who connects it; a personal access
+	// token's by its owner. Search, chat, agent chat and every record read by
+	// id stay inside it, and inside the connecting user's own permissions.
+	// Omit it for everything the user can see. Sent, it must name at least one id and at
+	// most 50 in all, since it is signed into every token the app gets.
+	//
+	KnowledgeLimit *KnowledgeLimit `json:"knowledgeLimit,omitzero"`
+	// The service account this app's own `client_credentials` tokens act as.
+	//
+	// Absent means the app has no service account and its tokens act as whoever
+	// created it. Apps registered since a service account became required always
+	// have one; an older app may not, and those are the ones an administrator
+	// still has to move.
+	//
+	TokenIdentityUserID *string `json:"tokenIdentityUserId,omitzero"`
 	// Creation timestamp
 	CreatedAt time.Time `json:"createdAt"`
 	// Last update timestamp
@@ -189,6 +205,20 @@ func (o *OAuthAppWithSecret) GetRefreshTokenLifetime() int64 {
 		return 0
 	}
 	return o.RefreshTokenLifetime
+}
+
+func (o *OAuthAppWithSecret) GetKnowledgeLimit() *KnowledgeLimit {
+	if o == nil {
+		return nil
+	}
+	return o.KnowledgeLimit
+}
+
+func (o *OAuthAppWithSecret) GetTokenIdentityUserID() *string {
+	if o == nil {
+		return nil
+	}
+	return o.TokenIdentityUserID
 }
 
 func (o *OAuthAppWithSecret) GetCreatedAt() time.Time {

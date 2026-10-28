@@ -67,57 +67,68 @@ func (e *MessageContentFormat) IsExact() bool {
 	return false
 }
 
-type CitationUnionType string
+type MessageCitationType string
 
 const (
-	CitationUnionTypeCitationReference          CitationUnionType = "CitationReference"
-	CitationUnionTypePopulatedCitationReference CitationUnionType = "PopulatedCitationReference"
-	CitationUnionTypeUnknown                    CitationUnionType = "Unknown"
+	MessageCitationTypeCitationReference          MessageCitationType = "CitationReference"
+	MessageCitationTypePopulatedCitationReference MessageCitationType = "PopulatedCitationReference"
+	MessageCitationTypeRedactedSource             MessageCitationType = "RedactedSource"
+	MessageCitationTypeUnknown                    MessageCitationType = "Unknown"
 )
 
-type CitationUnion struct {
+type MessageCitation struct {
 	CitationReference          *CitationReference          `queryParam:"inline" union:"member"`
 	PopulatedCitationReference *PopulatedCitationReference `queryParam:"inline" union:"member"`
+	RedactedSource             *RedactedSource             `queryParam:"inline" union:"member"`
 	UnknownRaw                 json.RawMessage             `json:"-" union:"unknown"`
 
-	Type CitationUnionType
+	Type MessageCitationType
 }
 
-func CreateCitationUnionCitationReference(citationReference CitationReference) CitationUnion {
-	typ := CitationUnionTypeCitationReference
+func CreateMessageCitationCitationReference(citationReference CitationReference) MessageCitation {
+	typ := MessageCitationTypeCitationReference
 
-	return CitationUnion{
+	return MessageCitation{
 		CitationReference: &citationReference,
 		Type:              typ,
 	}
 }
 
-func CreateCitationUnionPopulatedCitationReference(populatedCitationReference PopulatedCitationReference) CitationUnion {
-	typ := CitationUnionTypePopulatedCitationReference
+func CreateMessageCitationPopulatedCitationReference(populatedCitationReference PopulatedCitationReference) MessageCitation {
+	typ := MessageCitationTypePopulatedCitationReference
 
-	return CitationUnion{
+	return MessageCitation{
 		PopulatedCitationReference: &populatedCitationReference,
 		Type:                       typ,
 	}
 }
 
-func CreateCitationUnionUnknown(raw json.RawMessage) CitationUnion {
-	return CitationUnion{
-		UnknownRaw: raw,
-		Type:       CitationUnionTypeUnknown,
+func CreateMessageCitationRedactedSource(redactedSource RedactedSource) MessageCitation {
+	typ := MessageCitationTypeRedactedSource
+
+	return MessageCitation{
+		RedactedSource: &redactedSource,
+		Type:           typ,
 	}
 }
 
-func (u CitationUnion) GetUnknownRaw() json.RawMessage {
+func CreateMessageCitationUnknown(raw json.RawMessage) MessageCitation {
+	return MessageCitation{
+		UnknownRaw: raw,
+		Type:       MessageCitationTypeUnknown,
+	}
+}
+
+func (u MessageCitation) GetUnknownRaw() json.RawMessage {
 	return u.UnknownRaw
 }
 
-func (u CitationUnion) IsUnknown() bool {
-	return u.Type == CitationUnionTypeUnknown
+func (u MessageCitation) IsUnknown() bool {
+	return u.Type == MessageCitationTypeUnknown
 }
 
-func (u *CitationUnion) UnmarshalJSON(data []byte) error {
-	*u = CitationUnion{}
+func (u *MessageCitation) UnmarshalJSON(data []byte) error {
+	*u = MessageCitation{}
 
 	var candidates []utils.UnionCandidate
 
@@ -125,7 +136,7 @@ func (u *CitationUnion) UnmarshalJSON(data []byte) error {
 	var citationReference CitationReference = CitationReference{}
 	if err := utils.UnmarshalJSON(data, &citationReference, "", true, nil); err == nil {
 		candidates = append(candidates, utils.UnionCandidate{
-			Type:  CitationUnionTypeCitationReference,
+			Type:  MessageCitationTypeCitationReference,
 			Value: &citationReference,
 		})
 	}
@@ -133,14 +144,22 @@ func (u *CitationUnion) UnmarshalJSON(data []byte) error {
 	var populatedCitationReference PopulatedCitationReference = PopulatedCitationReference{}
 	if err := utils.UnmarshalJSON(data, &populatedCitationReference, "", true, nil); err == nil {
 		candidates = append(candidates, utils.UnionCandidate{
-			Type:  CitationUnionTypePopulatedCitationReference,
+			Type:  MessageCitationTypePopulatedCitationReference,
 			Value: &populatedCitationReference,
+		})
+	}
+
+	var redactedSource RedactedSource = RedactedSource{}
+	if err := utils.UnmarshalJSON(data, &redactedSource, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  MessageCitationTypeRedactedSource,
+			Value: &redactedSource,
 		})
 	}
 
 	if len(candidates) == 0 {
 		u.UnknownRaw = json.RawMessage(data)
-		u.Type = CitationUnionTypeUnknown
+		u.Type = MessageCitationTypeUnknown
 		return nil
 	}
 
@@ -148,27 +167,30 @@ func (u *CitationUnion) UnmarshalJSON(data []byte) error {
 	best := utils.PickBestUnionCandidate(candidates, data)
 	if best == nil {
 		u.UnknownRaw = json.RawMessage(data)
-		u.Type = CitationUnionTypeUnknown
+		u.Type = MessageCitationTypeUnknown
 		return nil
 	}
 
 	// Set the union type and value based on the best candidate
-	u.Type = best.Type.(CitationUnionType)
+	u.Type = best.Type.(MessageCitationType)
 	switch best.Type {
-	case CitationUnionTypeCitationReference:
+	case MessageCitationTypeCitationReference:
 		u.CitationReference = best.Value.(*CitationReference)
 		return nil
-	case CitationUnionTypePopulatedCitationReference:
+	case MessageCitationTypePopulatedCitationReference:
 		u.PopulatedCitationReference = best.Value.(*PopulatedCitationReference)
+		return nil
+	case MessageCitationTypeRedactedSource:
+		u.RedactedSource = best.Value.(*RedactedSource)
 		return nil
 	}
 
 	u.UnknownRaw = json.RawMessage(data)
-	u.Type = CitationUnionTypeUnknown
+	u.Type = MessageCitationTypeUnknown
 	return nil
 }
 
-func (u CitationUnion) MarshalJSON() ([]byte, error) {
+func (u MessageCitation) MarshalJSON() ([]byte, error) {
 	if u.CitationReference != nil {
 		return utils.MarshalJSON(u.CitationReference, "", true)
 	}
@@ -177,10 +199,14 @@ func (u CitationUnion) MarshalJSON() ([]byte, error) {
 		return utils.MarshalJSON(u.PopulatedCitationReference, "", true)
 	}
 
+	if u.RedactedSource != nil {
+		return utils.MarshalJSON(u.RedactedSource, "", true)
+	}
+
 	if u.UnknownRaw != nil {
 		return json.RawMessage(u.UnknownRaw), nil
 	}
-	return nil, errors.New("could not marshal union type CitationUnion: all fields are null")
+	return nil, errors.New("could not marshal union type MessageCitation: all fields are null")
 }
 
 type MessageMetadata struct {
@@ -305,6 +331,122 @@ func (m *MessageReferenceDatum) GetMetadata() map[string]string {
 	return m.Metadata
 }
 
+type MessageReferenceDatumUnionType string
+
+const (
+	MessageReferenceDatumUnionTypeMessageReferenceDatum MessageReferenceDatumUnionType = "Message_referenceDatum"
+	MessageReferenceDatumUnionTypeRedactedSource        MessageReferenceDatumUnionType = "RedactedSource"
+	MessageReferenceDatumUnionTypeUnknown               MessageReferenceDatumUnionType = "Unknown"
+)
+
+type MessageReferenceDatumUnion struct {
+	MessageReferenceDatum *MessageReferenceDatum `queryParam:"inline" union:"member"`
+	RedactedSource        *RedactedSource        `queryParam:"inline" union:"member"`
+	UnknownRaw            json.RawMessage        `json:"-" union:"unknown"`
+
+	Type MessageReferenceDatumUnionType
+}
+
+func CreateMessageReferenceDatumUnionMessageReferenceDatum(messageReferenceDatum MessageReferenceDatum) MessageReferenceDatumUnion {
+	typ := MessageReferenceDatumUnionTypeMessageReferenceDatum
+
+	return MessageReferenceDatumUnion{
+		MessageReferenceDatum: &messageReferenceDatum,
+		Type:                  typ,
+	}
+}
+
+func CreateMessageReferenceDatumUnionRedactedSource(redactedSource RedactedSource) MessageReferenceDatumUnion {
+	typ := MessageReferenceDatumUnionTypeRedactedSource
+
+	return MessageReferenceDatumUnion{
+		RedactedSource: &redactedSource,
+		Type:           typ,
+	}
+}
+
+func CreateMessageReferenceDatumUnionUnknown(raw json.RawMessage) MessageReferenceDatumUnion {
+	return MessageReferenceDatumUnion{
+		UnknownRaw: raw,
+		Type:       MessageReferenceDatumUnionTypeUnknown,
+	}
+}
+
+func (u MessageReferenceDatumUnion) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u MessageReferenceDatumUnion) IsUnknown() bool {
+	return u.Type == MessageReferenceDatumUnionTypeUnknown
+}
+
+func (u *MessageReferenceDatumUnion) UnmarshalJSON(data []byte) error {
+	*u = MessageReferenceDatumUnion{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var messageReferenceDatum MessageReferenceDatum = MessageReferenceDatum{}
+	if err := utils.UnmarshalJSON(data, &messageReferenceDatum, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  MessageReferenceDatumUnionTypeMessageReferenceDatum,
+			Value: &messageReferenceDatum,
+		})
+	}
+
+	var redactedSource RedactedSource = RedactedSource{}
+	if err := utils.UnmarshalJSON(data, &redactedSource, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  MessageReferenceDatumUnionTypeRedactedSource,
+			Value: &redactedSource,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = MessageReferenceDatumUnionTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = MessageReferenceDatumUnionTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(MessageReferenceDatumUnionType)
+	switch best.Type {
+	case MessageReferenceDatumUnionTypeMessageReferenceDatum:
+		u.MessageReferenceDatum = best.Value.(*MessageReferenceDatum)
+		return nil
+	case MessageReferenceDatumUnionTypeRedactedSource:
+		u.RedactedSource = best.Value.(*RedactedSource)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = MessageReferenceDatumUnionTypeUnknown
+	return nil
+}
+
+func (u MessageReferenceDatumUnion) MarshalJSON() ([]byte, error) {
+	if u.MessageReferenceDatum != nil {
+		return utils.MarshalJSON(u.MessageReferenceDatum, "", true)
+	}
+
+	if u.RedactedSource != nil {
+		return utils.MarshalJSON(u.RedactedSource, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type MessageReferenceDatumUnion: all fields are null")
+}
+
 // Message - A single message within a conversation. Messages can be user queries,
 // AI responses, system messages, or error notifications.
 type Message struct {
@@ -327,7 +469,7 @@ type Message struct {
 	// return the saved conversation after a turn (create, add message)
 	// populate each item to `{ citationId, citationData }`.
 	//
-	Citations []CitationUnion `json:"citations,omitzero"`
+	Citations []MessageCitation `json:"citations,omitzero"`
 	// AI confidence in the answer. Present only on `bot_response` messages,
 	// and only when the model emitted a trailing confidence block.
 	//
@@ -349,7 +491,7 @@ type Message struct {
 	// Reference identifiers extracted from tool responses, used to scope
 	// follow-up queries (for example Jira project keys or record IDs).
 	//
-	ReferenceData []MessageReferenceDatum `json:"referenceData,omitzero"`
+	ReferenceData []MessageReferenceDatumUnion `json:"referenceData,omitzero"`
 	// Files uploaded for this message turn (see
 	// `POST /conversations/attachments/upload`).
 	//
@@ -403,7 +545,7 @@ func (m *Message) GetContentFormat() *MessageContentFormat {
 	return m.ContentFormat
 }
 
-func (m *Message) GetCitations() []CitationUnion {
+func (m *Message) GetCitations() []MessageCitation {
 	if m == nil {
 		return nil
 	}
@@ -452,7 +594,7 @@ func (m *Message) GetAppliedFilters() *AppliedFilters {
 	return m.AppliedFilters
 }
 
-func (m *Message) GetReferenceData() []MessageReferenceDatum {
+func (m *Message) GetReferenceData() []MessageReferenceDatumUnion {
 	if m == nil {
 		return nil
 	}

@@ -10,8 +10,10 @@ import (
 type GetRecordByIDRequest struct {
 	// Record ID
 	RecordID string `pathParam:"style=simple,explode=false,name=recordId"`
-	// Optional format to convert the file to (e.g., PDF to text). Supported conversions include PPT to PDF and PPTX to PDF.
+	// Accepted as any single string and not used by this endpoint (no conversion happens here). Sending it more than once is rejected with `400`.
 	ConvertTo *string `queryParam:"style=form,explode=true,name=convertTo"`
+	// Registry version number of an artifact record: digits only. Checked and then not used by this endpoint; a value that is not all digits (empty, negative or decimal included) is rejected with `400`.
+	Version *string `queryParam:"style=form,explode=true,name=version"`
 }
 
 func (g *GetRecordByIDRequest) GetRecordID() string {
@@ -26,6 +28,13 @@ func (g *GetRecordByIDRequest) GetConvertTo() *string {
 		return nil
 	}
 	return g.ConvertTo
+}
+
+func (g *GetRecordByIDRequest) GetVersion() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Version
 }
 
 type GetRecordByIDResponse struct {

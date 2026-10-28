@@ -3,17 +3,605 @@
 package components
 
 import (
+	"encoding/json"
+	"errors"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 )
+
+type AppType string
+
+const (
+	AppTypeAppliedFilterNode AppType = "AppliedFilterNode"
+	AppTypeRedactedSource    AppType = "RedactedSource"
+	AppTypeUnknown           AppType = "Unknown"
+)
+
+type App struct {
+	AppliedFilterNode *AppliedFilterNode `queryParam:"inline" union:"member"`
+	RedactedSource    *RedactedSource    `queryParam:"inline" union:"member"`
+	UnknownRaw        json.RawMessage    `json:"-" union:"unknown"`
+
+	Type AppType
+}
+
+func CreateAppAppliedFilterNode(appliedFilterNode AppliedFilterNode) App {
+	typ := AppTypeAppliedFilterNode
+
+	return App{
+		AppliedFilterNode: &appliedFilterNode,
+		Type:              typ,
+	}
+}
+
+func CreateAppRedactedSource(redactedSource RedactedSource) App {
+	typ := AppTypeRedactedSource
+
+	return App{
+		RedactedSource: &redactedSource,
+		Type:           typ,
+	}
+}
+
+func CreateAppUnknown(raw json.RawMessage) App {
+	return App{
+		UnknownRaw: raw,
+		Type:       AppTypeUnknown,
+	}
+}
+
+func (u App) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u App) IsUnknown() bool {
+	return u.Type == AppTypeUnknown
+}
+
+func (u *App) UnmarshalJSON(data []byte) error {
+	*u = App{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var appliedFilterNode AppliedFilterNode = AppliedFilterNode{}
+	if err := utils.UnmarshalJSON(data, &appliedFilterNode, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  AppTypeAppliedFilterNode,
+			Value: &appliedFilterNode,
+		})
+	}
+
+	var redactedSource RedactedSource = RedactedSource{}
+	if err := utils.UnmarshalJSON(data, &redactedSource, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  AppTypeRedactedSource,
+			Value: &redactedSource,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = AppTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = AppTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(AppType)
+	switch best.Type {
+	case AppTypeAppliedFilterNode:
+		u.AppliedFilterNode = best.Value.(*AppliedFilterNode)
+		return nil
+	case AppTypeRedactedSource:
+		u.RedactedSource = best.Value.(*RedactedSource)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = AppTypeUnknown
+	return nil
+}
+
+func (u App) MarshalJSON() ([]byte, error) {
+	if u.AppliedFilterNode != nil {
+		return utils.MarshalJSON(u.AppliedFilterNode, "", true)
+	}
+
+	if u.RedactedSource != nil {
+		return utils.MarshalJSON(u.RedactedSource, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type App: all fields are null")
+}
+
+type KbType string
+
+const (
+	KbTypeAppliedFilterNode KbType = "AppliedFilterNode"
+	KbTypeRedactedSource    KbType = "RedactedSource"
+	KbTypeUnknown           KbType = "Unknown"
+)
+
+type Kb struct {
+	AppliedFilterNode *AppliedFilterNode `queryParam:"inline" union:"member"`
+	RedactedSource    *RedactedSource    `queryParam:"inline" union:"member"`
+	UnknownRaw        json.RawMessage    `json:"-" union:"unknown"`
+
+	Type KbType
+}
+
+func CreateKbAppliedFilterNode(appliedFilterNode AppliedFilterNode) Kb {
+	typ := KbTypeAppliedFilterNode
+
+	return Kb{
+		AppliedFilterNode: &appliedFilterNode,
+		Type:              typ,
+	}
+}
+
+func CreateKbRedactedSource(redactedSource RedactedSource) Kb {
+	typ := KbTypeRedactedSource
+
+	return Kb{
+		RedactedSource: &redactedSource,
+		Type:           typ,
+	}
+}
+
+func CreateKbUnknown(raw json.RawMessage) Kb {
+	return Kb{
+		UnknownRaw: raw,
+		Type:       KbTypeUnknown,
+	}
+}
+
+func (u Kb) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u Kb) IsUnknown() bool {
+	return u.Type == KbTypeUnknown
+}
+
+func (u *Kb) UnmarshalJSON(data []byte) error {
+	*u = Kb{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var appliedFilterNode AppliedFilterNode = AppliedFilterNode{}
+	if err := utils.UnmarshalJSON(data, &appliedFilterNode, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  KbTypeAppliedFilterNode,
+			Value: &appliedFilterNode,
+		})
+	}
+
+	var redactedSource RedactedSource = RedactedSource{}
+	if err := utils.UnmarshalJSON(data, &redactedSource, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  KbTypeRedactedSource,
+			Value: &redactedSource,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = KbTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = KbTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(KbType)
+	switch best.Type {
+	case KbTypeAppliedFilterNode:
+		u.AppliedFilterNode = best.Value.(*AppliedFilterNode)
+		return nil
+	case KbTypeRedactedSource:
+		u.RedactedSource = best.Value.(*RedactedSource)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = KbTypeUnknown
+	return nil
+}
+
+func (u Kb) MarshalJSON() ([]byte, error) {
+	if u.AppliedFilterNode != nil {
+		return utils.MarshalJSON(u.AppliedFilterNode, "", true)
+	}
+
+	if u.RedactedSource != nil {
+		return utils.MarshalJSON(u.RedactedSource, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type Kb: all fields are null")
+}
+
+type RecordGroupType string
+
+const (
+	RecordGroupTypeAppliedFilterNode RecordGroupType = "AppliedFilterNode"
+	RecordGroupTypeRedactedSource    RecordGroupType = "RedactedSource"
+	RecordGroupTypeUnknown           RecordGroupType = "Unknown"
+)
+
+type RecordGroup struct {
+	AppliedFilterNode *AppliedFilterNode `queryParam:"inline" union:"member"`
+	RedactedSource    *RedactedSource    `queryParam:"inline" union:"member"`
+	UnknownRaw        json.RawMessage    `json:"-" union:"unknown"`
+
+	Type RecordGroupType
+}
+
+func CreateRecordGroupAppliedFilterNode(appliedFilterNode AppliedFilterNode) RecordGroup {
+	typ := RecordGroupTypeAppliedFilterNode
+
+	return RecordGroup{
+		AppliedFilterNode: &appliedFilterNode,
+		Type:              typ,
+	}
+}
+
+func CreateRecordGroupRedactedSource(redactedSource RedactedSource) RecordGroup {
+	typ := RecordGroupTypeRedactedSource
+
+	return RecordGroup{
+		RedactedSource: &redactedSource,
+		Type:           typ,
+	}
+}
+
+func CreateRecordGroupUnknown(raw json.RawMessage) RecordGroup {
+	return RecordGroup{
+		UnknownRaw: raw,
+		Type:       RecordGroupTypeUnknown,
+	}
+}
+
+func (u RecordGroup) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u RecordGroup) IsUnknown() bool {
+	return u.Type == RecordGroupTypeUnknown
+}
+
+func (u *RecordGroup) UnmarshalJSON(data []byte) error {
+	*u = RecordGroup{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var appliedFilterNode AppliedFilterNode = AppliedFilterNode{}
+	if err := utils.UnmarshalJSON(data, &appliedFilterNode, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  RecordGroupTypeAppliedFilterNode,
+			Value: &appliedFilterNode,
+		})
+	}
+
+	var redactedSource RedactedSource = RedactedSource{}
+	if err := utils.UnmarshalJSON(data, &redactedSource, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  RecordGroupTypeRedactedSource,
+			Value: &redactedSource,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = RecordGroupTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = RecordGroupTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(RecordGroupType)
+	switch best.Type {
+	case RecordGroupTypeAppliedFilterNode:
+		u.AppliedFilterNode = best.Value.(*AppliedFilterNode)
+		return nil
+	case RecordGroupTypeRedactedSource:
+		u.RedactedSource = best.Value.(*RedactedSource)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = RecordGroupTypeUnknown
+	return nil
+}
+
+func (u RecordGroup) MarshalJSON() ([]byte, error) {
+	if u.AppliedFilterNode != nil {
+		return utils.MarshalJSON(u.AppliedFilterNode, "", true)
+	}
+
+	if u.RedactedSource != nil {
+		return utils.MarshalJSON(u.RedactedSource, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type RecordGroup: all fields are null")
+}
+
+type RecordType string
+
+const (
+	RecordTypeAppliedFilterNode RecordType = "AppliedFilterNode"
+	RecordTypeRedactedSource    RecordType = "RedactedSource"
+	RecordTypeUnknown           RecordType = "Unknown"
+)
+
+type Record struct {
+	AppliedFilterNode *AppliedFilterNode `queryParam:"inline" union:"member"`
+	RedactedSource    *RedactedSource    `queryParam:"inline" union:"member"`
+	UnknownRaw        json.RawMessage    `json:"-" union:"unknown"`
+
+	Type RecordType
+}
+
+func CreateRecordAppliedFilterNode(appliedFilterNode AppliedFilterNode) Record {
+	typ := RecordTypeAppliedFilterNode
+
+	return Record{
+		AppliedFilterNode: &appliedFilterNode,
+		Type:              typ,
+	}
+}
+
+func CreateRecordRedactedSource(redactedSource RedactedSource) Record {
+	typ := RecordTypeRedactedSource
+
+	return Record{
+		RedactedSource: &redactedSource,
+		Type:           typ,
+	}
+}
+
+func CreateRecordUnknown(raw json.RawMessage) Record {
+	return Record{
+		UnknownRaw: raw,
+		Type:       RecordTypeUnknown,
+	}
+}
+
+func (u Record) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u Record) IsUnknown() bool {
+	return u.Type == RecordTypeUnknown
+}
+
+func (u *Record) UnmarshalJSON(data []byte) error {
+	*u = Record{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var appliedFilterNode AppliedFilterNode = AppliedFilterNode{}
+	if err := utils.UnmarshalJSON(data, &appliedFilterNode, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  RecordTypeAppliedFilterNode,
+			Value: &appliedFilterNode,
+		})
+	}
+
+	var redactedSource RedactedSource = RedactedSource{}
+	if err := utils.UnmarshalJSON(data, &redactedSource, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  RecordTypeRedactedSource,
+			Value: &redactedSource,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = RecordTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = RecordTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(RecordType)
+	switch best.Type {
+	case RecordTypeAppliedFilterNode:
+		u.AppliedFilterNode = best.Value.(*AppliedFilterNode)
+		return nil
+	case RecordTypeRedactedSource:
+		u.RedactedSource = best.Value.(*RedactedSource)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = RecordTypeUnknown
+	return nil
+}
+
+func (u Record) MarshalJSON() ([]byte, error) {
+	if u.AppliedFilterNode != nil {
+		return utils.MarshalJSON(u.AppliedFilterNode, "", true)
+	}
+
+	if u.RedactedSource != nil {
+		return utils.MarshalJSON(u.RedactedSource, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type Record: all fields are null")
+}
+
+type RecordsExactType string
+
+const (
+	RecordsExactTypeAppliedFilterNode RecordsExactType = "AppliedFilterNode"
+	RecordsExactTypeRedactedSource    RecordsExactType = "RedactedSource"
+	RecordsExactTypeUnknown           RecordsExactType = "Unknown"
+)
+
+type RecordsExact struct {
+	AppliedFilterNode *AppliedFilterNode `queryParam:"inline" union:"member"`
+	RedactedSource    *RedactedSource    `queryParam:"inline" union:"member"`
+	UnknownRaw        json.RawMessage    `json:"-" union:"unknown"`
+
+	Type RecordsExactType
+}
+
+func CreateRecordsExactAppliedFilterNode(appliedFilterNode AppliedFilterNode) RecordsExact {
+	typ := RecordsExactTypeAppliedFilterNode
+
+	return RecordsExact{
+		AppliedFilterNode: &appliedFilterNode,
+		Type:              typ,
+	}
+}
+
+func CreateRecordsExactRedactedSource(redactedSource RedactedSource) RecordsExact {
+	typ := RecordsExactTypeRedactedSource
+
+	return RecordsExact{
+		RedactedSource: &redactedSource,
+		Type:           typ,
+	}
+}
+
+func CreateRecordsExactUnknown(raw json.RawMessage) RecordsExact {
+	return RecordsExact{
+		UnknownRaw: raw,
+		Type:       RecordsExactTypeUnknown,
+	}
+}
+
+func (u RecordsExact) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u RecordsExact) IsUnknown() bool {
+	return u.Type == RecordsExactTypeUnknown
+}
+
+func (u *RecordsExact) UnmarshalJSON(data []byte) error {
+	*u = RecordsExact{}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var appliedFilterNode AppliedFilterNode = AppliedFilterNode{}
+	if err := utils.UnmarshalJSON(data, &appliedFilterNode, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  RecordsExactTypeAppliedFilterNode,
+			Value: &appliedFilterNode,
+		})
+	}
+
+	var redactedSource RedactedSource = RedactedSource{}
+	if err := utils.UnmarshalJSON(data, &redactedSource, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  RecordsExactTypeRedactedSource,
+			Value: &redactedSource,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = RecordsExactTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = RecordsExactTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(RecordsExactType)
+	switch best.Type {
+	case RecordsExactTypeAppliedFilterNode:
+		u.AppliedFilterNode = best.Value.(*AppliedFilterNode)
+		return nil
+	case RecordsExactTypeRedactedSource:
+		u.RedactedSource = best.Value.(*RedactedSource)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = RecordsExactTypeUnknown
+	return nil
+}
+
+func (u RecordsExact) MarshalJSON() ([]byte, error) {
+	if u.AppliedFilterNode != nil {
+		return utils.MarshalJSON(u.AppliedFilterNode, "", true)
+	}
+
+	if u.RedactedSource != nil {
+		return utils.MarshalJSON(u.RedactedSource, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type RecordsExact: all fields are null")
+}
 
 // AppliedFilters - Rich filter state selected by the user, used for display and persistence only.
 // This mirrors the active selection shown in the UI and is distinct from the
 // machine-readable `filters` field used for retrieval scoping.
 type AppliedFilters struct {
 	// Applied app/connector filter nodes
-	Apps []AppliedFilterNode `json:"apps,omitzero"`
+	Apps []App `json:"apps,omitzero"`
 	// Applied knowledge-base filter nodes
-	Kb []AppliedFilterNode `json:"kb,omitzero"`
+	Kb []Kb `json:"kb,omitzero"`
+	// Applied record-group filter nodes
+	RecordGroups []RecordGroup `json:"recordGroups,omitzero"`
+	// Applied folder and record filter nodes (each with everything under it)
+	Records []Record `json:"records,omitzero"`
+	// Applied record filter nodes selected alone
+	RecordsExact []RecordsExact `json:"recordsExact,omitzero"`
 }
 
 func (a AppliedFilters) MarshalJSON() ([]byte, error) {
@@ -27,16 +615,37 @@ func (a *AppliedFilters) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *AppliedFilters) GetApps() []AppliedFilterNode {
+func (a *AppliedFilters) GetApps() []App {
 	if a == nil {
 		return nil
 	}
 	return a.Apps
 }
 
-func (a *AppliedFilters) GetKb() []AppliedFilterNode {
+func (a *AppliedFilters) GetKb() []Kb {
 	if a == nil {
 		return nil
 	}
 	return a.Kb
+}
+
+func (a *AppliedFilters) GetRecordGroups() []RecordGroup {
+	if a == nil {
+		return nil
+	}
+	return a.RecordGroups
+}
+
+func (a *AppliedFilters) GetRecords() []Record {
+	if a == nil {
+		return nil
+	}
+	return a.Records
+}
+
+func (a *AppliedFilters) GetRecordsExact() []RecordsExact {
+	if a == nil {
+		return nil
+	}
+	return a.RecordsExact
 }

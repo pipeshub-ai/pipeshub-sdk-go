@@ -61,6 +61,16 @@ type RegenerateAnswerResponse struct {
 	// child-run events may contain `runId`, `threadId`, and
 	// `parentRunId`. Clients should ignore unknown event names.
 	//
+	// Refusals after validation are not HTTP errors. A missing, deleted
+	// or inaccessible conversation, a conversation with no messages, a
+	// target that is not the latest `bot_response`, or no preceding
+	// `user_query` each produce a 200 stream holding the opening
+	// `CUSTOM` `conversation_created` frame and one root `RUN_ERROR`
+	// (`code: streaming_error`) whose `message` names the cause.
+	//
+	// Two refusals about `answers` arrive the same way: `Answers can only replace the answers to a
+	// question card.` and `An edit cannot also replace the answers to a question card.`
+	//
 	SSEEvent *stream.EventStream[components.SSEEvent]
 }
 

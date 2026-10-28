@@ -1,7 +1,7 @@
 # DeleteSearchHistoryShared
 
-Restrict the deletion to rows with this `isShared` value
-(`'true'` / `'false'`).
+Restrict the deletion to rows with this `isShared` value. `'true'` / `'1'` and
+`'false'` / `'0'`, case-insensitive; anything else is refused with `400`.
 
 
 ## Example Usage
@@ -21,3 +21,5 @@ value := operations.DeleteSearchHistorySharedTrue
 | -------------------------------- | -------------------------------- |
 | `DeleteSearchHistorySharedTrue`  | true                             |
 | `DeleteSearchHistorySharedFalse` | false                            |
+| `DeleteSearchHistorySharedOne`   | 1                                |
+| `DeleteSearchHistorySharedZero`  | 0                                |

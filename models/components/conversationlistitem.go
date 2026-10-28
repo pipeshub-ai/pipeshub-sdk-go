@@ -33,12 +33,40 @@ func (e *ConversationListItemStatus) IsExact() bool {
 	return false
 }
 
+// ConversationListItemReasoningEffort - Reasoning effort requested when the conversation was created, when one was set.
+type ConversationListItemReasoningEffort string
+
+const (
+	ConversationListItemReasoningEffortNone   ConversationListItemReasoningEffort = "none"
+	ConversationListItemReasoningEffortLow    ConversationListItemReasoningEffort = "low"
+	ConversationListItemReasoningEffortMedium ConversationListItemReasoningEffort = "medium"
+	ConversationListItemReasoningEffortHigh   ConversationListItemReasoningEffort = "high"
+	ConversationListItemReasoningEffortMax    ConversationListItemReasoningEffort = "max"
+)
+
+func (e ConversationListItemReasoningEffort) ToPointer() *ConversationListItemReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ConversationListItemReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
+
 type ConversationListItemModelInfo struct {
 	ModelKey          *string `json:"modelKey,omitzero"`
 	ModelName         *string `json:"modelName,omitzero"`
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	ModelProvider     *string `json:"modelProvider,omitzero"`
 	ChatMode          *string `json:"chatMode,omitzero"`
+	// Reasoning effort requested when the conversation was created, when one was set.
+	ReasoningEffort *ConversationListItemReasoningEffort `json:"reasoningEffort,omitzero"`
 }
 
 func (c *ConversationListItemModelInfo) GetModelKey() *string {
@@ -76,6 +104,13 @@ func (c *ConversationListItemModelInfo) GetChatMode() *string {
 	return c.ChatMode
 }
 
+func (c *ConversationListItemModelInfo) GetReasoningEffort() *ConversationListItemReasoningEffort {
+	if c == nil {
+		return nil
+	}
+	return c.ReasoningEffort
+}
+
 type ConversationListItemSharedWithAccessLevel string
 
 const (
@@ -101,6 +136,8 @@ func (e *ConversationListItemSharedWithAccessLevel) IsExact() bool {
 type ConversationListItemSharedWith struct {
 	UserID      *string                                    `json:"userId,omitzero"`
 	AccessLevel *ConversationListItemSharedWithAccessLevel `json:"accessLevel,omitzero"`
+	// Subdocument identifier auto-assigned by MongoDB.
+	ID *string `json:"_id,omitzero"`
 }
 
 func (c *ConversationListItemSharedWith) GetUserID() *string {
@@ -117,7 +154,16 @@ func (c *ConversationListItemSharedWith) GetAccessLevel() *ConversationListItemS
 	return c.AccessLevel
 }
 
+func (c *ConversationListItemSharedWith) GetID() *string {
+	if c == nil {
+		return nil
+	}
+	return c.ID
+}
+
 type ConversationListItemConversationError struct {
+	// Sub-document identifier auto-assigned by MongoDB.
+	ID        *string        `json:"_id,omitzero"`
 	Message   *string        `json:"message,omitzero"`
 	ErrorType *string        `json:"errorType,omitzero"`
 	Timestamp *time.Time     `json:"timestamp,omitzero"`
@@ -135,6 +181,13 @@ func (c *ConversationListItemConversationError) UnmarshalJSON(data []byte) error
 		return err
 	}
 	return nil
+}
+
+func (c *ConversationListItemConversationError) GetID() *string {
+	if c == nil {
+		return nil
+	}
+	return c.ID
 }
 
 func (c *ConversationListItemConversationError) GetMessage() *string {
@@ -231,6 +284,10 @@ func (e *ConversationListItemProjectVisibility) IsExact() bool {
 // `Conversation` but omits `messages` to keep list payloads small.
 // Fetch a single conversation to retrieve its messages.
 type ConversationListItem struct {
+	// Only on agent conversations (returned by `GET /conversations?source=shared`). Open
+	// them with `GET /agents/{agentKey}/conversations/{conversationId}`.
+	//
+	AgentKey   *string                          `json:"agentKey,omitzero"`
 	ID         *string                          `json:"_id,omitzero"`
 	UserID     *string                          `json:"userId,omitzero"`
 	OrgID      *string                          `json:"orgId,omitzero"`
@@ -257,6 +314,12 @@ type ConversationListItem struct {
 	UpdatedAt          *time.Time                                `json:"updatedAt,omitzero"`
 	IsOwner            *bool                                     `json:"isOwner,omitzero"`
 	AccessLevel        *ConversationListItemAccessLevel          `json:"accessLevel,omitzero"`
+	// `true` when the owner pinned this conversation. Absent on
+	// conversations that are not pinned (never `false`). Set via
+	// `PATCH /conversations/{conversationId}/pin`. Only returned to the
+	// owner: lists with `source=shared` omit it.
+	//
+	IsPinned *bool `json:"isPinned,omitzero"`
 	// The project this conversation is linked to, if any. Set via
 	// `PUT /conversations/{conversationId}/project` or at creation
 	// time; absent on conversations that were never linked.
@@ -283,6 +346,13 @@ func (c *ConversationListItem) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (c *ConversationListItem) GetAgentKey() *string {
+	if c == nil {
+		return nil
+	}
+	return c.AgentKey
 }
 
 func (c *ConversationListItem) GetID() *string {
@@ -437,6 +507,13 @@ func (c *ConversationListItem) GetAccessLevel() *ConversationListItemAccessLevel
 		return nil
 	}
 	return c.AccessLevel
+}
+
+func (c *ConversationListItem) GetIsPinned() *bool {
+	if c == nil {
+		return nil
+	}
+	return c.IsPinned
 }
 
 func (c *ConversationListItem) GetProjectID() optionalnullable.OptionalNullable[string] {

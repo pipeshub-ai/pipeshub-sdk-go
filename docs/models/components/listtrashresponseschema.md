@@ -1,0 +1,13 @@
+# ListTrashResponseSchema
+
+Response returned by GET /knowledgeBase/{kbId}/trash.
+
+
+## Fields
+
+| Field                                                                                                        | Type                                                                                                         | Required                                                                                                     | Description                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `Success`                                                                                                    | `bool`                                                                                                       | :heavy_check_mark:                                                                                           | N/A                                                                                                          |
+| `Items`                                                                                                      | [][components.TrashItemSchema](../../models/components/trashitemschema.md)                                   | :heavy_check_mark:                                                                                           | N/A                                                                                                          |
+| `Pagination`                                                                                                 | [components.ListTrashResponseSchemaPagination](../../models/components/listtrashresponseschemapagination.md) | :heavy_check_mark:                                                                                           | N/A                                                                                                          |
+| `Retention`                                                                                                  | optionalnullable.OptionalNullable[[components.Retention](../../models/components/retention.md)]              | :heavy_minus_sign:                                                                                           | N/A                                                                                                          |

@@ -10,6 +10,7 @@ const (
 	AgentCreateToolsetNameClickup              AgentCreateToolsetName = "clickup"
 	AgentCreateToolsetNameConfluence           AgentCreateToolsetName = "confluence"
 	AgentCreateToolsetNameConfluencedatacenter AgentCreateToolsetName = "confluencedatacenter"
+	AgentCreateToolsetNameDocs                 AgentCreateToolsetName = "docs"
 	AgentCreateToolsetNameDrive                AgentCreateToolsetName = "drive"
 	AgentCreateToolsetNameGithub               AgentCreateToolsetName = "github"
 	AgentCreateToolsetNameGmail                AgentCreateToolsetName = "gmail"
@@ -22,6 +23,7 @@ const (
 	AgentCreateToolsetNameRedshift             AgentCreateToolsetName = "redshift"
 	AgentCreateToolsetNameSalesforce           AgentCreateToolsetName = "salesforce"
 	AgentCreateToolsetNameSharepoint           AgentCreateToolsetName = "sharepoint"
+	AgentCreateToolsetNameSheets               AgentCreateToolsetName = "sheets"
 	AgentCreateToolsetNameSlack                AgentCreateToolsetName = "slack"
 	AgentCreateToolsetNameTeams                AgentCreateToolsetName = "teams"
 	AgentCreateToolsetNameZoom                 AgentCreateToolsetName = "zoom"
@@ -35,7 +37,7 @@ func (e AgentCreateToolsetName) ToPointer() *AgentCreateToolsetName {
 func (e *AgentCreateToolsetName) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "calendar", "clickup", "confluence", "confluencedatacenter", "drive", "github", "gmail", "jira", "jiradatacenter", "lumos", "mariadb", "onedrive", "outlook", "redshift", "salesforce", "sharepoint", "slack", "teams", "zoom":
+		case "calendar", "clickup", "confluence", "confluencedatacenter", "docs", "drive", "github", "gmail", "jira", "jiradatacenter", "lumos", "mariadb", "onedrive", "outlook", "redshift", "salesforce", "sharepoint", "sheets", "slack", "teams", "zoom":
 			return true
 		}
 	}

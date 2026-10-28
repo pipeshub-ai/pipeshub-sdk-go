@@ -32,12 +32,37 @@ a chat citation's `recordId`, then call this endpoint to read the
 full content when the search snippet or citation excerpt isn't
 enough to answer the question.
 
+**Reading part of a long record, or a whole Slack thread:**
+
+With no query parameters the record is returned up to 140,000
+characters (a longer one is cut and marked `truncated`), which for a
+pull request with its diffs or a long document is a large response. Pass any of `maxChars`, `startBlock`, `query`
+or `mode` for a budgeted read instead: the response stays within
+`maxChars` and says how to continue (`nextStartBlock`, or
+`nextStartRecord` for a thread). `query` makes a record too large for
+the budget show its most relevant blocks first, with the skipped
+ranges marked. `mode=thread` returns every message of the Slack
+thread the record belongs to, oldest first, as far as the caller may
+see them. A Slack record in no single thread (several channel
+messages in one record, or a message without replies) returns itself,
+then the replies of each thread its messages started; the first page
+opens with a bracketed note saying which.
+
 **Permission scoping:**
 
 The requesting user/token must have access to the record; access is
 verified via the knowledge graph before content is returned — a
 caller with a valid scope but no access to this specific record gets
 a `403`.
+
+**A connected app with a limit:** the rendered text names nothing
+outside the limit beside the record. Its `External Parent ID` reads
+`N/A` for a parent the limit leaves out, and a code file's `Path:`
+line is left out unless the limit covers the whole app. Linked
+records, related tables, a deal's orgs and products, and live Jira
+parent, epic, sub-task and linked-issue lines appear only for
+records inside the limit. `Web URL` is kept, though it can contain
+folder names.
 
 
 ### Example Usage
@@ -51,6 +76,7 @@ import(
 	"os"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 	"log"
 )
 
@@ -63,7 +89,9 @@ func main() {
         }),
     )
 
-    res, err := s.Connector.GetRecordContent(ctx, "<id>")
+    res, err := s.Connector.GetRecordContent(ctx, operations.GetRecordContentRequest{
+        RecordID: "<id>",
+    })
     if err != nil {
         log.Fatal(err)
     }
@@ -75,11 +103,11 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                                                                        | Type                                                                                                                             | Required                                                                                                                         | Description                                                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `ctx`                                                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                                                            | :heavy_check_mark:                                                                                                               | The context to use for the request.                                                                                              |
-| `recordID`                                                                                                                       | `string`                                                                                                                         | :heavy_check_mark:                                                                                                               | Record ID to fetch. Obtain it from a `pipeshub_search` result (`hits[*].recordId`) or a chat citation (`citations[*].recordId`). |
-| `opts`                                                                                                                           | [][operations.Option](../../models/operations/option.md)                                                                         | :heavy_minus_sign:                                                                                                               | The options for this request.                                                                                                    |
+| Parameter                                                                                | Type                                                                                     | Required                                                                                 | Description                                                                              |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `ctx`                                                                                    | [context.Context](https://pkg.go.dev/context#Context)                                    | :heavy_check_mark:                                                                       | The context to use for the request.                                                      |
+| `request`                                                                                | [operations.GetRecordContentRequest](../../models/operations/getrecordcontentrequest.md) | :heavy_check_mark:                                                                       | The request object to use for the request.                                               |
+| `opts`                                                                                   | [][operations.Option](../../models/operations/option.md)                                 | :heavy_minus_sign:                                                                       | The options for this request.                                                            |
 
 ### Response
 
@@ -89,7 +117,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 401, 403                | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404, 422 | application/json        |
 | apierrors.ErrorResponse | 500, 503                | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
@@ -100,9 +128,10 @@ explorer across every connected source.
 
 Call it with no `nodeId` for a flat listing of every record group and
 record the caller can reach, newest first. This is a starting point to
-pick a node from, not a roster of connected apps — app nodes are never
-returned in a listing, though an app's `id` is accepted as a `nodeId`
-and lists that app's record groups. Pass a node's `id` to descend:
+pick a node from, not a roster of connected apps — app nodes are not
+returned in a listing (except at the root of a limited connected app,
+below), though an app's `id` is accepted as a `nodeId` and lists that
+app's record groups. Pass a node's `id` to descend:
 record groups contain records and folders, and a record contains its
 own children — comments, attachments, sub-tasks — plus a `related`
 section of cross-referenced records, such as the Confluence page linked
@@ -138,7 +167,19 @@ its own `level`, instead of only direct children.
 
 **Scope:** everything the caller can read, across both connectors and
 Knowledge Base collections. No connector-level filter is applied — the
-listing is bounded by per-node permissions alone.
+listing is bounded by per-node permissions, and for a connected app
+with a limit by that limit too: no row, breadcrumb or related node
+outside it is returned.
+
+**A connected app with a limit:** with no `nodeId`, the root depends
+on what the limit names.
+- Whole sources (apps or collections) only: the usual flat root,
+  every record group and record in those sources.
+- Any spaces, folders or files, alone or beside whole sources: one
+  row for each whole source, space (record group), folder and file
+  the limit names, and nothing from inside them. `pagination.total`
+  counts those rows, not the records inside them. `depth` is not
+  applied on this call; pass a row's `id` as `nodeId` to open it.
 
 **Permission scoping:**
 
@@ -153,6 +194,24 @@ alone, without a permission check. For a record shared directly with
 the caller, it can therefore name ancestors the caller cannot open.
 Treat breadcrumb entries as labels, not as nodes guaranteed to be
 navigable.
+
+**A connected app with a limit:** the opened record's `context_block`, and each row's
+`context_summary`, names nothing
+outside the limit beside the record. Its `External Parent ID` reads
+`N/A` for a parent the limit leaves out, and a code file's `Path:`
+line is left out unless the limit covers the whole app. Linked
+records, related tables, a deal's orgs and products, and live Jira
+parent, epic, sub-task and linked-issue lines appear only for
+records inside the limit. `Web URL` is kept, though it can contain
+folder names.
+
+**Connector and knowledge base nodes:** opening the `id` of a
+connector instance the caller has no permission on in the graph (for
+example one that has never synced, even for its creator) returns the
+same empty view as a missing node. Opening a knowledge base at
+`depth` 1 lists nothing; its records appear from `depth` 2.
+
+An OAuth token holding `connector:read` instead of `kb:read` is accepted too.
 
 
 ### Example Usage
@@ -179,7 +238,12 @@ func main() {
         }),
     )
 
-    res, err := s.Connector.NavigateKnowledgeGraph(ctx, operations.NavigateKnowledgeGraphRequest{})
+    res, err := s.Connector.NavigateKnowledgeGraph(ctx, operations.NavigateKnowledgeGraphRequest{
+        CreatedAfter: pipeshub.Pointer("2026-01-15T08:00:00Z"),
+        CreatedBefore: pipeshub.Pointer("2026-01-15T08:00:00Z"),
+        ModifiedAfter: pipeshub.Pointer("2026-01-15T08:00:00Z"),
+        ModifiedBefore: pipeshub.Pointer("2026-01-15T08:00:00Z"),
+    })
     if err != nil {
         log.Fatal(err)
     }
@@ -263,6 +327,17 @@ covered, so a retry with `connectorName` is often the right next move.
 **Scope:** resolution searches every connector the caller can access,
 regardless of any source filter used elsewhere.
 
+**A connected app with a limit:** each match's `context_block` names nothing
+outside the limit beside the record. Its `External Parent ID` reads
+`N/A` for a parent the limit leaves out, and a code file's `Path:`
+line is left out unless the limit covers the whole app. Linked
+records, related tables, a deal's orgs and products, and live Jira
+parent, epic, sub-task and linked-issue lines appear only for
+records inside the limit. `Web URL` is kept, though it can contain
+folder names.
+
+An OAuth token holding `connector:read` instead of `kb:read` is accepted too.
+
 
 ### Example Usage
 
@@ -289,7 +364,7 @@ func main() {
 
     res, err := s.Connector.LookupRecordByIdentifier(ctx, []string{
         "<value 1>",
-    }, components.ConnectorNameEnumDrive.ToPointer())
+    }, pipeshub.Pointer("DRIVE"))
     if err != nil {
         log.Fatal(err)
     }
@@ -301,12 +376,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                                                                                                                                                                                                                         | Type                                                                                                                                                                                                                                                                              | Required                                                                                                                                                                                                                                                                          | Description                                                                                                                                                                                                                                                                       | Example                                                                                                                                                                                                                                                                           |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ctx`                                                                                                                                                                                                                                                                             | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                                                                                             | :heavy_check_mark:                                                                                                                                                                                                                                                                | The context to use for the request.                                                                                                                                                                                                                                               |                                                                                                                                                                                                                                                                                   |
-| `identifiers`                                                                                                                                                                                                                                                                     | []`string`                                                                                                                                                                                                                                                                        | :heavy_check_mark:                                                                                                                                                                                                                                                                | The reference(s) to resolve: a URL, an issue key such as `PA-1787`, or a bare external system ID. Repeat the parameter to batch: `?identifiers=PA-1787&identifiers=PA-1788`. Maximum 10.                                                                                          |                                                                                                                                                                                                                                                                                   |
-| `connectorName`                                                                                                                                                                                                                                                                   | [*components.ConnectorNameEnum](../../models/components/connectornameenum.md)                                                                                                                                                                                                     | :heavy_minus_sign:                                                                                                                                                                                                                                                                | Optional hint that prioritises resolution order, e.g. `JIRA`, `CONFLUENCE`, `DRIVE`, `SLACK`. Allowed values are the `ConnectorNameEnum` values. It cannot widen the search beyond the connectors the caller can already access. Useful on a retry when a lookup came back empty. | DRIVE                                                                                                                                                                                                                                                                             |
-| `opts`                                                                                                                                                                                                                                                                            | [][operations.Option](../../models/operations/option.md)                                                                                                                                                                                                                          | :heavy_minus_sign:                                                                                                                                                                                                                                                                | The options for this request.                                                                                                                                                                                                                                                     |                                                                                                                                                                                                                                                                                   |
+| Parameter                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Type                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Required                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                                                                                                                                                                                                                                                                         | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                                                                                                                                                                                                                                                                         | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                            | The context to use for the request.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `identifiers`                                                                                                                                                                                                                                                                                                                                                                                                                                                 | []`string`                                                                                                                                                                                                                                                                                                                                                                                                                                                    | :heavy_check_mark:                                                                                                                                                                                                                                                                                                                                                                                                                                            | The reference(s) to resolve: a URL, an issue key such as `PA-1787`, or a bare external system ID. Repeat the parameter to batch: `?identifiers=PA-1787&identifiers=PA-1788`. Maximum 10.                                                                                                                                                                                                                                                                      |
+| `connectorName`                                                                                                                                                                                                                                                                                                                                                                                                                                               | `*string`                                                                                                                                                                                                                                                                                                                                                                                                                                                     | :heavy_minus_sign:                                                                                                                                                                                                                                                                                                                                                                                                                                            | Optional hint that prioritises resolution order, e.g. `JIRA`, `CONFLUENCE`, `DRIVE`, `SLACK` (the `ConnectorNameEnum` values). Any other non-empty string is accepted too and simply matches no connector, so it changes nothing. It cannot widen the search beyond the connectors the caller can already access. Useful on a retry when a lookup came back empty. An empty or blank value is refused with `400` (the value is trimmed before it is checked). |
+| `opts`                                                                                                                                                                                                                                                                                                                                                                                                                                                        | [][operations.Option](../../models/operations/option.md)                                                                                                                                                                                                                                                                                                                                                                                                      | :heavy_minus_sign:                                                                                                                                                                                                                                                                                                                                                                                                                                            | The options for this request.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ### Response
 

@@ -7,7 +7,9 @@ import (
 )
 
 type AgentCreateToolset struct {
-	// Registered toolset name (lowercase) accepted by the create-agent gateway.
+	// Toolset name. Surrounding whitespace is trimmed before the check, so
+	// `"  slack  "` is accepted.
+	//
 	Name         AgentCreateToolsetName `json:"name"`
 	DisplayName  *string                `json:"displayName,omitzero"`
 	Type         *string                `json:"type,omitzero"`

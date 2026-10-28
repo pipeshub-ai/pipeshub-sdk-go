@@ -53,8 +53,13 @@ func (e *AgentUpdateRequestDefaultReasoningEffort) UnmarshalJSON(data []byte) er
 // chat time), or set to a non-empty array. When a non-empty array is
 // provided, the gateway Zod middleware (mirroring the Python backend)
 // requires at least one object entry with `isReasoning: true`.
+//
+// Fields the gateway validator does not know are dropped before the
+// request reaches the AI backend; they are not refused.
 type AgentUpdateRequest struct {
-	// Agent display name
+	// Agent display name. Surrounding whitespace is trimmed; a blank name is
+	// refused with `400` (`VALIDATION_ERROR`).
+	//
 	Name *string `json:"name,omitzero"`
 	// What the agent does
 	Description *string `json:"description,omitzero"`
@@ -66,9 +71,9 @@ type AgentUpdateRequest struct {
 	Instructions *string `json:"instructions,omitzero"`
 	// Agent model configuration entries. Optional. An empty array clears the
 	// agent's models so it falls back to the organization's default LLM.
-	// When a non-empty array is present, the Zod middleware requires at
-	// least one object entry with `isReasoning: true`. String-only arrays
-	// are schema-valid but rejected at runtime with HTTP 400 unless empty.
+	// A non-empty list must hold at least one object entry with
+	// `isReasoning: true`; otherwise the gateway answers `400`
+	// (`VALIDATION_ERROR` on `models`).
 	//
 	Models []AgentCreateModelEntryUnion `json:"models,omitzero"`
 	Tags   []string                     `json:"tags,omitzero"`
@@ -76,6 +81,15 @@ type AgentUpdateRequest struct {
 	ShareWithOrg *bool `default:"false" json:"shareWithOrg"`
 	// Mark agent as a service account
 	IsServiceAccount *bool `default:"false" json:"isServiceAccount"`
+	// The `userId` of the service account this agent should search
+	// knowledge as. Only valid on a service-account agent, checked
+	// against what the agent will be once the request is applied, so one
+	// request may convert an agent and bind it. Null is accepted on any
+	// agent and clears the binding, going back to searching as the
+	// agent's creator.
+	// Whitespace around it is removed first; 1-128 characters.
+	//
+	ServiceAccountUserID optionalnullable.OptionalNullable[string] `json:"serviceAccountUserId,omitzero"`
 	// Toolsets attached to the agent (instance-aware)
 	Toolsets []AgentCreateToolset `json:"toolsets,omitzero"`
 	// Knowledge sources connected to the agent
@@ -84,12 +98,23 @@ type AgentUpdateRequest struct {
 	// an empty array to clear all skill assignments.
 	//
 	Skills []AgentSkillAssignment `json:"skills,omitzero"`
+	// MCP server instances attached to the agent. Two entries with the same
+	// `typeId` are refused with `400` (`VALIDATION_ERROR` on
+	// `mcpServers.<index>.typeId`); entries without a `typeId` are exempt.
+	//
+	McpServers []AgentMcpServerRef `json:"mcpServers,omitzero"`
 	// Web-search attachment for an agent. Accepts a provider string, an object
-	// with at least a `provider` field, or `null`.
+	// with at least a `provider` field, or `null`. The provider string and
+	// `provider` are trimmed; an empty or blank value is refused with `400`.
 	//
 	WebSearch optionalnullable.OptionalNullable[AgentCreateWebSearchUnion] `json:"webSearch,omitzero"`
 	// Agent-level reasoning effort used when a chat request omits its own.
 	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentUpdateRequestDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
+	// API toolset operations the agent may call, each `<toolsetId>:<operation>`
+	// (see `/api-toolsets`). A service-account agent may only use toolsets with a
+	// shared credential.
+	//
+	APIToolsetTools []string `json:"apiToolsetTools,omitzero"`
 	// When true (default), include the current user's name, email, and
 	// organization in this agent's system prompt. When false, omit that
 	// profile data.
@@ -171,6 +196,13 @@ func (a *AgentUpdateRequest) GetIsServiceAccount() *bool {
 	return a.IsServiceAccount
 }
 
+func (a *AgentUpdateRequest) GetServiceAccountUserID() optionalnullable.OptionalNullable[string] {
+	if a == nil {
+		return nil
+	}
+	return a.ServiceAccountUserID
+}
+
 func (a *AgentUpdateRequest) GetToolsets() []AgentCreateToolset {
 	if a == nil {
 		return nil
@@ -192,6 +224,13 @@ func (a *AgentUpdateRequest) GetSkills() []AgentSkillAssignment {
 	return a.Skills
 }
 
+func (a *AgentUpdateRequest) GetMcpServers() []AgentMcpServerRef {
+	if a == nil {
+		return nil
+	}
+	return a.McpServers
+}
+
 func (a *AgentUpdateRequest) GetWebSearch() optionalnullable.OptionalNullable[AgentCreateWebSearchUnion] {
 	if a == nil {
 		return nil
@@ -204,6 +243,13 @@ func (a *AgentUpdateRequest) GetDefaultReasoningEffort() optionalnullable.Option
 		return nil
 	}
 	return a.DefaultReasoningEffort
+}
+
+func (a *AgentUpdateRequest) GetAPIToolsetTools() []string {
+	if a == nil {
+		return nil
+	}
+	return a.APIToolsetTools
 }
 
 func (a *AgentUpdateRequest) GetSendUserContext() *bool {

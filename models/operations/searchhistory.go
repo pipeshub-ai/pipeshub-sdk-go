@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"time"
 )
 
 // SearchHistorySortBy - Field used to sort results. Any value other than `createdAt`,
@@ -41,7 +40,9 @@ func (e *SearchHistorySortBy) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// SearchHistorySortOrder - Sort direction applied to `sortBy`.
+// SearchHistorySortOrder - Sort direction applied to `sortBy`. Only the exact, case-sensitive value `asc` sorts
+// ascending; any other value (`ASC`, `sideways`, ...) is accepted and sorts descending.
+// The raw value is echoed in `filters.applied.values.sortOrder`.
 type SearchHistorySortOrder string
 
 const (
@@ -105,19 +106,30 @@ func (e *SearchHistoryShared) UnmarshalJSON(data []byte) error {
 }
 
 type SearchHistoryRequest struct {
-	// Page number to return. Must be within `[1, 1000]`.
+	// Page number to return, from 1. An empty value means `1`. The value is read with
+	// `parseInt`, so a fraction or trailing text is truncated (`2.5` reads as page `2`)
+	// instead of refused. `0`, a negative value, a value that is not a number, or one
+	// above 90071992547409 is refused with `400`.
+	//
 	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
-	// Number of items per page. Values are clamped to the range `[1, 100]`.
+	// Number of items per page. An empty value means `20`. Read with `parseInt` like
+	// `page`; a value outside `[1, 100]` or not a number is refused with `400`, not
+	// clamped.
+	//
 	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
 	// Field used to sort results. Any value other than `createdAt`,
 	// `lastActivityAt`, or `title` is treated as `lastActivityAt`.
 	//
 	SortBy *SearchHistorySortBy `default:"lastActivityAt" queryParam:"style=form,explode=true,name=sortBy"`
-	// Sort direction applied to `sortBy`.
+	// Sort direction applied to `sortBy`. Only the exact, case-sensitive value `asc` sorts
+	// ascending; any other value (`ASC`, `sideways`, ...) is accepted and sorts descending.
+	// The raw value is echoed in `filters.applied.values.sortOrder`.
+	//
 	SortOrder *SearchHistorySortOrder `default:"desc" queryParam:"style=form,explode=true,name=sortOrder"`
-	// Case-insensitive substring to match against a search's title and
-	// message content. Regex metacharacters are escaped automatically.
-	// Values longer than 1000 characters are rejected with `400`.
+	// Meant as a case-insensitive substring filter on a search's title, but a stored
+	// search has no title, so the filter is dropped and every search is still returned.
+	// The value is still checked: more than 1000 characters, or HTML markup, is refused
+	// with `400`.
 	//
 	Search *string `queryParam:"style=form,explode=true,name=search"`
 	// Filter results by their shared status. Accepted values are
@@ -126,10 +138,16 @@ type SearchHistoryRequest struct {
 	// case-insensitive and surrounding whitespace is trimmed.
 	//
 	Shared *SearchHistoryShared `queryParam:"style=form,explode=true,name=shared"`
-	// ISO 8601 timestamp used as the lower bound for a search's creation date.
-	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
-	// ISO 8601 timestamp used as the upper bound for a search's creation date.
-	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
+	// ISO 8601 date or date-time used as the inclusive lower bound for a search's creation
+	// date. A value JavaScript's `Date` cannot parse is refused with `400` ("Invalid start
+	// date format").
+	//
+	StartDate *string `queryParam:"style=form,explode=true,name=startDate"`
+	// ISO 8601 date or date-time used as the inclusive upper bound for a search's creation
+	// date. A value JavaScript's `Date` cannot parse is refused with `400` ("Invalid end
+	// date format").
+	//
+	EndDate *string `queryParam:"style=form,explode=true,name=endDate"`
 }
 
 func (s SearchHistoryRequest) MarshalJSON() ([]byte, error) {
@@ -185,22 +203,22 @@ func (s *SearchHistoryRequest) GetShared() *SearchHistoryShared {
 	return s.Shared
 }
 
-func (s *SearchHistoryRequest) GetStartDate() *time.Time {
+func (s *SearchHistoryRequest) GetStartDate() *string {
 	if s == nil {
 		return nil
 	}
 	return s.StartDate
 }
 
-func (s *SearchHistoryRequest) GetEndDate() *time.Time {
+func (s *SearchHistoryRequest) GetEndDate() *string {
 	if s == nil {
 		return nil
 	}
 	return s.EndDate
 }
 
-// SearchHistoryInternalServerErrorError - Error payload.
-type SearchHistoryInternalServerErrorError struct {
+// InternalServerErrorError - Error payload.
+type InternalServerErrorError struct {
 	// Identifier for this request, echoed so a bug report can quote it.
 	// Absent when the request never reached the middleware that assigns one.
 	//
@@ -216,29 +234,29 @@ type SearchHistoryInternalServerErrorError struct {
 	Message string `json:"message"`
 }
 
-func (s *SearchHistoryInternalServerErrorError) GetRequestID() *string {
-	if s == nil {
+func (i *InternalServerErrorError) GetRequestID() *string {
+	if i == nil {
 		return nil
 	}
-	return s.RequestID
+	return i.RequestID
 }
 
-func (s *SearchHistoryInternalServerErrorError) GetCode() string {
-	if s == nil {
+func (i *InternalServerErrorError) GetCode() string {
+	if i == nil {
 		return ""
 	}
-	return s.Code
+	return i.Code
 }
 
-func (s *SearchHistoryInternalServerErrorError) GetMessage() string {
-	if s == nil {
+func (i *InternalServerErrorError) GetMessage() string {
+	if i == nil {
 		return ""
 	}
-	return s.Message
+	return i.Message
 }
 
-// SearchHistoryForbiddenError - Error payload.
-type SearchHistoryForbiddenError struct {
+// ForbiddenError - Error payload.
+type ForbiddenError struct {
 	// Identifier for this request, echoed so a bug report can quote it.
 	// Absent when the request never reached the middleware that assigns one.
 	//
@@ -252,29 +270,29 @@ type SearchHistoryForbiddenError struct {
 	Message string `json:"message"`
 }
 
-func (s *SearchHistoryForbiddenError) GetRequestID() *string {
-	if s == nil {
+func (f *ForbiddenError) GetRequestID() *string {
+	if f == nil {
 		return nil
 	}
-	return s.RequestID
+	return f.RequestID
 }
 
-func (s *SearchHistoryForbiddenError) GetCode() string {
-	if s == nil {
+func (f *ForbiddenError) GetCode() string {
+	if f == nil {
 		return ""
 	}
-	return s.Code
+	return f.Code
 }
 
-func (s *SearchHistoryForbiddenError) GetMessage() string {
-	if s == nil {
+func (f *ForbiddenError) GetMessage() string {
+	if f == nil {
 		return ""
 	}
-	return s.Message
+	return f.Message
 }
 
-// SearchHistoryUnauthorizedError - Error payload.
-type SearchHistoryUnauthorizedError struct {
+// UnauthorizedError - Error payload.
+type UnauthorizedError struct {
 	// Identifier for this request, echoed so a bug report can quote it.
 	// Absent when the request never reached the middleware that assigns one.
 	//
@@ -289,29 +307,29 @@ type SearchHistoryUnauthorizedError struct {
 	Message string `json:"message"`
 }
 
-func (s *SearchHistoryUnauthorizedError) GetRequestID() *string {
-	if s == nil {
+func (u *UnauthorizedError) GetRequestID() *string {
+	if u == nil {
 		return nil
 	}
-	return s.RequestID
+	return u.RequestID
 }
 
-func (s *SearchHistoryUnauthorizedError) GetCode() string {
-	if s == nil {
+func (u *UnauthorizedError) GetCode() string {
+	if u == nil {
 		return ""
 	}
-	return s.Code
+	return u.Code
 }
 
-func (s *SearchHistoryUnauthorizedError) GetMessage() string {
-	if s == nil {
+func (u *UnauthorizedError) GetMessage() string {
+	if u == nil {
 		return ""
 	}
-	return s.Message
+	return u.Message
 }
 
-// SearchHistoryBadRequestError - Error payload.
-type SearchHistoryBadRequestError struct {
+// BadRequestError - Error payload.
+type BadRequestError struct {
 	// Identifier for this request, echoed so a bug report can quote it.
 	// Absent when the request never reached the middleware that assigns one.
 	//
@@ -327,25 +345,25 @@ type SearchHistoryBadRequestError struct {
 	Message string `json:"message"`
 }
 
-func (s *SearchHistoryBadRequestError) GetRequestID() *string {
-	if s == nil {
+func (b *BadRequestError) GetRequestID() *string {
+	if b == nil {
 		return nil
 	}
-	return s.RequestID
+	return b.RequestID
 }
 
-func (s *SearchHistoryBadRequestError) GetCode() string {
-	if s == nil {
+func (b *BadRequestError) GetCode() string {
+	if b == nil {
 		return ""
 	}
-	return s.Code
+	return b.Code
 }
 
-func (s *SearchHistoryBadRequestError) GetMessage() string {
-	if s == nil {
+func (b *BadRequestError) GetMessage() string {
+	if b == nil {
 		return ""
 	}
-	return s.Message
+	return b.Message
 }
 
 type SearchHistoryResponse struct {

@@ -175,19 +175,40 @@ type AgentCreateResponseAgent struct {
 	WebSearch    *WebSearch `json:"webSearch"`
 	// Agent-level reasoning effort used when a chat request omits its own. Null when unset.
 	DefaultReasoningEffort optionalnullable.OptionalNullable[AgentCreateResponseAgentDefaultReasoningEffort] `json:"defaultReasoningEffort,omitzero"`
+	// API toolset operations the agent may call, each `<toolsetId>:<operation>`
+	// (see `/api-toolsets`). A service-account agent may only use toolsets with a
+	// shared credential.
+	//
+	APIToolsetTools []string `json:"apiToolsetTools,omitzero"`
 	// When false, this agent omits user name/email/org from its system prompt.
-	SendUserContext    *bool                          `json:"sendUserContext,omitzero"`
-	IsActive           bool                           `json:"isActive"`
-	IsServiceAccount   bool                           `json:"isServiceAccount"`
-	CreatedBy          string                         `json:"createdBy"`
-	UpdatedBy          *string                        `json:"updatedBy"`
-	CreatedAtTimestamp int64                          `json:"createdAtTimestamp"`
-	UpdatedAtTimestamp int64                          `json:"updatedAtTimestamp"`
-	IsDeleted          bool                           `json:"isDeleted"`
-	Toolsets           []AgentCreateResponseToolset   `json:"toolsets"`
-	McpServers         []AgentCreateResponseMcpServer `json:"mcpServers"`
-	Knowledge          []AgentCreateResponseKnowledge `json:"knowledge"`
-	Skills             []AgentCreateResponseSkill     `json:"skills"`
+	SendUserContext  *bool `json:"sendUserContext,omitzero"`
+	IsActive         bool  `json:"isActive"`
+	IsServiceAccount bool  `json:"isServiceAccount"`
+	// The `userId` of the service account this agent searches knowledge
+	// as, or null when it searches as its creator. Only set on a
+	// service-account agent.
+	//
+	ServiceAccountUserID optionalnullable.OptionalNullable[string] `json:"serviceAccountUserId,omitzero"`
+	CreatedBy            string                                    `json:"createdBy"`
+	UpdatedBy            *string                                   `json:"updatedBy"`
+	CreatedAtTimestamp   int64                                     `json:"createdAtTimestamp"`
+	UpdatedAtTimestamp   int64                                     `json:"updatedAtTimestamp"`
+	IsDeleted            bool                                      `json:"isDeleted"`
+	Toolsets             []AgentCreateResponseToolset              `json:"toolsets"`
+	McpServers           []AgentCreateResponseMcpServer            `json:"mcpServers"`
+	Knowledge            []AgentCreateResponseKnowledge            `json:"knowledge"`
+	Skills               []AgentCreateResponseSkill                `json:"skills"`
+}
+
+func (a AgentCreateResponseAgent) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *AgentCreateResponseAgent) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *AgentCreateResponseAgent) GetKey() string {
@@ -260,6 +281,13 @@ func (a *AgentCreateResponseAgent) GetDefaultReasoningEffort() optionalnullable.
 	return a.DefaultReasoningEffort
 }
 
+func (a *AgentCreateResponseAgent) GetAPIToolsetTools() []string {
+	if a == nil {
+		return nil
+	}
+	return a.APIToolsetTools
+}
+
 func (a *AgentCreateResponseAgent) GetSendUserContext() *bool {
 	if a == nil {
 		return nil
@@ -279,6 +307,13 @@ func (a *AgentCreateResponseAgent) GetIsServiceAccount() bool {
 		return false
 	}
 	return a.IsServiceAccount
+}
+
+func (a *AgentCreateResponseAgent) GetServiceAccountUserID() optionalnullable.OptionalNullable[string] {
+	if a == nil {
+		return nil
+	}
+	return a.ServiceAccountUserID
 }
 
 func (a *AgentCreateResponseAgent) GetCreatedBy() string {

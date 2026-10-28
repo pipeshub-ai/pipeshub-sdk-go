@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"time"
 )
 
 // GetAgentConversationByIDSortBy - Field to sort messages by
@@ -40,37 +39,11 @@ func (e *GetAgentConversationByIDSortBy) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// GetAgentConversationByIDSortOrder - Sort direction
-type GetAgentConversationByIDSortOrder string
-
-const (
-	GetAgentConversationByIDSortOrderAsc  GetAgentConversationByIDSortOrder = "asc"
-	GetAgentConversationByIDSortOrderDesc GetAgentConversationByIDSortOrder = "desc"
-)
-
-func (e GetAgentConversationByIDSortOrder) ToPointer() *GetAgentConversationByIDSortOrder {
-	return &e
-}
-func (e *GetAgentConversationByIDSortOrder) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "asc":
-		fallthrough
-	case "desc":
-		*e = GetAgentConversationByIDSortOrder(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for GetAgentConversationByIDSortOrder: %v", v)
-	}
-}
-
-// GetAgentConversationByIDMessageType - Filter messages by type
+// GetAgentConversationByIDMessageType - Filter messages by type. An empty value is read as not sent.
 type GetAgentConversationByIDMessageType string
 
 const (
+	GetAgentConversationByIDMessageTypeUnknown     GetAgentConversationByIDMessageType = ""
 	GetAgentConversationByIDMessageTypeUserQuery   GetAgentConversationByIDMessageType = "user_query"
 	GetAgentConversationByIDMessageTypeBotResponse GetAgentConversationByIDMessageType = "bot_response"
 	GetAgentConversationByIDMessageTypeError       GetAgentConversationByIDMessageType = "error"
@@ -87,6 +60,8 @@ func (e *GetAgentConversationByIDMessageType) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	switch v {
+	case "":
+		fallthrough
 	case "user_query":
 		fallthrough
 	case "bot_response":
@@ -112,13 +87,23 @@ type GetAgentConversationByIDRequest struct {
 	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
 	// Field to sort messages by
 	SortBy *GetAgentConversationByIDSortBy `default:"createdAt" queryParam:"style=form,explode=true,name=sortBy"`
-	// Sort direction
-	SortOrder *GetAgentConversationByIDSortOrder `default:"desc" queryParam:"style=form,explode=true,name=sortOrder"`
-	// Filter messages created on or after this date
-	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
-	// Filter messages created on or before this date
-	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
-	// Filter messages by type
+	// Sort direction. `asc` sorts ascending; any other value, including
+	// an unrecognised one, is read as `desc` and is not refused.
+	//
+	SortOrder *string `default:"desc" queryParam:"style=form,explode=true,name=sortOrder"`
+	// Filter messages created on or after this date, as an ISO 8601 date
+	// or date-time. The validator accepts any string JavaScript `Date` can
+	// parse (so also forms like `May 1 2020` or `2999/01/01`); one it
+	// cannot parse returns HTTP 400. An empty value is read as not sent.
+	//
+	StartDate *string `queryParam:"style=form,explode=true,name=startDate"`
+	// Filter messages created on or before this date, as an ISO 8601 date
+	// or date-time. The validator accepts any string JavaScript `Date` can
+	// parse (so also forms like `May 1 2020` or `2999/01/01`); one it
+	// cannot parse returns HTTP 400. An empty value is read as not sent.
+	//
+	EndDate *string `queryParam:"style=form,explode=true,name=endDate"`
+	// Filter messages by type. An empty value is read as not sent.
 	MessageType *GetAgentConversationByIDMessageType `queryParam:"style=form,explode=true,name=messageType"`
 }
 
@@ -168,21 +153,21 @@ func (g *GetAgentConversationByIDRequest) GetSortBy() *GetAgentConversationByIDS
 	return g.SortBy
 }
 
-func (g *GetAgentConversationByIDRequest) GetSortOrder() *GetAgentConversationByIDSortOrder {
+func (g *GetAgentConversationByIDRequest) GetSortOrder() *string {
 	if g == nil {
 		return nil
 	}
 	return g.SortOrder
 }
 
-func (g *GetAgentConversationByIDRequest) GetStartDate() *time.Time {
+func (g *GetAgentConversationByIDRequest) GetStartDate() *string {
 	if g == nil {
 		return nil
 	}
 	return g.StartDate
 }
 
-func (g *GetAgentConversationByIDRequest) GetEndDate() *time.Time {
+func (g *GetAgentConversationByIDRequest) GetEndDate() *string {
 	if g == nil {
 		return nil
 	}

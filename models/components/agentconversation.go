@@ -3,6 +3,8 @@
 package components
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
 	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
 	"time"
@@ -75,6 +77,101 @@ func (a *AgentConversationSharedWith) GetAccessLevel() *AgentConversationAccessL
 	return a.AccessLevel
 }
 
+type AgentConversationConversationError struct {
+	ID        *string    `json:"_id,omitzero"`
+	Message   string     `json:"message"`
+	ErrorType *string    `json:"errorType,omitzero"`
+	Timestamp *time.Time `json:"timestamp,omitzero"`
+	MessageID *string    `json:"messageId,omitzero"`
+	Stack     *string    `json:"stack,omitzero"`
+	// Free-form map of error context values.
+	Metadata map[string]any `json:"metadata,omitzero"`
+}
+
+func (a AgentConversationConversationError) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *AgentConversationConversationError) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *AgentConversationConversationError) GetID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ID
+}
+
+func (a *AgentConversationConversationError) GetMessage() string {
+	if a == nil {
+		return ""
+	}
+	return a.Message
+}
+
+func (a *AgentConversationConversationError) GetErrorType() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ErrorType
+}
+
+func (a *AgentConversationConversationError) GetTimestamp() *time.Time {
+	if a == nil {
+		return nil
+	}
+	return a.Timestamp
+}
+
+func (a *AgentConversationConversationError) GetMessageID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.MessageID
+}
+
+func (a *AgentConversationConversationError) GetStack() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Stack
+}
+
+func (a *AgentConversationConversationError) GetMetadata() map[string]any {
+	if a == nil {
+		return nil
+	}
+	return a.Metadata
+}
+
+// AgentConversationConversationSource - Always `agent_chat` for agent conversations.
+type AgentConversationConversationSource string
+
+const (
+	AgentConversationConversationSourceAgentChat AgentConversationConversationSource = "agent_chat"
+)
+
+func (e AgentConversationConversationSource) ToPointer() *AgentConversationConversationSource {
+	return &e
+}
+func (e *AgentConversationConversationSource) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "agent_chat":
+		*e = AgentConversationConversationSource(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AgentConversationConversationSource: %v", v)
+	}
+}
+
 // AgentConversationProjectVisibility - Only meaningful when `projectId` is set. `project` exposes the
 // conversation to every member of the linked project.
 type AgentConversationProjectVisibility string
@@ -104,18 +201,50 @@ func (e *AgentConversationProjectVisibility) IsExact() bool {
 type AgentConversation struct {
 	ID *string `json:"_id,omitzero"`
 	// The agent this conversation is with
-	AgentKey *string   `json:"agentKey,omitzero"`
-	UserID   *string   `json:"userId,omitzero"`
-	OrgID    *string   `json:"orgId,omitzero"`
-	Title    *string   `json:"title,omitzero"`
-	Messages []Message `json:"messages,omitzero"`
+	AgentKey *string `json:"agentKey,omitzero"`
+	UserID   *string `json:"userId,omitzero"`
+	OrgID    *string `json:"orgId,omitzero"`
+	Title    *string `json:"title,omitzero"`
+	// User who started the conversation.
+	Initiator *string   `json:"initiator,omitzero"`
+	Messages  []Message `json:"messages,omitzero"`
 	// Same values as `Conversation.status`.
-	Status         *AgentConversationStatus      `json:"status,omitzero"`
-	IsShared       *bool                         `json:"isShared,omitzero"`
-	SharedWith     []AgentConversationSharedWith `json:"sharedWith,omitzero"`
-	LastActivityAt *int64                        `json:"lastActivityAt,omitzero"`
-	CreatedAt      *time.Time                    `json:"createdAt,omitzero"`
-	UpdatedAt      *time.Time                    `json:"updatedAt,omitzero"`
+	Status *AgentConversationStatus `json:"status,omitzero"`
+	// Error description, populated only when `status` is `Failed`.
+	FailReason *string `json:"failReason,omitzero"`
+	// AI model configuration recorded against a conversation or message.
+	ModelInfo *ConversationModelInfo `json:"modelInfo,omitzero"`
+	IsShared  *bool                  `json:"isShared,omitzero"`
+	// Shareable link, present only when the conversation is shared.
+	ShareLink  *string                       `json:"shareLink,omitzero"`
+	SharedWith []AgentConversationSharedWith `json:"sharedWith,omitzero"`
+	// Whether this conversation is archived.
+	IsArchived *bool `json:"isArchived,omitzero"`
+	// User who archived the conversation. Absent on rows that were never archived.
+	ArchivedBy optionalnullable.OptionalNullable[string] `json:"archivedBy,omitzero"`
+	// Whether this conversation has been soft-deleted.
+	IsDeleted *bool `json:"isDeleted,omitzero"`
+	// User who soft-deleted the conversation. Absent on live rows.
+	DeletedBy optionalnullable.OptionalNullable[string] `json:"deletedBy,omitzero"`
+	// Errors recorded against this conversation (e.g. failed message generations).
+	ConversationErrors []AgentConversationConversationError `json:"conversationErrors,omitzero"`
+	// Free-form metadata map attached to the conversation.
+	Metadata map[string]any `json:"metadata,omitzero"`
+	// Always `agent_chat` for agent conversations.
+	ConversationSource *AgentConversationConversationSource `json:"conversationSource,omitzero"`
+	// Summary of older turns, present only once the conversation has
+	// been compacted.
+	//
+	CompactedSummary *string `json:"compactedSummary,omitzero"`
+	// Turn index up to which `compactedSummary` covers the conversation.
+	CompactedAtTurnIndex *int64 `json:"compactedAtTurnIndex,omitzero"`
+	// Unix timestamp (ms) of the last compaction.
+	CompactedAtTimestamp *int64     `json:"compactedAtTimestamp,omitzero"`
+	LastActivityAt       *int64     `json:"lastActivityAt,omitzero"`
+	CreatedAt            *time.Time `json:"createdAt,omitzero"`
+	UpdatedAt            *time.Time `json:"updatedAt,omitzero"`
+	// Document version counter of the backing store.
+	V *int64 `json:"__v,omitzero"`
 	// The project this agent conversation is linked to, if any.
 	ProjectID optionalnullable.OptionalNullable[string] `json:"projectId,omitzero"`
 	// Only meaningful when `projectId` is set. `project` exposes the
@@ -170,6 +299,13 @@ func (a *AgentConversation) GetTitle() *string {
 	return a.Title
 }
 
+func (a *AgentConversation) GetInitiator() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Initiator
+}
+
 func (a *AgentConversation) GetMessages() []Message {
 	if a == nil {
 		return nil
@@ -184,6 +320,20 @@ func (a *AgentConversation) GetStatus() *AgentConversationStatus {
 	return a.Status
 }
 
+func (a *AgentConversation) GetFailReason() *string {
+	if a == nil {
+		return nil
+	}
+	return a.FailReason
+}
+
+func (a *AgentConversation) GetModelInfo() *ConversationModelInfo {
+	if a == nil {
+		return nil
+	}
+	return a.ModelInfo
+}
+
 func (a *AgentConversation) GetIsShared() *bool {
 	if a == nil {
 		return nil
@@ -191,11 +341,88 @@ func (a *AgentConversation) GetIsShared() *bool {
 	return a.IsShared
 }
 
+func (a *AgentConversation) GetShareLink() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ShareLink
+}
+
 func (a *AgentConversation) GetSharedWith() []AgentConversationSharedWith {
 	if a == nil {
 		return nil
 	}
 	return a.SharedWith
+}
+
+func (a *AgentConversation) GetIsArchived() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.IsArchived
+}
+
+func (a *AgentConversation) GetArchivedBy() optionalnullable.OptionalNullable[string] {
+	if a == nil {
+		return nil
+	}
+	return a.ArchivedBy
+}
+
+func (a *AgentConversation) GetIsDeleted() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.IsDeleted
+}
+
+func (a *AgentConversation) GetDeletedBy() optionalnullable.OptionalNullable[string] {
+	if a == nil {
+		return nil
+	}
+	return a.DeletedBy
+}
+
+func (a *AgentConversation) GetConversationErrors() []AgentConversationConversationError {
+	if a == nil {
+		return nil
+	}
+	return a.ConversationErrors
+}
+
+func (a *AgentConversation) GetMetadata() map[string]any {
+	if a == nil {
+		return nil
+	}
+	return a.Metadata
+}
+
+func (a *AgentConversation) GetConversationSource() *AgentConversationConversationSource {
+	if a == nil {
+		return nil
+	}
+	return a.ConversationSource
+}
+
+func (a *AgentConversation) GetCompactedSummary() *string {
+	if a == nil {
+		return nil
+	}
+	return a.CompactedSummary
+}
+
+func (a *AgentConversation) GetCompactedAtTurnIndex() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.CompactedAtTurnIndex
+}
+
+func (a *AgentConversation) GetCompactedAtTimestamp() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.CompactedAtTimestamp
 }
 
 func (a *AgentConversation) GetLastActivityAt() *int64 {
@@ -217,6 +444,13 @@ func (a *AgentConversation) GetUpdatedAt() *time.Time {
 		return nil
 	}
 	return a.UpdatedAt
+}
+
+func (a *AgentConversation) GetV() *int64 {
+	if a == nil {
+		return nil
+	}
+	return a.V
 }
 
 func (a *AgentConversation) GetProjectID() optionalnullable.OptionalNullable[string] {

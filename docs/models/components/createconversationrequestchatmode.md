@@ -1,7 +1,10 @@
 # CreateConversationRequestChatMode
 
 Optional execution mode for non-stream consumers of this shared
-request schema.
+request schema. `deep`, `quick`, `verification` and `auto` are
+legacy values: still accepted, they run as `internal_search`.
+The streaming routes accept only `agent`, `internal_search` and
+`web_search`. `agent:<mode>` is refused.
 `agent` uses the universal agent loop, while `internal_search`
 and `web_search` use their corresponding assistant search paths.
 
@@ -24,3 +27,7 @@ value := components.CreateConversationRequestChatModeAgent
 | `CreateConversationRequestChatModeAgent`          | agent                                             |
 | `CreateConversationRequestChatModeInternalSearch` | internal_search                                   |
 | `CreateConversationRequestChatModeWebSearch`      | web_search                                        |
+| `CreateConversationRequestChatModeDeep`           | deep                                              |
+| `CreateConversationRequestChatModeQuick`          | quick                                             |
+| `CreateConversationRequestChatModeVerification`   | verification                                      |
+| `CreateConversationRequestChatModeAuto`           | auto                                              |

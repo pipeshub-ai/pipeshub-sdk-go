@@ -9,7 +9,7 @@ import (
 
 // UpdateAuthMethodRequest - Request payload
 type UpdateAuthMethodRequest struct {
-	// Authentication steps to set for the organization (1-3 steps)
+	// Authentication steps to set for the organization (1-3 steps).
 	AuthMethod []components.AuthStep `json:"authMethod"`
 }
 

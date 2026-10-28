@@ -1,6 +1,6 @@
 # GetAgentConversationByIDMessageType
 
-Filter messages by type
+Filter messages by type. An empty value is read as not sent.
 
 ## Example Usage
 
@@ -9,7 +9,7 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
 )
 
-value := operations.GetAgentConversationByIDMessageTypeUserQuery
+value := operations.GetAgentConversationByIDMessageTypeUnknown
 ```
 
 
@@ -17,6 +17,7 @@ value := operations.GetAgentConversationByIDMessageTypeUserQuery
 
 | Name                                             | Value                                            |
 | ------------------------------------------------ | ------------------------------------------------ |
+| `GetAgentConversationByIDMessageTypeUnknown`     |                                                  |
 | `GetAgentConversationByIDMessageTypeUserQuery`   | user_query                                       |
 | `GetAgentConversationByIDMessageTypeBotResponse` | bot_response                                     |
 | `GetAgentConversationByIDMessageTypeError`       | error                                            |

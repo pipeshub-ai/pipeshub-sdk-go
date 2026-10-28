@@ -9,20 +9,20 @@ import (
 	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
 )
 
-// ListAgentConversationsIsArchived - Optional archived flag applied to the `sharedWithMeConversations`
+// IsArchived - Optional archived flag applied to the `sharedWithMeConversations`
 // branch before the route-level non-archived guard is enforced.
 // Accepted values are `true` and `false`.
-type ListAgentConversationsIsArchived string
+type IsArchived string
 
 const (
-	ListAgentConversationsIsArchivedTrue  ListAgentConversationsIsArchived = "true"
-	ListAgentConversationsIsArchivedFalse ListAgentConversationsIsArchived = "false"
+	IsArchivedTrue  IsArchived = "true"
+	IsArchivedFalse IsArchived = "false"
 )
 
-func (e ListAgentConversationsIsArchived) ToPointer() *ListAgentConversationsIsArchived {
+func (e IsArchived) ToPointer() *IsArchived {
 	return &e
 }
-func (e *ListAgentConversationsIsArchived) UnmarshalJSON(data []byte) error {
+func (e *IsArchived) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
@@ -31,10 +31,10 @@ func (e *ListAgentConversationsIsArchived) UnmarshalJSON(data []byte) error {
 	case "true":
 		fallthrough
 	case "false":
-		*e = ListAgentConversationsIsArchived(v)
+		*e = IsArchived(v)
 		return nil
 	default:
-		return fmt.Errorf("invalid value for ListAgentConversationsIsArchived: %v", v)
+		return fmt.Errorf("invalid value for IsArchived: %v", v)
 	}
 }
 
@@ -61,16 +61,22 @@ type ListAgentConversationsRequest struct {
 	//
 	SortOrder *string `queryParam:"style=form,explode=true,name=sortOrder"`
 	// Case-insensitive search term applied to conversation `title` and
-	// `messages.content`. Maximum length is 1000 characters. HTML/XSS
-	// payloads and format specifiers are rejected.
+	// `messages.content`. Maximum length is 1000 characters. A printf-style
+	// format specifier (`%s`, `%x`, ...) is refused with `VALIDATION_ERROR`;
+	// markup (HTML tags, `javascript:`, event handlers) is refused with
+	// `HTTP_BAD_REQUEST` by the sanitizer every route runs.
 	//
 	Search *string `queryParam:"style=form,explode=true,name=search"`
-	// Inclusive lower bound on `createdAt`. The handler accepts any
-	// JavaScript-parseable date string; invalid values return HTTP 400.
+	// Inclusive lower bound on `createdAt`, as an ISO 8601 date or
+	// date-time. The validator accepts any string JavaScript `Date` can
+	// parse (so also forms like `May 1 2026`); one it cannot parse returns
+	// HTTP 400.
 	//
 	StartDate *string `queryParam:"style=form,explode=true,name=startDate"`
-	// Inclusive upper bound on `createdAt`. The handler accepts any
-	// JavaScript-parseable date string; invalid values return HTTP 400.
+	// Inclusive upper bound on `createdAt`, as an ISO 8601 date or
+	// date-time. The validator accepts any string JavaScript `Date` can
+	// parse (so also forms like `May 1 2026`); one it cannot parse returns
+	// HTTP 400.
 	//
 	EndDate *string `queryParam:"style=form,explode=true,name=endDate"`
 	// Optional status filter applied to the `sharedWithMeConversations`
@@ -82,10 +88,10 @@ type ListAgentConversationsRequest struct {
 	// branch before the route-level non-archived guard is enforced.
 	// Accepted values are `true` and `false`.
 	//
-	IsArchived *ListAgentConversationsIsArchived `queryParam:"style=form,explode=true,name=isArchived"`
+	IsArchived *IsArchived `queryParam:"style=form,explode=true,name=isArchived"`
 	// Restrict results to a single project. Pass a project's `id`, or
 	// the literal string `unassigned` to list agent conversations with
-	// no `projectId`.
+	// no `projectId`. Anything else is refused with HTTP 400.
 	//
 	ProjectID *string `queryParam:"style=form,explode=true,name=projectId"`
 }
@@ -164,7 +170,7 @@ func (l *ListAgentConversationsRequest) GetStatus() *string {
 	return l.Status
 }
 
-func (l *ListAgentConversationsRequest) GetIsArchived() *ListAgentConversationsIsArchived {
+func (l *ListAgentConversationsRequest) GetIsArchived() *IsArchived {
 	if l == nil {
 		return nil
 	}

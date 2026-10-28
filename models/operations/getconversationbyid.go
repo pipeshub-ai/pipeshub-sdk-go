@@ -68,7 +68,43 @@ func (e *GetConversationByIDSortOrderEnum) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// GetConversationByIDQueryParamMessageType - Filter messages by type
+// GetConversationByIDSharedEnum - Filters on the conversation's `isShared`; a conversation that
+// does not match is answered `404`. Read case-insensitively;
+// any other value is refused with `400`.
+type GetConversationByIDSharedEnum string
+
+const (
+	GetConversationByIDSharedEnumTrue  GetConversationByIDSharedEnum = "true"
+	GetConversationByIDSharedEnumFalse GetConversationByIDSharedEnum = "false"
+	GetConversationByIDSharedEnumOne   GetConversationByIDSharedEnum = "1"
+	GetConversationByIDSharedEnumZero  GetConversationByIDSharedEnum = "0"
+)
+
+func (e GetConversationByIDSharedEnum) ToPointer() *GetConversationByIDSharedEnum {
+	return &e
+}
+func (e *GetConversationByIDSharedEnum) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "true":
+		fallthrough
+	case "false":
+		fallthrough
+	case "1":
+		fallthrough
+	case "0":
+		*e = GetConversationByIDSharedEnum(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetConversationByIDSharedEnum: %v", v)
+	}
+}
+
+// GetConversationByIDQueryParamMessageType - Checked against the listed values (`400` otherwise) but not
+// applied: every message type is returned.
 type GetConversationByIDQueryParamMessageType string
 
 const (
@@ -77,6 +113,7 @@ const (
 	GetConversationByIDQueryParamMessageTypeError       GetConversationByIDQueryParamMessageType = "error"
 	GetConversationByIDQueryParamMessageTypeFeedback    GetConversationByIDQueryParamMessageType = "feedback"
 	GetConversationByIDQueryParamMessageTypeSystem      GetConversationByIDQueryParamMessageType = "system"
+	GetConversationByIDQueryParamMessageTypeToolCall    GetConversationByIDQueryParamMessageType = "tool_call"
 )
 
 func (e GetConversationByIDQueryParamMessageType) ToPointer() *GetConversationByIDQueryParamMessageType {
@@ -97,6 +134,8 @@ func (e *GetConversationByIDQueryParamMessageType) UnmarshalJSON(data []byte) er
 	case "feedback":
 		fallthrough
 	case "system":
+		fallthrough
+	case "tool_call":
 		*e = GetConversationByIDQueryParamMessageType(v)
 		return nil
 	default:
@@ -107,23 +146,50 @@ func (e *GetConversationByIDQueryParamMessageType) UnmarshalJSON(data []byte) er
 type GetConversationByIDRequest struct {
 	// Unique conversation identifier
 	ConversationID string `pathParam:"style=simple,explode=false,name=conversationId"`
-	// Page number for message pagination
+	// Page number for message pagination. Read with `parseInt`, so a fraction such
+	// as `1.5` is tolerated and truncated (page 1).
+	//
 	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
-	// Number of messages per page
+	// Number of messages per page. Read with `parseInt`, so a fraction such as `5.5`
+	// is tolerated and truncated (5).
+	//
 	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
 	// Field to sort messages by
 	SortBy *GetConversationByIDSortByEnum `default:"createdAt" queryParam:"style=form,explode=true,name=sortBy"`
 	// Sort direction
 	SortOrder *GetConversationByIDSortOrderEnum `default:"desc" queryParam:"style=form,explode=true,name=sortOrder"`
-	// Case-insensitive search across conversation title and message content
+	// Case-insensitive match against the conversation's title and its
+	// messages' content. Applies to the conversation, not its messages:
+	// when nothing matches the answer is `404`; when something matches
+	// every message is returned.
+	//
 	Search *string `queryParam:"style=form,explode=true,name=search"`
-	// Filter messages created on or after this date (ISO 8601)
-	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
-	// Filter messages created on or before this date (ISO 8601)
-	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
-	// Filter by shared status of the conversation
-	Shared *bool `queryParam:"style=form,explode=true,name=shared"`
-	// Filter messages by type
+	// Applies to the conversation, not its messages: when the
+	// conversation was created before this instant the answer is `404`.
+	// Any value JavaScript's `Date` parses is accepted (an ISO 8601
+	// date or date-time is the documented form); a value it cannot
+	// parse is refused with `400`.
+	//
+	StartDate *string `queryParam:"style=form,explode=true,name=startDate"`
+	// Applies to the conversation, not its messages: when the
+	// conversation was created after this instant the answer is `404`.
+	// Parsed like `startDate`.
+	//
+	EndDate *string `queryParam:"style=form,explode=true,name=endDate"`
+	// Filters on the conversation's `isShared`; a conversation that
+	// does not match is answered `404`. Read case-insensitively;
+	// any other value is refused with `400`.
+	//
+	Shared *GetConversationByIDSharedEnum `queryParam:"style=form,explode=true,name=shared"`
+	// `unassigned` matches only a conversation linked to no project; a
+	// 24-character ObjectId matches only a conversation linked to that
+	// project. A conversation that does not match is answered `404`.
+	// Any other value is ignored.
+	//
+	ProjectID *string `queryParam:"style=form,explode=true,name=projectId"`
+	// Checked against the listed values (`400` otherwise) but not
+	// applied: every message type is returned.
+	//
 	MessageType *GetConversationByIDQueryParamMessageType `queryParam:"style=form,explode=true,name=messageType"`
 }
 
@@ -180,25 +246,32 @@ func (g *GetConversationByIDRequest) GetSearch() *string {
 	return g.Search
 }
 
-func (g *GetConversationByIDRequest) GetStartDate() *time.Time {
+func (g *GetConversationByIDRequest) GetStartDate() *string {
 	if g == nil {
 		return nil
 	}
 	return g.StartDate
 }
 
-func (g *GetConversationByIDRequest) GetEndDate() *time.Time {
+func (g *GetConversationByIDRequest) GetEndDate() *string {
 	if g == nil {
 		return nil
 	}
 	return g.EndDate
 }
 
-func (g *GetConversationByIDRequest) GetShared() *bool {
+func (g *GetConversationByIDRequest) GetShared() *GetConversationByIDSharedEnum {
 	if g == nil {
 		return nil
 	}
 	return g.Shared
+}
+
+func (g *GetConversationByIDRequest) GetProjectID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ProjectID
 }
 
 func (g *GetConversationByIDRequest) GetMessageType() *GetConversationByIDQueryParamMessageType {
@@ -233,6 +306,10 @@ func (e *GetConversationByIDSharedWithAccessLevel) IsExact() bool {
 type GetConversationByIDSharedWith struct {
 	UserID      *string                                   `json:"userId,omitzero"`
 	AccessLevel *GetConversationByIDSharedWithAccessLevel `json:"accessLevel,omitzero"`
+	// Id of the share entry. The session schema asks for none,
+	// but Mongoose ignores that option and stores one.
+	//
+	ID *string `json:"_id,omitzero"`
 }
 
 func (g *GetConversationByIDSharedWith) GetUserID() *string {
@@ -247,6 +324,13 @@ func (g *GetConversationByIDSharedWith) GetAccessLevel() *GetConversationByIDSha
 		return nil
 	}
 	return g.AccessLevel
+}
+
+func (g *GetConversationByIDSharedWith) GetID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ID
 }
 
 type GetConversationByIDStatus string
@@ -268,6 +352,29 @@ func (e *GetConversationByIDStatus) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "None", "Inprogress", "Complete", "Failed", "Stopped":
+			return true
+		}
+	}
+	return false
+}
+
+// GetConversationByIDProjectVisibility - Who in the project sees the conversation. Absent when never set.
+type GetConversationByIDProjectVisibility string
+
+const (
+	GetConversationByIDProjectVisibilityPrivate GetConversationByIDProjectVisibility = "private"
+	GetConversationByIDProjectVisibilityProject GetConversationByIDProjectVisibility = "project"
+)
+
+func (e GetConversationByIDProjectVisibility) ToPointer() *GetConversationByIDProjectVisibility {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *GetConversationByIDProjectVisibility) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "private", "project":
 			return true
 		}
 	}
@@ -457,61 +564,31 @@ func (r *ReferenceDatum) GetMetadata() map[string]string {
 	return r.Metadata
 }
 
-type AppliedFilters struct {
-	Apps []components.AppliedFilterNode `json:"apps,omitzero"`
-	Kb   []components.AppliedFilterNode `json:"kb,omitzero"`
-}
-
-func (a AppliedFilters) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(a, "", false)
-}
-
-func (a *AppliedFilters) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *AppliedFilters) GetApps() []components.AppliedFilterNode {
-	if a == nil {
-		return nil
-	}
-	return a.Apps
-}
-
-func (a *AppliedFilters) GetKb() []components.AppliedFilterNode {
-	if a == nil {
-		return nil
-	}
-	return a.Kb
-}
-
-type GetConversationByIDMetadata struct {
+type Metadata struct {
 	ProcessingTimeMs *float64 `json:"processingTimeMs,omitzero"`
 	ModelVersion     *string  `json:"modelVersion,omitzero"`
 	AiTransactionID  *string  `json:"aiTransactionId,omitzero"`
 }
 
-func (g *GetConversationByIDMetadata) GetProcessingTimeMs() *float64 {
-	if g == nil {
+func (m *Metadata) GetProcessingTimeMs() *float64 {
+	if m == nil {
 		return nil
 	}
-	return g.ProcessingTimeMs
+	return m.ProcessingTimeMs
 }
 
-func (g *GetConversationByIDMetadata) GetModelVersion() *string {
-	if g == nil {
+func (m *Metadata) GetModelVersion() *string {
+	if m == nil {
 		return nil
 	}
-	return g.ModelVersion
+	return m.ModelVersion
 }
 
-func (g *GetConversationByIDMetadata) GetAiTransactionID() *string {
-	if g == nil {
+func (m *Metadata) GetAiTransactionID() *string {
+	if m == nil {
 		return nil
 	}
-	return g.AiTransactionID
+	return m.AiTransactionID
 }
 
 type Message struct {
@@ -531,8 +608,12 @@ type Message struct {
 	// Reference IDs surfaced from tool responses, used for follow-up queries
 	ReferenceData []ReferenceDatum `json:"referenceData,omitzero"`
 	// AI model configuration recorded against a conversation or message.
-	ModelInfo      *components.ConversationModelInfo `json:"modelInfo,omitzero"`
-	AppliedFilters *AppliedFilters                   `json:"appliedFilters,omitzero"`
+	ModelInfo *components.ConversationModelInfo `json:"modelInfo,omitzero"`
+	// Rich filter state selected by the user, used for display and persistence only.
+	// This mirrors the active selection shown in the UI and is distinct from the
+	// machine-readable `filters` field used for retrieval scoping.
+	//
+	AppliedFilters *components.AppliedFilters `json:"appliedFilters,omitzero"`
 	// Files uploaded for this message turn (see
 	// `POST /conversations/attachments/upload`).
 	//
@@ -542,10 +623,10 @@ type Message struct {
 	// Persisted chain-of-thought for this turn.
 	Reasoning []components.MessageReasoningTurn `json:"reasoning,omitzero"`
 	// Ordered agent-activity transcript for this turn.
-	Parts     []components.MessagePart     `json:"parts,omitzero"`
-	Metadata  *GetConversationByIDMetadata `json:"metadata,omitzero"`
-	CreatedAt *time.Time                   `json:"createdAt,omitzero"`
-	UpdatedAt *time.Time                   `json:"updatedAt,omitzero"`
+	Parts     []components.MessagePart `json:"parts,omitzero"`
+	Metadata  *Metadata                `json:"metadata,omitzero"`
+	CreatedAt *time.Time               `json:"createdAt,omitzero"`
+	UpdatedAt *time.Time               `json:"updatedAt,omitzero"`
 }
 
 func (m Message) MarshalJSON() ([]byte, error) {
@@ -629,7 +710,7 @@ func (m *Message) GetModelInfo() *components.ConversationModelInfo {
 	return m.ModelInfo
 }
 
-func (m *Message) GetAppliedFilters() *AppliedFilters {
+func (m *Message) GetAppliedFilters() *components.AppliedFilters {
 	if m == nil {
 		return nil
 	}
@@ -664,7 +745,7 @@ func (m *Message) GetParts() []components.MessagePart {
 	return m.Parts
 }
 
-func (m *Message) GetMetadata() *GetConversationByIDMetadata {
+func (m *Message) GetMetadata() *Metadata {
 	if m == nil {
 		return nil
 	}
@@ -834,6 +915,10 @@ type GetConversationByIDConversation struct {
 	Status     *GetConversationByIDStatus      `json:"status,omitzero"`
 	// Populated only when `status` is `Failed`
 	FailReason *string `json:"failReason,omitzero"`
+	// Project the conversation is linked to. Absent when it is in none.
+	ProjectID *string `json:"projectId,omitzero"`
+	// Who in the project sees the conversation. Absent when never set.
+	ProjectVisibility *GetConversationByIDProjectVisibility `json:"projectVisibility,omitzero"`
 	// Page of messages, sliced by `pagination` and ordered by `sortingMessages`
 	Messages []Message `json:"messages,omitzero"`
 	// AI model configuration recorded against a conversation or message.
@@ -917,6 +1002,20 @@ func (g *GetConversationByIDConversation) GetFailReason() *string {
 	return g.FailReason
 }
 
+func (g *GetConversationByIDConversation) GetProjectID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ProjectID
+}
+
+func (g *GetConversationByIDConversation) GetProjectVisibility() *GetConversationByIDProjectVisibility {
+	if g == nil {
+		return nil
+	}
+	return g.ProjectVisibility
+}
+
 func (g *GetConversationByIDConversation) GetMessages() []Message {
 	if g == nil {
 		return nil
@@ -984,46 +1083,46 @@ func (g *GetConversationByIDApplied) GetValues() map[string]any {
 	return g.Values
 }
 
-type GetConversationByIDShared struct {
+type GetConversationByIDSharedResponse struct {
 	Values      []string                                  `json:"values,omitzero"`
 	Description *string                                   `json:"description,omitzero"`
 	Current     optionalnullable.OptionalNullable[string] `json:"current,omitzero"`
 	Applied     *bool                                     `json:"applied,omitzero"`
 }
 
-func (g GetConversationByIDShared) MarshalJSON() ([]byte, error) {
+func (g GetConversationByIDSharedResponse) MarshalJSON() ([]byte, error) {
 	return utils.MarshalJSON(g, "", false)
 }
 
-func (g *GetConversationByIDShared) UnmarshalJSON(data []byte) error {
+func (g *GetConversationByIDSharedResponse) UnmarshalJSON(data []byte) error {
 	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *GetConversationByIDShared) GetValues() []string {
+func (g *GetConversationByIDSharedResponse) GetValues() []string {
 	if g == nil {
 		return nil
 	}
 	return g.Values
 }
 
-func (g *GetConversationByIDShared) GetDescription() *string {
+func (g *GetConversationByIDSharedResponse) GetDescription() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Description
 }
 
-func (g *GetConversationByIDShared) GetCurrent() optionalnullable.OptionalNullable[string] {
+func (g *GetConversationByIDSharedResponse) GetCurrent() optionalnullable.OptionalNullable[string] {
 	if g == nil {
 		return nil
 	}
 	return g.Current
 }
 
-func (g *GetConversationByIDShared) GetApplied() *bool {
+func (g *GetConversationByIDSharedResponse) GetApplied() *bool {
 	if g == nil {
 		return nil
 	}
@@ -1711,7 +1810,7 @@ func (g *GetConversationByIDSortingMessages) GetSortOrder() *GetConversationByID
 }
 
 type GetConversationByIDAvailable struct {
-	Shared *GetConversationByIDShared `json:"shared,omitzero"`
+	Shared *GetConversationByIDSharedResponse `json:"shared,omitzero"`
 	// Advertised in the `available` catalog but not currently applied as a filter by the server.
 	Tags *GetConversationByIDTags `json:"tags,omitzero"`
 	// Advertised in the `available` catalog but not currently applied as a filter by the server.
@@ -1737,7 +1836,7 @@ func (g *GetConversationByIDAvailable) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetConversationByIDAvailable) GetShared() *GetConversationByIDShared {
+func (g *GetConversationByIDAvailable) GetShared() *GetConversationByIDSharedResponse {
 	if g == nil {
 		return nil
 	}

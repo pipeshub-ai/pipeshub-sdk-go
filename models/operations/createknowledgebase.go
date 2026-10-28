@@ -9,7 +9,9 @@ import (
 
 // CreateKnowledgeBaseRequest - Request payload
 type CreateKnowledgeBaseRequest struct {
-	// Name of the knowledge base
+	// Name of the knowledge base. Leading and trailing whitespace is removed
+	// first, so a name made only of whitespace is refused as empty.
+	//
 	KbName string `json:"kbName"`
 }
 

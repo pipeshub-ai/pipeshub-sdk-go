@@ -11,58 +11,106 @@ import (
 // All listed fields are optional in the schema so partial or evolving documents validate; typical Arango documents
 // usually include `_key`, `_id`, `_rev`, `orgId`, `recordName`, `externalRecordId`, `recordType`, `origin`,
 // `createdAtTimestamp`, and `connectorId`. Extend this schema when new stable fields appear on Record vertices.
+//
+// For a connected app with a limit, a parent the limit leaves out is not named: `recordGroupId`
+// (with `externalGroupId`), `rootRecordGroupId` and `parentNodeId` (with `externalParentId`) are `null`
+// for it, and `location` keeps only the part of the trail inside the limit, or is left out.
+// `connectorInstanceName`, the source's or collection's own name, is left out unless the limit
+// covers that app whole; this applies to each hit's `metadata` too.
 type SemanticSearchGraphRecord struct {
-	Key                         optionalnullable.OptionalNullable[string]   `json:"_key,omitzero"`
-	ID                          optionalnullable.OptionalNullable[string]   `json:"_id,omitzero"`
-	Rev                         optionalnullable.OptionalNullable[string]   `json:"_rev,omitzero"`
-	RecordName                  optionalnullable.OptionalNullable[string]   `json:"recordName,omitzero"`
-	ExternalRecordID            optionalnullable.OptionalNullable[string]   `json:"externalRecordId,omitzero"`
-	RecordType                  optionalnullable.OptionalNullable[string]   `json:"recordType,omitzero"`
-	Origin                      optionalnullable.OptionalNullable[string]   `json:"origin,omitzero"`
-	CreatedAtTimestamp          optionalnullable.OptionalNullable[float64]  `json:"createdAtTimestamp,omitzero"`
-	ConnectorID                 optionalnullable.OptionalNullable[string]   `json:"connectorId,omitzero"`
-	OrgID                       optionalnullable.OptionalNullable[string]   `json:"orgId,omitzero"`
-	UpdatedAtTimestamp          optionalnullable.OptionalNullable[float64]  `json:"updatedAtTimestamp,omitzero"`
-	ExternalGroupID             optionalnullable.OptionalNullable[string]   `json:"externalGroupId,omitzero"`
-	ExternalParentID            optionalnullable.OptionalNullable[string]   `json:"externalParentId,omitzero"`
-	ExternalRevisionID          optionalnullable.OptionalNullable[string]   `json:"externalRevisionId,omitzero"`
-	ExternalRootGroupID         optionalnullable.OptionalNullable[string]   `json:"externalRootGroupId,omitzero"`
-	RecordGroupID               optionalnullable.OptionalNullable[string]   `json:"recordGroupId,omitzero"`
-	Version                     optionalnullable.OptionalNullable[float64]  `json:"version,omitzero"`
-	ConnectorName               optionalnullable.OptionalNullable[string]   `json:"connectorName,omitzero"`
-	MimeType                    optionalnullable.OptionalNullable[string]   `json:"mimeType,omitzero"`
-	WebURL                      optionalnullable.OptionalNullable[string]   `json:"webUrl,omitzero"`
-	LastSyncTimestamp           optionalnullable.OptionalNullable[float64]  `json:"lastSyncTimestamp,omitzero"`
-	SourceCreatedAtTimestamp    optionalnullable.OptionalNullable[float64]  `json:"sourceCreatedAtTimestamp,omitzero"`
-	SourceLastModifiedTimestamp optionalnullable.OptionalNullable[float64]  `json:"sourceLastModifiedTimestamp,omitzero"`
-	IsDeleted                   optionalnullable.OptionalNullable[bool]     `json:"isDeleted,omitzero"`
-	IsArchived                  optionalnullable.OptionalNullable[bool]     `json:"isArchived,omitzero"`
-	IsVLMOcrProcessed           optionalnullable.OptionalNullable[bool]     `json:"isVLMOcrProcessed,omitzero"`
-	DeletedByUserID             optionalnullable.OptionalNullable[string]   `json:"deletedByUserId,omitzero"`
-	ProcessingStartedAt         optionalnullable.OptionalNullable[float64]  `json:"processingStartedAt,omitzero"`
-	QueuedAtTimestamp           optionalnullable.OptionalNullable[float64]  `json:"queuedAtTimestamp,omitzero"`
-	ParsingStatus               optionalnullable.OptionalNullable[string]   `json:"parsingStatus,omitzero"`
-	IndexingStatus              optionalnullable.OptionalNullable[string]   `json:"indexingStatus,omitzero"`
-	ExtractionStatus            optionalnullable.OptionalNullable[string]   `json:"extractionStatus,omitzero"`
-	IsLatestVersion             optionalnullable.OptionalNullable[bool]     `json:"isLatestVersion,omitzero"`
-	IsDirty                     optionalnullable.OptionalNullable[bool]     `json:"isDirty,omitzero"`
-	Reason                      optionalnullable.OptionalNullable[string]   `json:"reason,omitzero"`
-	LastIndexTimestamp          optionalnullable.OptionalNullable[float64]  `json:"lastIndexTimestamp,omitzero"`
-	LastExtractionTimestamp     optionalnullable.OptionalNullable[float64]  `json:"lastExtractionTimestamp,omitzero"`
-	SummaryDocumentID           optionalnullable.OptionalNullable[string]   `json:"summaryDocumentId,omitzero"`
-	StorageDocumentID           optionalnullable.OptionalNullable[string]   `json:"storageDocumentId,omitzero"`
-	VirtualRecordID             optionalnullable.OptionalNullable[string]   `json:"virtualRecordId,omitzero"`
-	PreviewRenderable           optionalnullable.OptionalNullable[bool]     `json:"previewRenderable,omitzero"`
-	IsShared                    optionalnullable.OptionalNullable[bool]     `json:"isShared,omitzero"`
-	IsDependentNode             optionalnullable.OptionalNullable[bool]     `json:"isDependentNode,omitzero"`
-	ParentNodeID                optionalnullable.OptionalNullable[string]   `json:"parentNodeId,omitzero"`
-	HideWeburl                  optionalnullable.OptionalNullable[bool]     `json:"hideWeburl,omitzero"`
-	IsInternal                  optionalnullable.OptionalNullable[bool]     `json:"isInternal,omitzero"`
-	Md5Checksum                 optionalnullable.OptionalNullable[string]   `json:"md5Checksum,omitzero"`
-	SizeInBytes                 optionalnullable.OptionalNullable[float64]  `json:"sizeInBytes,omitzero"`
-	Definition                  optionalnullable.OptionalNullable[string]   `json:"definition,omitzero"`
-	SourceTables                optionalnullable.OptionalNullable[[]string] `json:"sourceTables,omitzero"`
-	RowCount                    optionalnullable.OptionalNullable[float64]  `json:"rowCount,omitzero"`
+	RecordName                  optionalnullable.OptionalNullable[string]  `json:"recordName,omitzero"`
+	ExternalRecordID            optionalnullable.OptionalNullable[string]  `json:"externalRecordId,omitzero"`
+	RecordType                  optionalnullable.OptionalNullable[string]  `json:"recordType,omitzero"`
+	Origin                      optionalnullable.OptionalNullable[string]  `json:"origin,omitzero"`
+	CreatedAtTimestamp          optionalnullable.OptionalNullable[float64] `json:"createdAtTimestamp,omitzero"`
+	ConnectorID                 optionalnullable.OptionalNullable[string]  `json:"connectorId,omitzero"`
+	OrgID                       optionalnullable.OptionalNullable[string]  `json:"orgId,omitzero"`
+	UpdatedAtTimestamp          optionalnullable.OptionalNullable[float64] `json:"updatedAtTimestamp,omitzero"`
+	ExternalGroupID             optionalnullable.OptionalNullable[string]  `json:"externalGroupId,omitzero"`
+	ExternalParentID            optionalnullable.OptionalNullable[string]  `json:"externalParentId,omitzero"`
+	ExternalRevisionID          optionalnullable.OptionalNullable[string]  `json:"externalRevisionId,omitzero"`
+	ExternalRootGroupID         optionalnullable.OptionalNullable[string]  `json:"externalRootGroupId,omitzero"`
+	RecordGroupID               optionalnullable.OptionalNullable[string]  `json:"recordGroupId,omitzero"`
+	Version                     optionalnullable.OptionalNullable[float64] `json:"version,omitzero"`
+	ConnectorName               optionalnullable.OptionalNullable[string]  `json:"connectorName,omitzero"`
+	MimeType                    optionalnullable.OptionalNullable[string]  `json:"mimeType,omitzero"`
+	WebURL                      optionalnullable.OptionalNullable[string]  `json:"webUrl,omitzero"`
+	LastSyncTimestamp           optionalnullable.OptionalNullable[float64] `json:"lastSyncTimestamp,omitzero"`
+	SourceCreatedAtTimestamp    optionalnullable.OptionalNullable[float64] `json:"sourceCreatedAtTimestamp,omitzero"`
+	SourceLastModifiedTimestamp optionalnullable.OptionalNullable[float64] `json:"sourceLastModifiedTimestamp,omitzero"`
+	IsDeleted                   optionalnullable.OptionalNullable[bool]    `json:"isDeleted,omitzero"`
+	IsArchived                  optionalnullable.OptionalNullable[bool]    `json:"isArchived,omitzero"`
+	IsVLMOcrProcessed           optionalnullable.OptionalNullable[bool]    `json:"isVLMOcrProcessed,omitzero"`
+	DeletedByUserID             optionalnullable.OptionalNullable[string]  `json:"deletedByUserId,omitzero"`
+	// When a restore last brought the file back from the trash (epoch milliseconds); see `restoredAtTimestamp` on GET /knowledgeBase/record/{recordId}.
+	RestoredAtTimestamp optionalnullable.OptionalNullable[float64] `json:"restoredAtTimestamp,omitzero"`
+	ProcessingStartedAt optionalnullable.OptionalNullable[float64] `json:"processingStartedAt,omitzero"`
+	QueuedAtTimestamp   optionalnullable.OptionalNullable[float64] `json:"queuedAtTimestamp,omitzero"`
+	// Earliest time (epoch milliseconds) indexing reads a record its source
+	// rate-limited; see `retryNotBefore` on GET /knowledgeBase/record/{recordId}.
+	//
+	RetryNotBefore          optionalnullable.OptionalNullable[float64] `json:"retryNotBefore,omitzero"`
+	ParsingStatus           optionalnullable.OptionalNullable[string]  `json:"parsingStatus,omitzero"`
+	IndexingStatus          optionalnullable.OptionalNullable[string]  `json:"indexingStatus,omitzero"`
+	ExtractionStatus        optionalnullable.OptionalNullable[string]  `json:"extractionStatus,omitzero"`
+	IsLatestVersion         optionalnullable.OptionalNullable[bool]    `json:"isLatestVersion,omitzero"`
+	IsDirty                 optionalnullable.OptionalNullable[bool]    `json:"isDirty,omitzero"`
+	Reason                  optionalnullable.OptionalNullable[string]  `json:"reason,omitzero"`
+	LastIndexTimestamp      optionalnullable.OptionalNullable[float64] `json:"lastIndexTimestamp,omitzero"`
+	LastExtractionTimestamp optionalnullable.OptionalNullable[float64] `json:"lastExtractionTimestamp,omitzero"`
+	// Where named-entity extraction stands for the record; see
+	// `entityExtractionStatus` on GET /knowledgeBase/record/{recordId}.
+	//
+	EntityExtractionStatus        optionalnullable.OptionalNullable[string]  `json:"entityExtractionStatus,omitzero"`
+	LastEntityExtractionTimestamp optionalnullable.OptionalNullable[float64] `json:"lastEntityExtractionTimestamp,omitzero"`
+	EntityExtractionStrategy      optionalnullable.OptionalNullable[string]  `json:"entityExtractionStrategy,omitzero"`
+	EntityExtractorVersion        optionalnullable.OptionalNullable[string]  `json:"entityExtractorVersion,omitzero"`
+	SummaryDocumentID             optionalnullable.OptionalNullable[string]  `json:"summaryDocumentId,omitzero"`
+	StorageDocumentID             optionalnullable.OptionalNullable[string]  `json:"storageDocumentId,omitzero"`
+	VirtualRecordID               optionalnullable.OptionalNullable[string]  `json:"virtualRecordId,omitzero"`
+	// Revision of the record's content (16 lowercase hex characters); see
+	// `contentRev` on GET /knowledgeBase/record/{recordId}. Absent on
+	// records not indexed since pipeline stages were introduced.
+	//
+	ContentRev        optionalnullable.OptionalNullable[string]   `json:"contentRev,omitzero"`
+	PreviewRenderable optionalnullable.OptionalNullable[bool]     `json:"previewRenderable,omitzero"`
+	IsShared          optionalnullable.OptionalNullable[bool]     `json:"isShared,omitzero"`
+	IsDependentNode   optionalnullable.OptionalNullable[bool]     `json:"isDependentNode,omitzero"`
+	ParentNodeID      optionalnullable.OptionalNullable[string]   `json:"parentNodeId,omitzero"`
+	HideWeburl        optionalnullable.OptionalNullable[bool]     `json:"hideWeburl,omitzero"`
+	IsInternal        optionalnullable.OptionalNullable[bool]     `json:"isInternal,omitzero"`
+	Md5Checksum       optionalnullable.OptionalNullable[string]   `json:"md5Checksum,omitzero"`
+	SizeInBytes       optionalnullable.OptionalNullable[float64]  `json:"sizeInBytes,omitzero"`
+	Definition        optionalnullable.OptionalNullable[string]   `json:"definition,omitzero"`
+	SourceTables      optionalnullable.OptionalNullable[[]string] `json:"sourceTables,omitzero"`
+	RowCount          optionalnullable.OptionalNullable[float64]  `json:"rowCount,omitzero"`
+	// `true` when the record is a stub parent created for an ancestor that
+	// is not yet synced or is out of scope; replaced when the real record syncs.
+	//
+	IsPlaceholder *bool `json:"isPlaceholder,omitzero"`
+	// Where the record sits, from its source down to its parent, as
+	// `Name (App ID: id) -> Name (Record Group ID: id) -> Name (Record ID: id)`,
+	// resolved at retrieval time (not stored on the record).
+	// It names only the ancestors the caller can open; for a connected app
+	// with a limit, only those inside the limit. Absent when none is left.
+	//
+	Location *string `json:"location,omitzero"`
+	// Where a ticket, pull request or project stands, in one short phrase, on
+	// `records` entries only: for example `Merged 2026-09-25 by alice`,
+	// `Closed without merging 2026-09-26`, or
+	// `DONE (Jira: Done), resolved 2026-06-06, assignee Bo, priority HIGH`.
+	// Dates are days in UTC. Absent for record types with no state of their own.
+	//
+	StatusSummary *string `json:"statusSummary,omitzero"`
+	// On `records` entries only: the records that name this one (`mentionedIn`) and
+	// that it names (`linksTo`) by web address or issue key, across connectors,
+	// limited to records the caller may read, at most 10 per relation. For a
+	// connected app with a limit, only records inside it. Absent when there are none.
+	//
+	LinkedRecords []SemanticSearchLinkedRecord              `json:"linkedRecords,omitzero"`
+	Key           optionalnullable.OptionalNullable[string] `json:"_key,omitzero"`
+	ID            optionalnullable.OptionalNullable[string] `json:"_id,omitzero"`
+	Rev           optionalnullable.OptionalNullable[string] `json:"_rev,omitzero"`
 }
 
 func (s SemanticSearchGraphRecord) MarshalJSON() ([]byte, error) {
@@ -74,27 +122,6 @@ func (s *SemanticSearchGraphRecord) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (s *SemanticSearchGraphRecord) GetKey() optionalnullable.OptionalNullable[string] {
-	if s == nil {
-		return nil
-	}
-	return s.Key
-}
-
-func (s *SemanticSearchGraphRecord) GetID() optionalnullable.OptionalNullable[string] {
-	if s == nil {
-		return nil
-	}
-	return s.ID
-}
-
-func (s *SemanticSearchGraphRecord) GetRev() optionalnullable.OptionalNullable[string] {
-	if s == nil {
-		return nil
-	}
-	return s.Rev
 }
 
 func (s *SemanticSearchGraphRecord) GetRecordName() optionalnullable.OptionalNullable[string] {
@@ -265,6 +292,13 @@ func (s *SemanticSearchGraphRecord) GetDeletedByUserID() optionalnullable.Option
 	return s.DeletedByUserID
 }
 
+func (s *SemanticSearchGraphRecord) GetRestoredAtTimestamp() optionalnullable.OptionalNullable[float64] {
+	if s == nil {
+		return nil
+	}
+	return s.RestoredAtTimestamp
+}
+
 func (s *SemanticSearchGraphRecord) GetProcessingStartedAt() optionalnullable.OptionalNullable[float64] {
 	if s == nil {
 		return nil
@@ -277,6 +311,13 @@ func (s *SemanticSearchGraphRecord) GetQueuedAtTimestamp() optionalnullable.Opti
 		return nil
 	}
 	return s.QueuedAtTimestamp
+}
+
+func (s *SemanticSearchGraphRecord) GetRetryNotBefore() optionalnullable.OptionalNullable[float64] {
+	if s == nil {
+		return nil
+	}
+	return s.RetryNotBefore
 }
 
 func (s *SemanticSearchGraphRecord) GetParsingStatus() optionalnullable.OptionalNullable[string] {
@@ -335,6 +376,34 @@ func (s *SemanticSearchGraphRecord) GetLastExtractionTimestamp() optionalnullabl
 	return s.LastExtractionTimestamp
 }
 
+func (s *SemanticSearchGraphRecord) GetEntityExtractionStatus() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.EntityExtractionStatus
+}
+
+func (s *SemanticSearchGraphRecord) GetLastEntityExtractionTimestamp() optionalnullable.OptionalNullable[float64] {
+	if s == nil {
+		return nil
+	}
+	return s.LastEntityExtractionTimestamp
+}
+
+func (s *SemanticSearchGraphRecord) GetEntityExtractionStrategy() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.EntityExtractionStrategy
+}
+
+func (s *SemanticSearchGraphRecord) GetEntityExtractorVersion() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.EntityExtractorVersion
+}
+
 func (s *SemanticSearchGraphRecord) GetSummaryDocumentID() optionalnullable.OptionalNullable[string] {
 	if s == nil {
 		return nil
@@ -354,6 +423,13 @@ func (s *SemanticSearchGraphRecord) GetVirtualRecordID() optionalnullable.Option
 		return nil
 	}
 	return s.VirtualRecordID
+}
+
+func (s *SemanticSearchGraphRecord) GetContentRev() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.ContentRev
 }
 
 func (s *SemanticSearchGraphRecord) GetPreviewRenderable() optionalnullable.OptionalNullable[bool] {
@@ -431,4 +507,53 @@ func (s *SemanticSearchGraphRecord) GetRowCount() optionalnullable.OptionalNulla
 		return nil
 	}
 	return s.RowCount
+}
+
+func (s *SemanticSearchGraphRecord) GetIsPlaceholder() *bool {
+	if s == nil {
+		return nil
+	}
+	return s.IsPlaceholder
+}
+
+func (s *SemanticSearchGraphRecord) GetLocation() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Location
+}
+
+func (s *SemanticSearchGraphRecord) GetStatusSummary() *string {
+	if s == nil {
+		return nil
+	}
+	return s.StatusSummary
+}
+
+func (s *SemanticSearchGraphRecord) GetLinkedRecords() []SemanticSearchLinkedRecord {
+	if s == nil {
+		return nil
+	}
+	return s.LinkedRecords
+}
+
+func (s *SemanticSearchGraphRecord) GetKey() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.Key
+}
+
+func (s *SemanticSearchGraphRecord) GetID() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.ID
+}
+
+func (s *SemanticSearchGraphRecord) GetRev() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.Rev
 }

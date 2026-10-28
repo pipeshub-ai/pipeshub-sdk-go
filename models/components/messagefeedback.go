@@ -181,22 +181,22 @@ func (c *CitationFeedback) GetComment() *string {
 	return c.Comment
 }
 
-// Source - Origin of the feedback. Always present in responses (server applies the default `user`).
-type Source string
+// MessageFeedbackSource - Origin of the feedback. Always present in responses (server applies the default `user`).
+type MessageFeedbackSource string
 
 const (
-	SourceUser   Source = "user"
-	SourceSystem Source = "system"
-	SourceAdmin  Source = "admin"
-	SourceAuto   Source = "auto"
+	MessageFeedbackSourceUser   MessageFeedbackSource = "user"
+	MessageFeedbackSourceSystem MessageFeedbackSource = "system"
+	MessageFeedbackSourceAdmin  MessageFeedbackSource = "admin"
+	MessageFeedbackSourceAuto   MessageFeedbackSource = "auto"
 )
 
-func (e Source) ToPointer() *Source {
+func (e MessageFeedbackSource) ToPointer() *MessageFeedbackSource {
 	return &e
 }
 
 // IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *Source) IsExact() bool {
+func (e *MessageFeedbackSource) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "user", "system", "admin", "auto":
@@ -339,7 +339,7 @@ type MessageFeedback struct {
 	// Follow-up questions that were suggested but not used by the user
 	UnusedFollowUpQuestions []string `json:"unusedFollowUpQuestions,omitzero"`
 	// Origin of the feedback. Always present in responses (server applies the default `user`).
-	Source *Source `default:"user" json:"source"`
+	Source *MessageFeedbackSource `default:"user" json:"source"`
 	// User who submitted the feedback
 	FeedbackProvider *string `json:"feedbackProvider,omitzero"`
 	// Time the feedback was created, stored as a Number (epoch milliseconds)
@@ -413,7 +413,7 @@ func (m *MessageFeedback) GetUnusedFollowUpQuestions() []string {
 	return m.UnusedFollowUpQuestions
 }
 
-func (m *MessageFeedback) GetSource() *Source {
+func (m *MessageFeedback) GetSource() *MessageFeedbackSource {
 	if m == nil {
 		return nil
 	}
