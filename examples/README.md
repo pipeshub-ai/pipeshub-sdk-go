@@ -139,6 +139,35 @@ So pass `nil`, never an empty-but-non-nil `Filters`, when you mean "no opinion".
 
 `Tools []string` is an allow-list of fully-qualified action names (`jira.create_issue`). Omit it to offer every configured tool; an empty non-nil slice offers none. `AgentCapabilities` toggles `InternalSearch` / `WebSearch` / `DeepSearch`, each treated as enabled when its field is absent. Both apply only under `chatMode: agent`.
 
+## Connectors
+
+`connectors/` has one program per connector operation, new in SDK 2.0.0. They sign in with
+**OAuth2 client credentials**: create an OAuth app with the `client_credentials` grant and the
+`connector:*` scopes, then set `PIPESHUB_CLIENT_ID` and `PIPESHUB_CLIENT_SECRET`. The SDK fetches the
+token from `PIPESHUB_TOKEN_URL`, or `${PIPESHUB_BASE_URL}/api/v1/oauth2/token` when that is unset.
+
+They import the 2.0.0 module, `github.com/pipeshub-ai/pipeshub-sdk-go/v2`; the other programs still use v1.7.0.
+
+```bash
+go run ./connectors/create_connector_instance .env
+go run ./connectors/list_connector_instances .env
+```
+
+`create_connector_instance` creates a team RSS connector and prints its id. Put it in
+`PIPESHUB_CONNECTOR_ID` for the programs that act on one connector, and delete it with
+`delete_connector_instance` when you are done.
+
+| Variable | Used by |
+| --- | --- |
+| `PIPESHUB_CONNECTOR_ID` | the programs that act on one connector instance |
+| `PIPESHUB_CONNECTOR_TYPE` | the registry, schema, connection check and OAuth configuration programs (`RSS`, `Jira`, ...) |
+| `PIPESHUB_FILTER_KEY` | `get_filter_field_options`: a filter of the connector's type whose options are fetched from the source |
+| `PIPESHUB_OAUTH_CONFIG_ID` | the get, update and delete OAuth configuration programs |
+| `PIPESHUB_OAUTH_CODE`, `PIPESHUB_OAUTH_STATE` | `handle_oauth_callback`: the `code` and `state` of the provider's redirect |
+
+- `get_oauth_authorization_url` needs a connector created with an OAuth auth type; an RSS connector is refused.
+- `test_connector_connection` works only for types with a connection check (PostgreSQL, SMB, OneDrive).
+
 ## Project layout
 
 ```
@@ -158,13 +187,14 @@ examples/
 │   ├── agui_trace/                     every frame, by category
 │   ├── knowledgebase/  connector/      Filters.Kb / Filters.Apps
 │   └── web_search/
+├── connectors/                         one program per connector operation (SDK v2)
 ├── semantic_search/{knowledgebase,connector}/
 └── st_examples/{chat,search}/
 ```
 
 ## Notes
 
-- `go.mod` requires the published SDK, `github.com/pipeshub-ai/pipeshub-sdk-go v1.7.0`. `go mod tidy` downloads it.
+- `go.mod` requires the published SDK, `github.com/pipeshub-ai/pipeshub-sdk-go v1.7.0`, and `github.com/pipeshub-ai/pipeshub-sdk-go/v2 v2.0.0` for `connectors/*`. `go mod tidy` downloads them.
 - Every `KB/*` program creates a fresh knowledge base named `Internal documents`, so it never touches your data. Repeated runs leave extra copies behind; delete them in the UI when you are done.
 - One `main()` per directory — that is what keeps `go build ./...` and `go vet ./...` working across the tree.
 - Troubleshooting: `401` means bad credentials; `500` on a conversation means no AI model provider is configured; an empty answer means nothing is indexed in the knowledge sources you scoped to.
