@@ -8,7 +8,7 @@ any other value is answered `400` ("Invalid sort_order: ...").
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.GetKnowledgeHubRootNodesSortOrderAsc

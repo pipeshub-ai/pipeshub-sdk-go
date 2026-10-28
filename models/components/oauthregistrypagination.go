@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 )
 
 // OAuthRegistryPagination - Pagination block of `GET /oauth/registry` and `GET /oauth/{connectorType}`

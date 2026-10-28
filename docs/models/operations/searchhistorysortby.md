@@ -8,7 +8,7 @@ Field used to sort results. Any value other than `createdAt`,
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.SearchHistorySortByCreatedAt

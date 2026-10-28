@@ -40,8 +40,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -133,8 +133,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -173,8 +173,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -247,9 +247,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -319,8 +319,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -391,9 +391,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -461,9 +461,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -528,9 +528,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -590,9 +590,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 

@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 )
 
 const (

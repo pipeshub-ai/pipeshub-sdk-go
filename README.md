@@ -69,7 +69,7 @@ On every `/api/v1` and `/mcp` endpoint, a query parameter whose name starts with
 
 To add the SDK as a dependency to your project:
 ```bash
-go get github.com/pipeshub-ai/pipeshub-sdk-go
+go get github.com/pipeshub-ai/pipeshub-sdk-go/v2
 ```
 <!-- End SDK Installation [installation] -->
 
@@ -83,8 +83,8 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 )
 
@@ -125,8 +125,8 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 	"os"
 )
@@ -161,8 +161,8 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 	"os"
 )
@@ -416,9 +416,9 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 	"os"
 )
@@ -471,9 +471,9 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/retry"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
 	"log"
 	"models/operations"
 )
@@ -512,9 +512,9 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/retry"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
 	"log"
 )
 
@@ -574,9 +574,9 @@ package main
 import (
 	"context"
 	"errors"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/apierrors"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/apierrors"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 )
 
@@ -650,8 +650,8 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 )
 
@@ -684,8 +684,8 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 )
 
@@ -728,7 +728,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 )
 
 var (

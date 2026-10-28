@@ -9,7 +9,7 @@ The raw value is echoed in `filters.applied.values.sortOrder`.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.SearchHistorySortOrderAsc

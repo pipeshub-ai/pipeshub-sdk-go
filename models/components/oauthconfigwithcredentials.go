@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 // OAuthConfigWithCredentials - An OAuth configuration as `GET /oauth/{connectorType}/{configId}` returns it. An admin

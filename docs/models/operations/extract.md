@@ -6,7 +6,7 @@ With `query`, in record mode and without `startBlock`: return only the passages 
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.ExtractTrue

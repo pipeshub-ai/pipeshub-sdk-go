@@ -17,7 +17,7 @@ reads as `microsoft`), with `password` added to the first step.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.AuthMethodTypeOtp

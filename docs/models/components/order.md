@@ -6,7 +6,7 @@ Budgeted record reads only. `relevance` when `query` chose which blocks to show;
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.OrderInOrder

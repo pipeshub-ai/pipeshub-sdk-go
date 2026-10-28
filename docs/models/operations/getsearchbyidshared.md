@@ -8,7 +8,7 @@ Return the search only if its `isShared` matches. `'true'` / `'1'` and `'false'`
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.GetSearchByIDSharedTrue

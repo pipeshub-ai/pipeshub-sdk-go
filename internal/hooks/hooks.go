@@ -5,7 +5,7 @@ package hooks
 import (
 	"context"
 	"errors"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/config"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/config"
 	"net/http"
 )
 

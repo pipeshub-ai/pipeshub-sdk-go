@@ -9,7 +9,7 @@ any other value is refused with `400`.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.GetConversationByIDSharedEnumTrue
