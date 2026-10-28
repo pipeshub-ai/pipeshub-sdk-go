@@ -5,8 +5,8 @@ package components
 import (
 	"encoding/json"
 	"errors"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 	"time"
 )
 
@@ -281,8 +281,10 @@ type SemanticSearchHitMetadata struct {
 	Origin          optionalnullable.OptionalNullable[string]        `json:"origin,omitzero"`
 	Connector       optionalnullable.OptionalNullable[string]        `json:"connector,omitzero"`
 	ConnectorID     optionalnullable.OptionalNullable[string]        `json:"connectorId,omitzero"`
-	ConnectorName   optionalnullable.OptionalNullable[string]        `json:"connectorName,omitzero"`
-	BlockText       optionalnullable.OptionalNullable[string]        `json:"blockText,omitzero"`
+	// The name the admin gave the connector instance; `connector` is only its type.
+	ConnectorInstanceName optionalnullable.OptionalNullable[string] `json:"connectorInstanceName,omitzero"`
+	ConnectorName         optionalnullable.OptionalNullable[string] `json:"connectorName,omitzero"`
+	BlockText             optionalnullable.OptionalNullable[string] `json:"blockText,omitzero"`
 	// Block type for this hit. Common values: `text`, `image`, `table_row`, `table`,
 	// `record_summary` (whole-record semantic summary chunk — no block index).
 	//
@@ -396,6 +398,13 @@ func (s *SemanticSearchHitMetadata) GetConnectorID() optionalnullable.OptionalNu
 		return nil
 	}
 	return s.ConnectorID
+}
+
+func (s *SemanticSearchHitMetadata) GetConnectorInstanceName() optionalnullable.OptionalNullable[string] {
+	if s == nil {
+		return nil
+	}
+	return s.ConnectorInstanceName
 }
 
 func (s *SemanticSearchHitMetadata) GetConnectorName() optionalnullable.OptionalNullable[string] {

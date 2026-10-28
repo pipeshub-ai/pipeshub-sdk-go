@@ -5,8 +5,8 @@ package operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 // ListAgentsSortOrder - Sort direction.
@@ -41,9 +41,17 @@ type ListAgentsRequest struct {
 	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
 	// Maximum number of agents to return in the current page.
 	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
-	// Case-insensitive search across agent name, description, and tags. Leading/trailing whitespace is trimmed; blank-after-trim values are rejected.
+	// Case-insensitive search across agent name, description, and tags.
+	// Leading/trailing whitespace is trimmed; a blank value is refused with
+	// `VALIDATION_ERROR`, and so is a printf-style format specifier (`%s`,
+	// `%x`, ...). Markup (HTML tags, `javascript:`, event handlers) is
+	// refused with `HTTP_BAD_REQUEST` by the sanitizer every route runs.
+	//
 	Search *string `queryParam:"style=form,explode=true,name=search"`
-	// Backend sort field. Leading/trailing whitespace is trimmed. Common value is `updatedAtTimestamp`.
+	// Backend sort field. Leading/trailing whitespace is trimmed and a blank
+	// value is refused. Any other value is accepted. Common value is
+	// `updatedAtTimestamp`.
+	//
 	SortBy *string `default:"updatedAtTimestamp" queryParam:"style=form,explode=true,name=sort_by"`
 	// Sort direction.
 	SortOrder *ListAgentsSortOrder `default:"desc" queryParam:"style=form,explode=true,name=sort_order"`

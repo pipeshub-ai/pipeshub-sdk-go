@@ -1,12 +1,14 @@
 # GetConversationByIDQueryParamMessageType
 
-Filter messages by type
+Checked against the listed values (`400` otherwise) but not
+applied: every message type is returned.
+
 
 ## Example Usage
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.GetConversationByIDQueryParamMessageTypeUserQuery
@@ -22,3 +24,4 @@ value := operations.GetConversationByIDQueryParamMessageTypeUserQuery
 | `GetConversationByIDQueryParamMessageTypeError`       | error                                                 |
 | `GetConversationByIDQueryParamMessageTypeFeedback`    | feedback                                              |
 | `GetConversationByIDQueryParamMessageTypeSystem`      | system                                                |
+| `GetConversationByIDQueryParamMessageTypeToolCall`    | tool_call                                             |

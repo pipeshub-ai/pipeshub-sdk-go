@@ -11,12 +11,21 @@ type OAuthTokenResponse struct {
 	TokenType *string `json:"token_type,omitzero"`
 	// Access token lifetime in seconds
 	ExpiresIn *int64 `json:"expires_in,omitzero"`
-	// Refresh token for obtaining new access tokens
+	// Refresh token for obtaining new access tokens. Issued only when the token acts as a user
+	// (`authorization_code`, `refresh_token` and `device_code` grants) and the granted scopes
+	// include `offline_access`; never for `client_credentials`.
+	//
 	RefreshToken *string `json:"refresh_token,omitzero"`
-	// Granted scopes (may differ from requested)
+	// Granted scopes, space-separated (may differ from requested). Empty for a
+	// `client_credentials` token whose app holds only user-bound scopes (`openid`, `profile`,
+	// `email`, `offline_access`), which are dropped from that grant.
+	//
 	Scope *string `json:"scope,omitzero"`
-	// OpenID Connect ID token (JWT) if openid scope was requested
-	IDToken *string `json:"id_token,omitzero"`
+	// The type of the issued token (RFC 8693 Section 2.2.1). Returned by
+	// the token-exchange grant, where it is always
+	// `urn:ietf:params:oauth:token-type:access_token`.
+	//
+	IssuedTokenType *string `json:"issued_token_type,omitzero"`
 }
 
 func (o *OAuthTokenResponse) GetAccessToken() *string {
@@ -54,9 +63,9 @@ func (o *OAuthTokenResponse) GetScope() *string {
 	return o.Scope
 }
 
-func (o *OAuthTokenResponse) GetIDToken() *string {
+func (o *OAuthTokenResponse) GetIssuedTokenType() *string {
 	if o == nil {
 		return nil
 	}
-	return o.IDToken
+	return o.IssuedTokenType
 }

@@ -21,10 +21,26 @@ PipesHub is an enterprise-grade platform providing:
 ## Authentication
 Most endpoints require JWT Bearer token authentication. Some internal endpoints use scoped tokens for service-to-service communication.
 
-**OAuth 2.0 Bearer tokens** from `POST /oauth2/token` use the same `Authorization: Bearer` header. For **`client_credentials`**, machine tokens may encode `userId === client_id` in the JWT; the **Node API gateway** resolves the OAuth **app creator** and sets the authenticated user accordingly. See the **OAuth Provider** tag for full behavior.
+**OAuth 2.0 Bearer tokens** from `POST /oauth2/token` use the same `Authorization: Bearer` header. For **`client_credentials`**, machine tokens may encode `userId === client_id` in the JWT; the **Node API gateway** resolves the application's **token identity** — the service account it is pointed at (`tokenIdentityUserId`), or its creator for an application registered before that was required and never bound, and sets the authenticated user accordingly. It reads the application record on every request, and a token minted for a different identity than the app's current one is refused with `401`. See the **OAuth Provider** tag for full behavior.
+
+## Behaviour common to every route
+App-level middleware runs before any router, so the following applies to every operation below, before authentication, unless an exception is named.
+
+**Markup filter.** A query value, or any string in a JSON or form-encoded body, that looks like markup is refused with `400 HTTP_BAD_REQUEST`. The message names where the value was, for example `HTML tags, scripts, and XSS content are not allowed in the field "name".` or `... in the query parameter "search".` (a field name that is not a plain identifier path reads `the request`), and says what counted: text in angle brackets such as `<id>` counts as an HTML tag, an encoded script tag counts, or script content such as `onclick=`, `javascript:` or `data:text/html` counts. A string over 100,000 characters is refused as too long to check instead: `The value of the field "name" is longer than 100,000 characters, which is too long to check for HTML tags and scripts. Please shorten it and try again.` It looks for an HTML tag, a script tag, `<iframe`, `<object`, `<embed` or `<svg` tag, a word starting with `on` followed by `=` (meant for inline event handlers such as `onerror=`, it also catches plain text such as `one=1`), a `javascript:` or `data:text/html` URL, an encoded script tag (`&lt;script`, `%3cscript`), and any string longer than 100,000 characters. A string the filter lets through is rewritten before the route sees it: the filter trims surrounding whitespace, drops a lone `<` together with everything after it (`a < b` arrives as `a`), and escapes `>` as `&gt;`. POST and PUT under `/agents/`, `/conversations/`, `/connectors` and `/api-toolsets`, and POST, PUT and PATCH under `/skills`, skip the filter. So does the question of a search: the `query` string of a JSON body sent to `POST /search` or `POST /retrieve` is neither checked nor rewritten, unless it is longer than 100,000 characters.
+
+**Body parsers.** `application/json` bodies (up to 10 MB, 5 MB on `/mcp`) and `application/x-www-form-urlencoded` bodies (up to 100 KB and 1000 fields) are parsed for every method. A JSON body that does not parse, or a body shorter or longer than its `Content-Length`, is answered `400 HTTP_BAD_REQUEST` (`The request body is not valid JSON.`, `The request body does not match its Content-Length.`), a body past these limits `413 HTTP_PAYLOAD_TOO_LARGE`, and an unsupported content encoding or character set `415 HTTP_UNSUPPORTED_MEDIA_TYPE`; a JSON body over 5 MB on `/mcp` gets its `413` as a JSON-RPC error (see `POST /mcp`). Form values arrive as text and the request validators do not convert them, so a number, a boolean or a free-form object sent form-encoded is refused (`400 VALIDATION_ERROR`) or read as a string. A list sent form-encoded is read as a list only when its key repeats, so a single value or an empty list cannot be sent. The form media type is therefore listed only on operations whose body is a flat object of text fields: every value a string (string enums included), with no lists or nested objects.
+
+**Request size.** On every route with a request validator, the body, query and path values are measured before the schema runs. An array over 10,000 items (`<path> can have at most 10000 items.`), an object over 10,000 keys (`<path> can have at most 10000 fields.`), more than 100,000 array items and object keys in the whole request (`The request holds too many items in total (the limit is 100000); the limit is reached at <path>.`) or nesting deeper than 64 levels (`<path> is nested more than 64 levels deep.`) is refused with `400 VALIDATION_ERROR` (detail code `TOO_BIG`, or `TOO_DEEP` for nesting; the path reads like `body.items`). The deployment can change the first three limits with `VALIDATION_MAX_ARRAY_LENGTH`, `VALIDATION_MAX_OBJECT_KEYS` and `VALIDATION_MAX_TOTAL_ITEMS`.
+
+**OAuth scopes.** On an operation whose `security` names `oauth2` scopes, an OAuth access token holding none of them gets `403 HTTP_FORBIDDEN` ("Insufficient scope. Required: ...") right after authentication. Session tokens are never scope-checked.
+
+**No such route.** A method and path that no route handles get Express's own `404` page, `text/html`, reading `Cannot <METHOD> <path>`. Such pairs are not listed as operations.
 
 ## Base URLs
 All endpoints use the `/api/v1` prefix unless otherwise noted.
+
+## Query parameter names
+On every `/api/v1` and `/mcp` endpoint, a query parameter whose name starts with `$` or contains `.` (including a nested name such as `filter[$ne]` or `a.b`) is refused with `400` and error code `VALIDATION_ERROR`. Only names are checked: values may contain dots, such as file names.
 <!-- End Summary [summary] -->
 
 <!-- Start Table of Contents [toc] -->
@@ -32,7 +48,9 @@ All endpoints use the `/api/v1` prefix unless otherwise noted.
 <!-- $toc-max-depth=2 -->
 * [pipeshub-sdk-go](#pipeshub-sdk-go)
   * [Authentication](#authentication)
+  * [Behaviour common to every route](#behaviour-common-to-every-route)
   * [Base URLs](#base-urls)
+  * [Query parameter names](#query-parameter-names)
   * [SDK Installation](#sdk-installation)
   * [SDK Example Usage](#sdk-example-usage)
   * [Authentication](#authentication-1)
@@ -42,6 +60,7 @@ All endpoints use the `/api/v1` prefix unless otherwise noted.
   * [Error Handling](#error-handling)
   * [Server Selection](#server-selection)
   * [Custom HTTP Client](#custom-http-client)
+  * [Special Types](#special-types)
 
 <!-- End Table of Contents [toc] -->
 
@@ -50,7 +69,7 @@ All endpoints use the `/api/v1` prefix unless otherwise noted.
 
 To add the SDK as a dependency to your project:
 ```bash
-go get github.com/pipeshub-ai/pipeshub-sdk-go
+go get github.com/pipeshub-ai/pipeshub-sdk-go/v2
 ```
 <!-- End SDK Installation [installation] -->
 
@@ -64,8 +83,8 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 )
 
@@ -106,8 +125,8 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 	"os"
 )
@@ -142,8 +161,8 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 	"os"
 )
@@ -187,14 +206,13 @@ func main() {
 * [StreamAgentConversation](docs/sdks/agents/README.md#streamagentconversation) - Create agent conversation with streaming response
 * [StreamAgentConversationMessage](docs/sdks/agents/README.md#streamagentconversationmessage) - Add message to agent conversation with streaming response
 * [RegenerateAgentConversationMessage](docs/sdks/agents/README.md#regenerateagentconversationmessage) - Regenerate agent conversation message
+* [ForkAgentConversation](docs/sdks/agents/README.md#forkagentconversation) - Fork agent conversation from a message
 * [CancelAgentConversationStream](docs/sdks/agents/README.md#cancelagentconversationstream) - Cancel an in-flight agent chat stream
 * [UpdateAgentConversationMessageFeedback](docs/sdks/agents/README.md#updateagentconversationmessagefeedback) - Submit feedback for an agent message
 * [AddAgentConversationMessage](docs/sdks/agents/README.md#addagentconversationmessage) - Add message to agent conversation (non-streaming)
 * [ArchiveAgentConversation](docs/sdks/agents/README.md#archiveagentconversation) - Archive an agent conversation
 * [UnarchiveAgentConversation](docs/sdks/agents/README.md#unarchiveagentconversation) - Unarchive an agent conversation
 * [UpdateAgentConversationTitle](docs/sdks/agents/README.md#updateagentconversationtitle) - Update agent conversation title
-* [SetAgentConversationProject](docs/sdks/agents/README.md#setagentconversationproject) - Link or unlink an agent conversation to a project
-* [SetAgentConversationProjectVisibility](docs/sdks/agents/README.md#setagentconversationprojectvisibility) - Override an agent conversation's project visibility
 * [DeleteAgentConversationByID](docs/sdks/agents/README.md#deleteagentconversationbyid) - Delete an agent conversation
 * [GetAgentConversationByID](docs/sdks/agents/README.md#getagentconversationbyid) - Get agent conversation by ID
 * [ListAgentConversations](docs/sdks/agents/README.md#listagentconversations) - List agent conversations
@@ -210,6 +228,45 @@ func main() {
 * [NavigateKnowledgeGraph](docs/sdks/connector/README.md#navigateknowledgegraph) - Browse the knowledge graph from a node
 * [LookupRecordByIdentifier](docs/sdks/connector/README.md#lookuprecordbyidentifier) - Resolve a URL, issue key or external ID to a Record ID
 
+### [ConnectorConfiguration](docs/sdks/connectorconfiguration/README.md)
+
+* [GetConnectorConfig](docs/sdks/connectorconfiguration/README.md#getconnectorconfig) - Get connector configuration
+* [UpdateConnectorConfig](docs/sdks/connectorconfiguration/README.md#updateconnectorconfig) - Update connector configuration
+* [UpdateConnectorAuthConfig](docs/sdks/connectorconfiguration/README.md#updateconnectorauthconfig) - Update authentication configuration
+* [UpdateConnectorFiltersSyncConfig](docs/sdks/connectorconfiguration/README.md#updateconnectorfilterssyncconfig) - Update filters and sync configuration
+
+### [ConnectorControl](docs/sdks/connectorcontrol/README.md)
+
+* [ToggleConnector](docs/sdks/connectorcontrol/README.md#toggleconnector) - Toggle connector sync or agent
+
+### [ConnectorFilters](docs/sdks/connectorfilters/README.md)
+
+* [GetConnectorFilters](docs/sdks/connectorfilters/README.md#getconnectorfilters) - Get filter options
+* [~~SaveConnectorFilters~~](docs/sdks/connectorfilters/README.md#saveconnectorfilters) - Save filter selections (deprecated) :warning: **Deprecated**
+* [GetFilterFieldOptions](docs/sdks/connectorfilters/README.md#getfilterfieldoptions) - Get dynamic filter options
+
+### [ConnectorInstances](docs/sdks/connectorinstances/README.md)
+
+* [ListConnectorInstances](docs/sdks/connectorinstances/README.md#listconnectorinstances) - List connector instances
+* [CreateConnectorInstance](docs/sdks/connectorinstances/README.md#createconnectorinstance) - Create connector instance
+* [GetConnectorInstance](docs/sdks/connectorinstances/README.md#getconnectorinstance) - Get connector instance
+* [DeleteConnectorInstance](docs/sdks/connectorinstances/README.md#deleteconnectorinstance) - Delete connector instance
+* [GetConnectorStats](docs/sdks/connectorinstances/README.md#getconnectorstats) - Get connector statistics
+* [ResyncConnector](docs/sdks/connectorinstances/README.md#resyncconnector) - Resync connector
+* [StopConnectorSync](docs/sdks/connectorinstances/README.md#stopconnectorsync) - Stop the running sync for a connector
+
+### [ConnectorOAuth](docs/sdks/connectoroauth/README.md)
+
+* [GetOAuthAuthorizationURL](docs/sdks/connectoroauth/README.md#getoauthauthorizationurl) - Get OAuth authorization URL
+* [HandleOAuthCallback](docs/sdks/connectoroauth/README.md#handleoauthcallback) - OAuth callback handler
+
+### [ConnectorRegistry](docs/sdks/connectorregistry/README.md)
+
+* [GetConnectorRegistry](docs/sdks/connectorregistry/README.md#getconnectorregistry) - List available connector types
+* [GetConnectorSchema](docs/sdks/connectorregistry/README.md#getconnectorschema) - Get connector configuration schema
+* [TestConnectorConnection](docs/sdks/connectorregistry/README.md#testconnectorconnection) - Test connector credentials before saving
+* [GetConnectorEgressIps](docs/sdks/connectorregistry/README.md#getconnectoregressips) - Get the IP addresses connectors connect from
+
 ### [Conversations](docs/sdks/conversations/README.md)
 
 * [CreateConversation](docs/sdks/conversations/README.md#createconversation) - Create conversation (non-streaming)
@@ -224,12 +281,12 @@ func main() {
 * [UpdateConversationTitle](docs/sdks/conversations/README.md#updateconversationtitle) - Update conversation title
 * [ArchiveConversation](docs/sdks/conversations/README.md#archiveconversation) - Archive conversation
 * [UnarchiveConversation](docs/sdks/conversations/README.md#unarchiveconversation) - Unarchive conversation
+* [PinConversation](docs/sdks/conversations/README.md#pinconversation) - Pin conversation
+* [UnpinConversation](docs/sdks/conversations/README.md#unpinconversation) - Unpin conversation
 * [RegenerateAnswer](docs/sdks/conversations/README.md#regenerateanswer) - Regenerate AI response
+* [ForkConversation](docs/sdks/conversations/README.md#forkconversation) - Fork conversation from a message
 * [CancelConversationStream](docs/sdks/conversations/README.md#cancelconversationstream) - Cancel an in-flight chat stream
 * [UpdateMessageFeedback](docs/sdks/conversations/README.md#updatemessagefeedback) - Submit feedback on AI response
-* [SetConversationProject](docs/sdks/conversations/README.md#setconversationproject) - Link or unlink a conversation to a project
-* [SetConversationProjectVisibility](docs/sdks/conversations/README.md#setconversationprojectvisibility) - Override a conversation's project visibility
-* [GetProjectConversations](docs/sdks/conversations/README.md#getprojectconversations) - List a project's conversations
 
 ### [KnowledgeBase](docs/sdks/knowledgebase/README.md)
 
@@ -239,10 +296,16 @@ func main() {
 * [UpdateKnowledgeBase](docs/sdks/knowledgebase/README.md#updateknowledgebase) - Update knowledge base
 * [DeleteKnowledgeBase](docs/sdks/knowledgebase/README.md#deleteknowledgebase) - Delete knowledge base
 * [GetRecordByID](docs/sdks/knowledgebase/README.md#getrecordbyid) - Get record by ID
+* [UpdateRecordMultipart](docs/sdks/knowledgebase/README.md#updaterecordmultipart) - Update record
 * [UpdateRecord](docs/sdks/knowledgebase/README.md#updaterecord) - Update record
+* [UpdateRecordForm](docs/sdks/knowledgebase/README.md#updaterecordform) - Update record
 * [DeleteRecord](docs/sdks/knowledgebase/README.md#deleterecord) - Delete record
+* [RestoreRecord](docs/sdks/knowledgebase/README.md#restorerecord) - Restore a deleted record
+* [RestoreRecords](docs/sdks/knowledgebase/README.md#restorerecords) - Restore several deleted records
+* [ListTrash](docs/sdks/knowledgebase/README.md#listtrash) - List a collection's recently deleted items
 * [StreamRecordBuffer](docs/sdks/knowledgebase/README.md#streamrecordbuffer) - Stream record content
 * [CreateFolder](docs/sdks/knowledgebase/README.md#createfolder) - Create folder
+* [CreateSubfolder](docs/sdks/knowledgebase/README.md#createsubfolder) - Create subfolder
 * [UpdateFolder](docs/sdks/knowledgebase/README.md#updatefolder) - Update folder
 * [DeleteFolder](docs/sdks/knowledgebase/README.md#deletefolder) - Delete folder
 * [UploadRecords](docs/sdks/knowledgebase/README.md#uploadrecords) - Upload files to knowledge base or folder
@@ -271,6 +334,17 @@ func main() {
 * [ActivateOAuthApp](docs/sdks/oauthapps/README.md#activateoauthapp) - Activate suspended OAuth app
 * [ListOAuthAppTokens](docs/sdks/oauthapps/README.md#listoauthapptokens) - List app tokens
 * [RevokeAllOAuthAppTokens](docs/sdks/oauthapps/README.md#revokealloauthapptokens) - Revoke all app tokens
+
+### [OAuthConfiguration](docs/sdks/oauthconfiguration/README.md)
+
+* [GetOAuthRegistry](docs/sdks/oauthconfiguration/README.md#getoauthregistry) - List OAuth-capable connector types
+* [GetOAuthConnectorType](docs/sdks/oauthconfiguration/README.md#getoauthconnectortype) - Get OAuth connector type details
+* [ListOAuthConfigs](docs/sdks/oauthconfiguration/README.md#listoauthconfigs) - List OAuth configurations
+* [ListOAuthConfigsByType](docs/sdks/oauthconfiguration/README.md#listoauthconfigsbytype) - List OAuth configs for connector type
+* [CreateOAuthConfig](docs/sdks/oauthconfiguration/README.md#createoauthconfig) - Create OAuth configuration
+* [GetOAuthConfig](docs/sdks/oauthconfiguration/README.md#getoauthconfig) - Get OAuth configuration
+* [UpdateOAuthConfig](docs/sdks/oauthconfiguration/README.md#updateoauthconfig) - Update OAuth configuration
+* [DeleteOAuthConfig](docs/sdks/oauthconfiguration/README.md#deleteoauthconfig) - Delete OAuth configuration
 
 ### [OAuthProvider](docs/sdks/oauthprovider/README.md)
 
@@ -301,29 +375,9 @@ func main() {
 * [AdminListPersonalAccessTokens](docs/sdks/personalaccesstokens/README.md#adminlistpersonalaccesstokens) - Admin: list every active personal access token in the org
 * [AdminRevokePersonalAccessToken](docs/sdks/personalaccesstokens/README.md#adminrevokepersonalaccesstoken) - Admin: revoke any user's personal access token by id
 
-### [Projects](docs/sdks/projects/README.md)
-
-* [SetConversationProject](docs/sdks/projects/README.md#setconversationproject) - Link or unlink a conversation to a project
-* [SetConversationProjectVisibility](docs/sdks/projects/README.md#setconversationprojectvisibility) - Override a conversation's project visibility
-* [CreateProject](docs/sdks/projects/README.md#createproject) - Create a project
-* [ListProjects](docs/sdks/projects/README.md#listprojects) - List projects
-* [GetProjectByID](docs/sdks/projects/README.md#getprojectbyid) - Get a project
-* [UpdateProject](docs/sdks/projects/README.md#updateproject) - Update a project
-* [DeleteProject](docs/sdks/projects/README.md#deleteproject) - Delete a project
-* [ArchiveProject](docs/sdks/projects/README.md#archiveproject) - Archive a project
-* [UnarchiveProject](docs/sdks/projects/README.md#unarchiveproject) - Unarchive a project
-* [PinProject](docs/sdks/projects/README.md#pinproject) - Pin a project
-* [UnpinProject](docs/sdks/projects/README.md#unpinproject) - Unpin a project
-* [GetProjectConversations](docs/sdks/projects/README.md#getprojectconversations) - List a project's conversations
-* [EnsureProjectKnowledgeBase](docs/sdks/projects/README.md#ensureprojectknowledgebase) - Ensure (create-if-absent) the project's hidden file Collection
-* [ListProjectMembers](docs/sdks/projects/README.md#listprojectmembers) - List project members
-* [UpsertProjectMembers](docs/sdks/projects/README.md#upsertprojectmembers) - Add or update project members
-* [RemoveProjectMember](docs/sdks/projects/README.md#removeprojectmember) - Remove a project member
-* [SetAgentConversationProject](docs/sdks/projects/README.md#setagentconversationproject) - Link or unlink an agent conversation to a project
-* [SetAgentConversationProjectVisibility](docs/sdks/projects/README.md#setagentconversationprojectvisibility) - Override an agent conversation's project visibility
-
 ### [SemanticSearch](docs/sdks/semanticsearch/README.md)
 
+* [Retrieve](docs/sdks/semanticsearch/README.md#retrieve) - Retrieve chunks with citations
 * [Search](docs/sdks/semanticsearch/README.md#search) - Perform semantic search
 * [SearchHistory](docs/sdks/semanticsearch/README.md#searchhistory) - Get search history
 * [DeleteSearchHistory](docs/sdks/semanticsearch/README.md#deletesearchhistory) - Clear all search history
@@ -337,6 +391,8 @@ func main() {
 * [InitAuth](docs/sdks/useraccount/README.md#initauth) - Initialize authentication session
 * [Authenticate](docs/sdks/useraccount/README.md#authenticate) - Authenticate user with credentials
 * [RefreshToken](docs/sdks/useraccount/README.md#refreshtoken) - Refresh access token
+* [GetPasswordStatus](docs/sdks/useraccount/README.md#getpasswordstatus) - Get password status
+* [SendPasswordSetupEmail](docs/sdks/useraccount/README.md#sendpasswordsetupemail) - Email a link to set a first password
 * [ResetPassword](docs/sdks/useraccount/README.md#resetpassword) - Reset password
 
 ### [WebSearch](docs/sdks/websearch/README.md)
@@ -360,9 +416,9 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 	"os"
 )
@@ -377,8 +433,13 @@ func main() {
 	)
 
 	res, err := s.KnowledgeBase.UploadRecords(ctx, "<id>", operations.UploadRecordsRequestBody{
-		Files:         []operations.UploadRecordsFile{},
-		FilesMetadata: pipeshub.Pointer("[{\"file_path\":\"/docs/report.pdf\",\"last_modified\":\"2024-01-15T10:30:00Z\"}]"),
+		Files: []operations.UploadRecordsFile{},
+		FilesMetadata: []operations.FilesMetadatum{
+			operations.FilesMetadatum{
+				FilePath:     "/docs/report.pdf",
+				LastModified: 2024.0,
+			},
+		},
 	}, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -410,9 +471,9 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/retry"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
 	"log"
 	"models/operations"
 )
@@ -451,9 +512,9 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/retry"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
 	"log"
 )
 
@@ -499,9 +560,10 @@ For example, the `OauthToken` function may return the following errors:
 
 | Error Type                                    | Status Code | Content Type     |
 | --------------------------------------------- | ----------- | ---------------- |
-| apierrors.ErrorResponse                       | 400         | application/json |
+| apierrors.BadRequest                          | 400         | application/json |
 | apierrors.OAuthErrorResponse                  | 401         | application/json |
 | apierrors.OAuthClientManagementRateLimitError | 429         | application/json |
+| apierrors.ErrorResponse                       | 500         | application/json |
 | apierrors.APIError                            | 4XX, 5XX    | \*/\*            |
 
 ### Example
@@ -512,9 +574,9 @@ package main
 import (
 	"context"
 	"errors"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/apierrors"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/apierrors"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 )
 
@@ -528,7 +590,7 @@ func main() {
 	})
 	if err != nil {
 
-		var e *apierrors.ErrorResponse
+		var e *apierrors.BadRequest
 		if errors.As(err, &e) {
 			// handle error
 			log.Fatal(e.Error())
@@ -541,6 +603,12 @@ func main() {
 		}
 
 		var e *apierrors.OAuthClientManagementRateLimitError
+		if errors.As(err, &e) {
+			// handle error
+			log.Fatal(e.Error())
+		}
+
+		var e *apierrors.ErrorResponse
 		if errors.As(err, &e) {
 			// handle error
 			log.Fatal(e.Error())
@@ -582,8 +650,8 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 )
 
@@ -616,8 +684,8 @@ package main
 
 import (
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 )
 
@@ -660,7 +728,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 )
 
 var (
@@ -671,5 +739,31 @@ var (
 
 This can be a convenient way to configure timeouts, cookies, proxies, custom headers, and other low-level configuration.
 <!-- End Custom HTTP Client [http-client] -->
+
+<!-- Start Special Types [types] -->
+## Special Types
+
+This SDK defines the following custom types to assist with marshalling and unmarshalling data.
+
+### Date
+
+`types.Date` is a wrapper around time.Time that allows for JSON marshaling a date string formatted as "2006-01-02".
+
+#### Usage
+
+```go
+d1 := types.NewDate(time.Now()) // returns *types.Date
+
+d2 := types.DateFromTime(time.Now()) // returns types.Date
+
+d3, err := types.NewDateFromString("2019-01-01") // returns *types.Date, error
+
+d4, err := types.DateFromString("2019-01-01") // returns types.Date, error
+
+d5 := types.MustNewDateFromString("2019-01-01") // returns *types.Date and panics on error
+
+d6 := types.MustDateFromString("2019-01-01") // returns types.Date and panics on error
+```
+<!-- End Special Types [types] -->
 
 <!-- Placeholder for Future Speakeasy SDK Sections -->

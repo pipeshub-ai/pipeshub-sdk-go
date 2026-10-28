@@ -3,8 +3,10 @@
 package components
 
 type ConversationTitleUpdateRequest struct {
-	// New title for the conversation
-	Title string `json:"title"`
+	// New title for the conversation. Surrounding whitespace is trimmed; a
+	// blank title is refused.
+	//
+	Title string `json:"title" form:"name=title"`
 }
 
 func (c *ConversationTitleUpdateRequest) GetTitle() string {

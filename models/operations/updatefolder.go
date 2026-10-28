@@ -3,12 +3,16 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 // UpdateFolderRequestBody - Request payload
 type UpdateFolderRequestBody struct {
+	// New name of the folder. Whitespace around it is removed first, so a name
+	// made only of whitespace is refused as empty.
+	// It cannot contain `/` or `\`, which folder paths use as separators.
+	//
 	FolderName string `json:"folderName"`
 }
 

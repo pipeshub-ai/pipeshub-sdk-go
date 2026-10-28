@@ -3,8 +3,8 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types/stream"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types/stream"
 )
 
 type RegenerateAgentConversationMessageRequest struct {
@@ -61,6 +61,9 @@ type RegenerateAgentConversationMessageResponse struct {
 	// `threadId`, and `parentRunId`. Additional backend-defined
 	// agent/tool events may be emitted.
 	// Clients should ignore unknown event names.
+	//
+	// Two refusals about `answers` arrive the same way: `Answers can only replace the answers to a
+	// question card.` and `An edit cannot also replace the answers to a question card.`
 	//
 	AgentRegenerateSSEEvent *stream.EventStream[components.AgentRegenerateSSEEvent]
 }

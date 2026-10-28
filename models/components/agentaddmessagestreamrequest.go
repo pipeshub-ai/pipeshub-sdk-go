@@ -5,7 +5,7 @@ package components
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 	"time"
 )
 
@@ -63,6 +63,70 @@ func (e *AgentAddMessageStreamRequestProtocol) UnmarshalJSON(data []byte) error 
 	}
 }
 
+// AgentAddMessageStreamRequestKeywordSearchBudget - How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+type AgentAddMessageStreamRequestKeywordSearchBudget string
+
+const (
+	AgentAddMessageStreamRequestKeywordSearchBudgetShort AgentAddMessageStreamRequestKeywordSearchBudget = "short"
+	AgentAddMessageStreamRequestKeywordSearchBudgetFull  AgentAddMessageStreamRequestKeywordSearchBudget = "full"
+)
+
+func (e AgentAddMessageStreamRequestKeywordSearchBudget) ToPointer() *AgentAddMessageStreamRequestKeywordSearchBudget {
+	return &e
+}
+func (e *AgentAddMessageStreamRequestKeywordSearchBudget) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "short":
+		fallthrough
+	case "full":
+		*e = AgentAddMessageStreamRequestKeywordSearchBudget(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AgentAddMessageStreamRequestKeywordSearchBudget: %v", v)
+	}
+}
+
+// AgentAddMessageStreamRequestReasoningEffort - Reasoning effort for this turn, for models that support it. Stored on
+// the conversation's model info and forwarded to the AI backend.
+type AgentAddMessageStreamRequestReasoningEffort string
+
+const (
+	AgentAddMessageStreamRequestReasoningEffortNone   AgentAddMessageStreamRequestReasoningEffort = "none"
+	AgentAddMessageStreamRequestReasoningEffortLow    AgentAddMessageStreamRequestReasoningEffort = "low"
+	AgentAddMessageStreamRequestReasoningEffortMedium AgentAddMessageStreamRequestReasoningEffort = "medium"
+	AgentAddMessageStreamRequestReasoningEffortHigh   AgentAddMessageStreamRequestReasoningEffort = "high"
+	AgentAddMessageStreamRequestReasoningEffortMax    AgentAddMessageStreamRequestReasoningEffort = "max"
+)
+
+func (e AgentAddMessageStreamRequestReasoningEffort) ToPointer() *AgentAddMessageStreamRequestReasoningEffort {
+	return &e
+}
+func (e *AgentAddMessageStreamRequestReasoningEffort) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "none":
+		fallthrough
+	case "low":
+		fallthrough
+	case "medium":
+		fallthrough
+	case "high":
+		fallthrough
+	case "max":
+		*e = AgentAddMessageStreamRequestReasoningEffort(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AgentAddMessageStreamRequestReasoningEffort: %v", v)
+	}
+}
+
 // AgentAddMessageStreamRequest - Request body for `POST /agents/{agentKey}/conversations/{conversationId}/messages/stream`.
 // `query` and `chatMode: quick` are required; all other fields are
 // optional overrides. Unknown fields are stripped during validation.
@@ -91,7 +155,8 @@ type AgentAddMessageStreamRequest struct {
 	//
 	ChatMode AgentAddMessageStreamRequestChatMode `json:"chatMode"`
 	// AI model configuration id override for this turn. Omit to use the
-	// agent's default model.
+	// agent's default model. A key that names no configured model is not
+	// refused: the turn runs on the organization's default model.
 	//
 	ModelKey *string `json:"modelKey,omitzero"`
 	// Provider model name (the underlying LLM identifier).
@@ -108,7 +173,8 @@ type AgentAddMessageStreamRequest struct {
 	CurrentTime *time.Time `json:"currentTime,omitzero"`
 	// Allowed tool ids for this turn, such as `jira.create_issue`. Omit
 	// to let the agent use its default toolset; send `[]` to disable
-	// tools for this turn.
+	// tools for this turn. A list that leaves out `web_search` turns off
+	// the agent's web search for the turn.
 	//
 	Tools []string `json:"tools,omitzero"`
 	// AG-UI is the only supported wire protocol. When present must be
@@ -124,11 +190,28 @@ type AgentAddMessageStreamRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Opt in to measurement frames on this stream: CUSTOM `retrieval_context` events naming the records and blocks that reached the model, and one CUSTOM `run_usage` event carrying the run's token totals and loop outcome. Identifiers only, never block text. Does not change the answer.
+	IncludeRetrievalContext *bool `default:"false" json:"includeRetrievalContext"`
+	// How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+	KeywordSearchBudget *AgentAddMessageStreamRequestKeywordSearchBudget `json:"keywordSearchBudget,omitzero"`
+	// The person's answer to a tool approval card. The web app sends it with the query
+	// `Tool approval: allow` or `Tool approval: deny`, and the request carries on the turn that
+	// stopped on the card: the saved call runs (when allowed) and its result answers the call
+	// the model made, in the same reply. The call is the one saved server-side when the card was
+	// shown (answerable for 15 minutes, settled once, bound to the asking user and
+	// conversation); only its id and the answer travel here. A reply that answered a card
+	// can't be regenerated.
+	//
+	ToolApproval *ToolApprovalAnswer `json:"toolApproval,omitzero"`
 	// Client-generated identifier for this run. Send it here to enable
 	// `POST /agents/{agentKey}/conversations/{conversationId}/cancel
 	// {runId}` while the stream is still generating.
 	//
 	RunID *string `json:"runId,omitzero"`
+	// Reasoning effort for this turn, for models that support it. Stored on
+	// the conversation's model info and forwarded to the AI backend.
+	//
+	ReasoningEffort *AgentAddMessageStreamRequestReasoningEffort `json:"reasoningEffort,omitzero"`
 }
 
 func (a AgentAddMessageStreamRequest) MarshalJSON() ([]byte, error) {
@@ -233,9 +316,37 @@ func (a *AgentAddMessageStreamRequest) GetAgentCapabilities() *AgentCapabilities
 	return a.AgentCapabilities
 }
 
+func (a *AgentAddMessageStreamRequest) GetIncludeRetrievalContext() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.IncludeRetrievalContext
+}
+
+func (a *AgentAddMessageStreamRequest) GetKeywordSearchBudget() *AgentAddMessageStreamRequestKeywordSearchBudget {
+	if a == nil {
+		return nil
+	}
+	return a.KeywordSearchBudget
+}
+
+func (a *AgentAddMessageStreamRequest) GetToolApproval() *ToolApprovalAnswer {
+	if a == nil {
+		return nil
+	}
+	return a.ToolApproval
+}
+
 func (a *AgentAddMessageStreamRequest) GetRunID() *string {
 	if a == nil {
 		return nil
 	}
 	return a.RunID
+}
+
+func (a *AgentAddMessageStreamRequest) GetReasoningEffort() *AgentAddMessageStreamRequestReasoningEffort {
+	if a == nil {
+		return nil
+	}
+	return a.ReasoningEffort
 }

@@ -5,7 +5,7 @@ package components
 import (
 	"errors"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 type AgentCreateKnowledgeFiltersType string
@@ -16,6 +16,10 @@ const (
 	AgentCreateKnowledgeFiltersTypeArrayOfAny                  AgentCreateKnowledgeFiltersType = "arrayOfAny"
 )
 
+// AgentCreateKnowledgeFilters - The source's limit, as an object or its JSON text. An empty string or an empty
+// array means no limit. A non-empty array, `null`, or text that is not the JSON of
+// an object is refused with `400` (`VALIDATION_ERROR`, "Knowledge filters must be
+// an object, with recordGroups and records as lists of ids").
 type AgentCreateKnowledgeFilters struct {
 	AgentKnowledgeFiltersParsed *AgentKnowledgeFiltersParsed `queryParam:"inline" union:"member"`
 	Str                         *string                      `queryParam:"inline" union:"member"`
@@ -131,8 +135,14 @@ func (u AgentCreateKnowledgeFilters) MarshalJSON() ([]byte, error) {
 }
 
 type AgentCreateKnowledge struct {
-	ConnectorID string                       `json:"connectorId"`
-	Filters     *AgentCreateKnowledgeFilters `json:"filters,omitzero"`
+	// Surrounding whitespace is trimmed; a blank id is refused with `400`.
+	ConnectorID string `json:"connectorId"`
+	// The source's limit, as an object or its JSON text. An empty string or an empty
+	// array means no limit. A non-empty array, `null`, or text that is not the JSON of
+	// an object is refused with `400` (`VALIDATION_ERROR`, "Knowledge filters must be
+	// an object, with recordGroups and records as lists of ids").
+	//
+	Filters *AgentCreateKnowledgeFilters `json:"filters,omitzero"`
 }
 
 func (a *AgentCreateKnowledge) GetConnectorID() string {

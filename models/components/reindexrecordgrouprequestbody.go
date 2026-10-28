@@ -3,18 +3,20 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
-// ReindexRecordGroupRequestBody - Optional body for record-group (folder/KB container) reindex.
+// ReindexRecordGroupRequestBody - Optional body for record-group reindex. Only `depth` and `statusFilters` are read;
+// any other field is dropped by the validator before the handler runs (there is no
+// `force` option: the handler always sends `force: false`).
 type ReindexRecordGroupRequestBody struct {
-	// Depth of records under the record group to include.
+	// Depth of records under the record group to include. `-1` (everything) is applied,
+	// and answered, as `100`.
+	//
 	Depth *int64 `default:"0" json:"depth"`
-	// Force reindex for all matched records in the group.
-	Force *bool `default:"false" json:"force"`
 	// When set, only records matching these indexing statuses are reindexed.
 	//
-	StatusFilters []IndexingStatusFilter `json:"statusFilters,omitzero"`
+	StatusFilters []string `json:"statusFilters,omitzero"`
 }
 
 func (r ReindexRecordGroupRequestBody) MarshalJSON() ([]byte, error) {
@@ -35,14 +37,7 @@ func (r *ReindexRecordGroupRequestBody) GetDepth() *int64 {
 	return r.Depth
 }
 
-func (r *ReindexRecordGroupRequestBody) GetForce() *bool {
-	if r == nil {
-		return nil
-	}
-	return r.Force
-}
-
-func (r *ReindexRecordGroupRequestBody) GetStatusFilters() []IndexingStatusFilter {
+func (r *ReindexRecordGroupRequestBody) GetStatusFilters() []string {
 	if r == nil {
 		return nil
 	}

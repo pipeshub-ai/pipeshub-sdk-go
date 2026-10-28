@@ -5,9 +5,9 @@ package operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 	"time"
 )
 
@@ -68,22 +68,70 @@ func (e *GetArchivedConversationsSortOrderEnum) UnmarshalJSON(data []byte) error
 	}
 }
 
+// GetArchivedConversationsSharedEnum - When set, filters by `isShared`. Accepts exactly `true`, `false`,
+// `1` or `0`.
+type GetArchivedConversationsSharedEnum string
+
+const (
+	GetArchivedConversationsSharedEnumTrue  GetArchivedConversationsSharedEnum = "true"
+	GetArchivedConversationsSharedEnumFalse GetArchivedConversationsSharedEnum = "false"
+	GetArchivedConversationsSharedEnumOne   GetArchivedConversationsSharedEnum = "1"
+	GetArchivedConversationsSharedEnumZero  GetArchivedConversationsSharedEnum = "0"
+)
+
+func (e GetArchivedConversationsSharedEnum) ToPointer() *GetArchivedConversationsSharedEnum {
+	return &e
+}
+func (e *GetArchivedConversationsSharedEnum) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "true":
+		fallthrough
+	case "false":
+		fallthrough
+	case "1":
+		fallthrough
+	case "0":
+		*e = GetArchivedConversationsSharedEnum(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetArchivedConversationsSharedEnum: %v", v)
+	}
+}
+
 type GetArchivedConversationsRequest struct {
-	// Page number (1-indexed)
-	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
-	// Items per page
-	Limit *int64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
+	// Page number (1-indexed). The validator accepts any number, so a fraction such
+	// as `1.5` is not refused; it is truncated (`1.5` reads as page 1).
+	//
+	Page *float64 `default:"1" queryParam:"style=form,explode=true,name=page"`
+	// Items per page. A fraction is not refused; it is truncated (`5.5` reads as 5).
+	//
+	Limit *float64 `default:"20" queryParam:"style=form,explode=true,name=limit"`
 	// Field to sort by
 	SortBy *GetArchivedConversationsSortByEnum `default:"lastActivityAt" queryParam:"style=form,explode=true,name=sortBy"`
 	// Sort direction
 	SortOrder *GetArchivedConversationsSortOrderEnum `default:"desc" queryParam:"style=form,explode=true,name=sortOrder"`
-	// Case-insensitive substring match against title and message content (max 1000 chars)
+	// Case-insensitive substring match against title and message content
+	// (max 1000 chars). A value holding markup is refused by the
+	// controller with `400 HTTP_BAD_REQUEST`.
+	//
 	Search *string `queryParam:"style=form,explode=true,name=search"`
-	// Filter by shared status
-	Shared *bool `queryParam:"style=form,explode=true,name=shared"`
-	// Include conversations created on or after this timestamp
+	// When set, filters by `isShared`. Accepts exactly `true`, `false`,
+	// `1` or `0`.
+	//
+	Shared *GetArchivedConversationsSharedEnum `queryParam:"style=form,explode=true,name=shared"`
+	// Include conversations created on or after this instant. Must be a
+	// full ISO 8601 date-time with `Z` or a numeric offset; a bare date
+	// is refused.
+	//
 	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
-	// Include conversations created on or before this timestamp
+	// Include conversations created on or before this instant. Must be a
+	// full ISO 8601 date-time with `Z` or a numeric offset; a bare date
+	// is refused.
+	//
 	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
 	// Restrict results to a single conversation by identifier
 	ConversationID *string `queryParam:"style=form,explode=true,name=conversationId"`
@@ -100,14 +148,14 @@ func (g *GetArchivedConversationsRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetArchivedConversationsRequest) GetPage() *int64 {
+func (g *GetArchivedConversationsRequest) GetPage() *float64 {
 	if g == nil {
 		return nil
 	}
 	return g.Page
 }
 
-func (g *GetArchivedConversationsRequest) GetLimit() *int64 {
+func (g *GetArchivedConversationsRequest) GetLimit() *float64 {
 	if g == nil {
 		return nil
 	}
@@ -135,7 +183,7 @@ func (g *GetArchivedConversationsRequest) GetSearch() *string {
 	return g.Search
 }
 
-func (g *GetArchivedConversationsRequest) GetShared() *bool {
+func (g *GetArchivedConversationsRequest) GetShared() *GetArchivedConversationsSharedEnum {
 	if g == nil {
 		return nil
 	}
@@ -195,6 +243,32 @@ func (e *GetArchivedConversationsStatus) IsExact() bool {
 	return false
 }
 
+// GetArchivedConversationsReasoningEffort - Reasoning effort requested for the turn, when one was set.
+type GetArchivedConversationsReasoningEffort string
+
+const (
+	GetArchivedConversationsReasoningEffortNone   GetArchivedConversationsReasoningEffort = "none"
+	GetArchivedConversationsReasoningEffortLow    GetArchivedConversationsReasoningEffort = "low"
+	GetArchivedConversationsReasoningEffortMedium GetArchivedConversationsReasoningEffort = "medium"
+	GetArchivedConversationsReasoningEffortHigh   GetArchivedConversationsReasoningEffort = "high"
+	GetArchivedConversationsReasoningEffortMax    GetArchivedConversationsReasoningEffort = "max"
+)
+
+func (e GetArchivedConversationsReasoningEffort) ToPointer() *GetArchivedConversationsReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *GetArchivedConversationsReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
+
 // GetArchivedConversationsModelInfo - AI model configuration used
 type GetArchivedConversationsModelInfo struct {
 	ModelKey  *string `json:"modelKey,omitzero"`
@@ -203,6 +277,8 @@ type GetArchivedConversationsModelInfo struct {
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	ModelProvider     *string `json:"modelProvider,omitzero"`
 	ChatMode          *string `json:"chatMode,omitzero"`
+	// Reasoning effort requested for the turn, when one was set.
+	ReasoningEffort *GetArchivedConversationsReasoningEffort `json:"reasoningEffort,omitzero"`
 }
 
 func (g *GetArchivedConversationsModelInfo) GetModelKey() *string {
@@ -240,6 +316,13 @@ func (g *GetArchivedConversationsModelInfo) GetChatMode() *string {
 	return g.ChatMode
 }
 
+func (g *GetArchivedConversationsModelInfo) GetReasoningEffort() *GetArchivedConversationsReasoningEffort {
+	if g == nil {
+		return nil
+	}
+	return g.ReasoningEffort
+}
+
 type GetArchivedConversationsSharedWithAccessLevel string
 
 const (
@@ -265,6 +348,8 @@ func (e *GetArchivedConversationsSharedWithAccessLevel) IsExact() bool {
 type GetArchivedConversationsSharedWith struct {
 	UserID      *string                                        `json:"userId,omitzero"`
 	AccessLevel *GetArchivedConversationsSharedWithAccessLevel `json:"accessLevel,omitzero"`
+	// Subdocument identifier auto-assigned by MongoDB.
+	ID *string `json:"_id,omitzero"`
 }
 
 func (g *GetArchivedConversationsSharedWith) GetUserID() *string {
@@ -281,7 +366,16 @@ func (g *GetArchivedConversationsSharedWith) GetAccessLevel() *GetArchivedConver
 	return g.AccessLevel
 }
 
+func (g *GetArchivedConversationsSharedWith) GetID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ID
+}
+
 type GetArchivedConversationsConversationError struct {
+	// Sub-document identifier auto-assigned by MongoDB.
+	ID        *string        `json:"_id,omitzero"`
 	Message   string         `json:"message"`
 	ErrorType *string        `json:"errorType,omitzero"`
 	Timestamp *time.Time     `json:"timestamp,omitzero"`
@@ -299,6 +393,13 @@ func (g *GetArchivedConversationsConversationError) UnmarshalJSON(data []byte) e
 		return err
 	}
 	return nil
+}
+
+func (g *GetArchivedConversationsConversationError) GetID() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ID
 }
 
 func (g *GetArchivedConversationsConversationError) GetMessage() string {
@@ -472,6 +573,12 @@ type GetArchivedConversationsConversation struct {
 	// conversation initiator (the only user who can share a chat).
 	//
 	SharedBy *components.ConversationSharedBy `json:"sharedBy,omitzero"`
+	// Only on agent conversations (returned by `GET /conversations?source=shared`). Open
+	// them with `GET /agents/{agentKey}/conversations/{conversationId}`.
+	//
+	AgentKey *string `json:"agentKey,omitzero"`
+	// Mongoose document version key.
+	V *int64 `json:"__v,omitzero"`
 	// Timestamp when the conversation was archived
 	ArchivedAt *time.Time `json:"archivedAt,omitzero"`
 }
@@ -669,6 +776,20 @@ func (g *GetArchivedConversationsConversation) GetSharedBy() *components.Convers
 	return g.SharedBy
 }
 
+func (g *GetArchivedConversationsConversation) GetAgentKey() *string {
+	if g == nil {
+		return nil
+	}
+	return g.AgentKey
+}
+
+func (g *GetArchivedConversationsConversation) GetV() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.V
+}
+
 func (g *GetArchivedConversationsConversation) GetArchivedAt() *time.Time {
 	if g == nil {
 		return nil
@@ -765,7 +886,7 @@ func (g *GetArchivedConversationsApplied) GetValues() map[string]any {
 	return g.Values
 }
 
-type GetArchivedConversationsShared struct {
+type GetArchivedConversationsSharedResponse struct {
 	// Allowed values for the `shared` filter
 	Values      []string `json:"values,omitzero"`
 	Description *string  `json:"description,omitzero"`
@@ -775,39 +896,39 @@ type GetArchivedConversationsShared struct {
 	Applied *bool `json:"applied,omitzero"`
 }
 
-func (g GetArchivedConversationsShared) MarshalJSON() ([]byte, error) {
+func (g GetArchivedConversationsSharedResponse) MarshalJSON() ([]byte, error) {
 	return utils.MarshalJSON(g, "", false)
 }
 
-func (g *GetArchivedConversationsShared) UnmarshalJSON(data []byte) error {
+func (g *GetArchivedConversationsSharedResponse) UnmarshalJSON(data []byte) error {
 	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *GetArchivedConversationsShared) GetValues() []string {
+func (g *GetArchivedConversationsSharedResponse) GetValues() []string {
 	if g == nil {
 		return nil
 	}
 	return g.Values
 }
 
-func (g *GetArchivedConversationsShared) GetDescription() *string {
+func (g *GetArchivedConversationsSharedResponse) GetDescription() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Description
 }
 
-func (g *GetArchivedConversationsShared) GetCurrent() optionalnullable.OptionalNullable[string] {
+func (g *GetArchivedConversationsSharedResponse) GetCurrent() optionalnullable.OptionalNullable[string] {
 	if g == nil {
 		return nil
 	}
 	return g.Current
 }
 
-func (g *GetArchivedConversationsShared) GetApplied() *bool {
+func (g *GetArchivedConversationsSharedResponse) GetApplied() *bool {
 	if g == nil {
 		return nil
 	}
@@ -1637,7 +1758,7 @@ func (g *GetArchivedConversationsSortingMessages) GetSortOrder() *GetArchivedCon
 
 // GetArchivedConversationsAvailable - Describes filters supported by this endpoint and their current values
 type GetArchivedConversationsAvailable struct {
-	Shared          *GetArchivedConversationsShared              `json:"shared,omitzero"`
+	Shared          *GetArchivedConversationsSharedResponse      `json:"shared,omitzero"`
 	Tags            *GetArchivedConversationsTags                `json:"tags,omitzero"`
 	MinMessages     *GetArchivedConversationsMinMessages         `json:"minMessages,omitzero"`
 	Search          *GetArchivedConversationsSearch              `json:"search,omitzero"`
@@ -1659,7 +1780,7 @@ func (g *GetArchivedConversationsAvailable) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (g *GetArchivedConversationsAvailable) GetShared() *GetArchivedConversationsShared {
+func (g *GetArchivedConversationsAvailable) GetShared() *GetArchivedConversationsSharedResponse {
 	if g == nil {
 		return nil
 	}

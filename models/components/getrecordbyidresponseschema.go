@@ -3,149 +3,187 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 )
 
-type GetRecordByIDResponseSchemaFileRecord struct {
-	ID                  string                                    `json:"id"`
-	OrgID               string                                    `json:"orgId"`
-	Name                string                                    `json:"name"`
-	Extension           string                                    `json:"extension"`
-	Etag                optionalnullable.OptionalNullable[string] `json:"etag,omitzero"`
-	Ctag                optionalnullable.OptionalNullable[string] `json:"ctag,omitzero"`
-	Md5Checksum         optionalnullable.OptionalNullable[string] `json:"md5Checksum,omitzero"`
-	QuickXorHash        optionalnullable.OptionalNullable[string] `json:"quickXorHash,omitzero"`
-	Crc32Hash           optionalnullable.OptionalNullable[string] `json:"crc32Hash,omitzero"`
-	Sha1Hash            optionalnullable.OptionalNullable[string] `json:"sha1Hash,omitzero"`
-	Sha256Hash          optionalnullable.OptionalNullable[string] `json:"sha256Hash,omitzero"`
-	MimeType            optionalnullable.OptionalNullable[string] `json:"mimeType,omitzero"`
-	SizeInBytes         optionalnullable.OptionalNullable[int64]  `json:"sizeInBytes,omitzero"`
-	IsFile              bool                                      `json:"isFile"`
-	WebURL              optionalnullable.OptionalNullable[string] `json:"webUrl,omitzero"`
-	Path                optionalnullable.OptionalNullable[string] `json:"path,omitzero"`
+// AccessRule - How this record's own permissions combine with its ancestors'.
+// OPEN: an accessible parent, or a direct grant, is enough.
+// STRICT: every ancestor up to the connector must be accessible too.
+// RESTRICTED: strict, and a grant on the record itself is required.
+// Absent on records written before the field existed; read as OPEN.
+type AccessRule string
+
+const (
+	AccessRuleOpen       AccessRule = "OPEN"
+	AccessRuleStrict     AccessRule = "STRICT"
+	AccessRuleRestricted AccessRule = "RESTRICTED"
+)
+
+func (e AccessRule) ToPointer() *AccessRule {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *AccessRule) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "OPEN", "STRICT", "RESTRICTED":
+			return true
+		}
+	}
+	return false
+}
+
+type FileRecord struct {
+	ID           string                                    `json:"id"`
+	OrgID        string                                    `json:"orgId"`
+	Name         string                                    `json:"name"`
+	Extension    string                                    `json:"extension"`
+	Etag         optionalnullable.OptionalNullable[string] `json:"etag,omitzero"`
+	Ctag         optionalnullable.OptionalNullable[string] `json:"ctag,omitzero"`
+	Md5Checksum  optionalnullable.OptionalNullable[string] `json:"md5Checksum,omitzero"`
+	QuickXorHash optionalnullable.OptionalNullable[string] `json:"quickXorHash,omitzero"`
+	Crc32Hash    optionalnullable.OptionalNullable[string] `json:"crc32Hash,omitzero"`
+	Sha1Hash     optionalnullable.OptionalNullable[string] `json:"sha1Hash,omitzero"`
+	Sha256Hash   optionalnullable.OptionalNullable[string] `json:"sha256Hash,omitzero"`
+	MimeType     optionalnullable.OptionalNullable[string] `json:"mimeType,omitzero"`
+	SizeInBytes  optionalnullable.OptionalNullable[int64]  `json:"sizeInBytes,omitzero"`
+	IsFile       bool                                      `json:"isFile"`
+	// Where the file opens in its source. Kept for a connected
+	// app with a limit too; it can contain the names of the
+	// folders above the file.
+	//
+	WebURL optionalnullable.OptionalNullable[string] `json:"webUrl,omitzero"`
+	// The file's path in its source, which names every folder
+	// above it. `null` for a connected app whose limit does not
+	// cover the file's whole app or collection.
+	//
+	Path optionalnullable.OptionalNullable[string] `json:"path,omitzero"`
+	// The same path on local storage; `null` in the same cases as `path`.
 	LocalFsRelativePath optionalnullable.OptionalNullable[string] `json:"localFsRelativePath,omitzero"`
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetID() string {
-	if g == nil {
+func (f *FileRecord) GetID() string {
+	if f == nil {
 		return ""
 	}
-	return g.ID
+	return f.ID
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetOrgID() string {
-	if g == nil {
+func (f *FileRecord) GetOrgID() string {
+	if f == nil {
 		return ""
 	}
-	return g.OrgID
+	return f.OrgID
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetName() string {
-	if g == nil {
+func (f *FileRecord) GetName() string {
+	if f == nil {
 		return ""
 	}
-	return g.Name
+	return f.Name
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetExtension() string {
-	if g == nil {
+func (f *FileRecord) GetExtension() string {
+	if f == nil {
 		return ""
 	}
-	return g.Extension
+	return f.Extension
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetEtag() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetEtag() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.Etag
+	return f.Etag
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetCtag() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetCtag() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.Ctag
+	return f.Ctag
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetMd5Checksum() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetMd5Checksum() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.Md5Checksum
+	return f.Md5Checksum
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetQuickXorHash() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetQuickXorHash() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.QuickXorHash
+	return f.QuickXorHash
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetCrc32Hash() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetCrc32Hash() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.Crc32Hash
+	return f.Crc32Hash
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetSha1Hash() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetSha1Hash() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.Sha1Hash
+	return f.Sha1Hash
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetSha256Hash() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetSha256Hash() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.Sha256Hash
+	return f.Sha256Hash
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetMimeType() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetMimeType() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.MimeType
+	return f.MimeType
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetSizeInBytes() optionalnullable.OptionalNullable[int64] {
-	if g == nil {
+func (f *FileRecord) GetSizeInBytes() optionalnullable.OptionalNullable[int64] {
+	if f == nil {
 		return nil
 	}
-	return g.SizeInBytes
+	return f.SizeInBytes
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetIsFile() bool {
-	if g == nil {
+func (f *FileRecord) GetIsFile() bool {
+	if f == nil {
 		return false
 	}
-	return g.IsFile
+	return f.IsFile
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetWebURL() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetWebURL() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.WebURL
+	return f.WebURL
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetPath() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetPath() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.Path
+	return f.Path
 }
 
-func (g *GetRecordByIDResponseSchemaFileRecord) GetLocalFsRelativePath() optionalnullable.OptionalNullable[string] {
-	if g == nil {
+func (f *FileRecord) GetLocalFsRelativePath() optionalnullable.OptionalNullable[string] {
+	if f == nil {
 		return nil
 	}
-	return g.LocalFsRelativePath
+	return f.LocalFsRelativePath
 }
 
-type GetRecordByIDResponseSchemaMailRecord struct {
+type MailRecord struct {
 }
 
 type TicketRecord struct {
@@ -167,7 +205,42 @@ type GetRecordByIDResponseSchemaRecord struct {
 	// connectors that do not set it.
 	//
 	RootRecordGroupID optionalnullable.OptionalNullable[string] `json:"rootRecordGroupId,omitzero"`
-	ConnectorID       string                                    `json:"connectorId"`
+	// How this record's own permissions combine with its ancestors'.
+	// OPEN: an accessible parent, or a direct grant, is enough.
+	// STRICT: every ancestor up to the connector must be accessible too.
+	// RESTRICTED: strict, and a grant on the record itself is required.
+	// Absent on records written before the field existed; read as OPEN.
+	//
+	AccessRule *AccessRule `json:"accessRule,omitzero"`
+	// User id of whoever uploaded the file to the knowledge base.
+	// Absent for connector records and for files uploaded before the
+	// field existed.
+	//
+	UploadedBy optionalnullable.OptionalNullable[string] `json:"uploadedBy,omitzero"`
+	// Knowledge-base uploads only: what set sourceCreatedAtTimestamp
+	// and sourceLastModifiedTimestamp. `upload`: the upload time (the
+	// file came without a last-modified time); `file`: the file's
+	// last-modified time sent with the upload; `content`: dates the
+	// document states in its header (CONTENT_DOCUMENT_DATES), stored at
+	// midnight UTC of each stated day. Absent for connector records,
+	// whose timestamps are the source system's, and for files uploaded
+	// before the field existed.
+	//
+	SourceTimestampOrigin *string `json:"sourceTimestampOrigin,omitzero"`
+	// With sourceTimestampOrigin `content`: the
+	// sourceCreatedAtTimestamp the upload had set, kept so it can be
+	// restored.
+	//
+	UploadSourceCreatedAtTimestamp optionalnullable.OptionalNullable[int64] `json:"uploadSourceCreatedAtTimestamp,omitzero"`
+	// With sourceTimestampOrigin `content`: the
+	// sourceLastModifiedTimestamp the upload had set.
+	//
+	UploadSourceLastModifiedTimestamp optionalnullable.OptionalNullable[int64] `json:"uploadSourceLastModifiedTimestamp,omitzero"`
+	// With sourceTimestampOrigin `content`: what had set the upload's
+	// values (`upload` or `file`).
+	//
+	UploadSourceTimestampOrigin *string `json:"uploadSourceTimestampOrigin,omitzero"`
+	ConnectorID                 string  `json:"connectorId"`
 	// Name of the source connector. Mirrors the values of the backend
 	// `Connectors` enum (`backend/python/app/config/constants/arangodb.py`);
 	// records store the enum value (e.g. Google Drive is `DRIVE`,
@@ -208,45 +281,97 @@ type GetRecordByIDResponseSchemaRecord struct {
 	// - SQL_VIEW: SQL view object
 	// - OTHERS: Miscellaneous content types
 	//
-	RecordType                  RecordTypeEnum                            `json:"recordType"`
-	Origin                      string                                    `json:"origin"`
-	Version                     int64                                     `json:"version"`
-	IsLatestVersion             optionalnullable.OptionalNullable[bool]   `json:"isLatestVersion,omitzero"`
-	CreatedAtTimestamp          int64                                     `json:"createdAtTimestamp"`
-	UpdatedAtTimestamp          int64                                     `json:"updatedAtTimestamp"`
-	SourceCreatedAtTimestamp    int64                                     `json:"sourceCreatedAtTimestamp"`
-	SourceLastModifiedTimestamp int64                                     `json:"sourceLastModifiedTimestamp"`
-	LastSyncTimestamp           optionalnullable.OptionalNullable[int64]  `json:"lastSyncTimestamp,omitzero"`
-	LastIndexTimestamp          *int64                                    `json:"lastIndexTimestamp,omitzero"`
-	LastExtractionTimestamp     *int64                                    `json:"lastExtractionTimestamp,omitzero"`
-	ProcessingStartedAt         optionalnullable.OptionalNullable[int64]  `json:"processingStartedAt,omitzero"`
-	QueuedAtTimestamp           optionalnullable.OptionalNullable[int64]  `json:"queuedAtTimestamp,omitzero"`
-	ParsingStatus               optionalnullable.OptionalNullable[string] `json:"parsingStatus,omitzero"`
-	IndexingStatus              string                                    `json:"indexingStatus"`
-	ExtractionStatus            string                                    `json:"extractionStatus"`
-	Reason                      optionalnullable.OptionalNullable[string] `json:"reason,omitzero"`
-	IsDeleted                   bool                                      `json:"isDeleted"`
-	IsArchived                  bool                                      `json:"isArchived"`
-	DeletedByUserID             optionalnullable.OptionalNullable[string] `json:"deletedByUserId,omitzero"`
-	IsDirty                     optionalnullable.OptionalNullable[bool]   `json:"isDirty,omitzero"`
-	IsVLMOcrProcessed           *bool                                     `json:"isVLMOcrProcessed"`
-	MimeType                    *string                                   `json:"mimeType"`
-	SizeInBytes                 *int64                                    `json:"sizeInBytes"`
-	Md5Checksum                 optionalnullable.OptionalNullable[string] `json:"md5Checksum,omitzero"`
-	VirtualRecordID             optionalnullable.OptionalNullable[string] `json:"virtualRecordId,omitzero"`
-	SummaryDocumentID           optionalnullable.OptionalNullable[string] `json:"summaryDocumentId,omitzero"`
-	StorageDocumentID           optionalnullable.OptionalNullable[string] `json:"storageDocumentId,omitzero"`
-	WebURL                      *string                                   `json:"webUrl"`
-	PreviewRenderable           optionalnullable.OptionalNullable[bool]   `json:"previewRenderable,omitzero"`
-	IsShared                    optionalnullable.OptionalNullable[bool]   `json:"isShared,omitzero"`
-	IsDependentNode             optionalnullable.OptionalNullable[bool]   `json:"isDependentNode,omitzero"`
-	ParentNodeID                optionalnullable.OptionalNullable[string] `json:"parentNodeId,omitzero"`
-	HideWeburl                  optionalnullable.OptionalNullable[bool]   `json:"hideWeburl,omitzero"`
-	IsInternal                  optionalnullable.OptionalNullable[bool]   `json:"isInternal,omitzero"`
+	RecordType                  RecordTypeEnum                           `json:"recordType"`
+	Origin                      string                                   `json:"origin"`
+	Version                     int64                                    `json:"version"`
+	IsLatestVersion             optionalnullable.OptionalNullable[bool]  `json:"isLatestVersion,omitzero"`
+	CreatedAtTimestamp          int64                                    `json:"createdAtTimestamp"`
+	UpdatedAtTimestamp          int64                                    `json:"updatedAtTimestamp"`
+	SourceCreatedAtTimestamp    int64                                    `json:"sourceCreatedAtTimestamp"`
+	SourceLastModifiedTimestamp int64                                    `json:"sourceLastModifiedTimestamp"`
+	LastSyncTimestamp           optionalnullable.OptionalNullable[int64] `json:"lastSyncTimestamp,omitzero"`
+	LastIndexTimestamp          *int64                                   `json:"lastIndexTimestamp,omitzero"`
+	LastExtractionTimestamp     *int64                                   `json:"lastExtractionTimestamp,omitzero"`
+	// Where named-entity extraction (people, organizations, dates and
+	// other values found in the content) stands for this record:
+	// NOT_STARTED, IN_PROGRESS, COMPLETED, PARTIAL, FAILED or SKIPPED.
+	// Absent when no status has been stored on the record; read that
+	// as not extracted. New values may be added, so treat an unknown
+	// one as not finished.
+	//
+	EntityExtractionStatus *string `json:"entityExtractionStatus,omitzero"`
+	// When named-entity extraction last ran on the record (epoch milliseconds). Absent until it is written.
+	LastEntityExtractionTimestamp optionalnullable.OptionalNullable[int64] `json:"lastEntityExtractionTimestamp,omitzero"`
+	// How the named entities were found: `deterministic` (pattern
+	// recognizers only), `single_call` (one model call) or `agent`.
+	// Absent until it is written.
+	//
+	EntityExtractionStrategy optionalnullable.OptionalNullable[string] `json:"entityExtractionStrategy,omitzero"`
+	// Version of the named-entity extractor that produced the record's entities, for example `ner-1`. Absent until it is written.
+	EntityExtractorVersion optionalnullable.OptionalNullable[string] `json:"entityExtractorVersion,omitzero"`
+	// Credentials (keys, tokens, passwords) removed from a code repository file before it was indexed. Present once the file has been scanned, 0 when nothing was found.
+	SecretsRedacted     *int64                                   `json:"secretsRedacted,omitzero"`
+	ProcessingStartedAt optionalnullable.OptionalNullable[int64] `json:"processingStartedAt,omitzero"`
+	QueuedAtTimestamp   optionalnullable.OptionalNullable[int64] `json:"queuedAtTimestamp,omitzero"`
+	// Set while the record is QUEUED because its source rate-limited
+	// the content fetch: the earliest time (epoch milliseconds)
+	// indexing reads it again. `reason` then says when indexing
+	// resumes. Null or absent once the source serves the record or
+	// indexing ends; a value on a record that is no longer QUEUED is
+	// left over from an earlier wait and means nothing.
+	//
+	RetryNotBefore optionalnullable.OptionalNullable[int64]  `json:"retryNotBefore,omitzero"`
+	ParsingStatus  optionalnullable.OptionalNullable[string] `json:"parsingStatus,omitzero"`
+	IndexingStatus string                                    `json:"indexingStatus"`
+	// True after the record is indexed (every COMPLETED write, including the upgrade
+	// backfill for records indexed earlier), and false once it is marked EMPTY. A later
+	// re-queue or a failed re-index leaves it as it is, so search keeps returning the
+	// previous indexed copy until the new version is indexed. Absent until the first
+	// COMPLETED or EMPTY write sets it.
+	//
+	HasIndexedCopy   *bool                                     `json:"hasIndexedCopy,omitzero"`
+	ExtractionStatus string                                    `json:"extractionStatus"`
+	Reason           optionalnullable.OptionalNullable[string] `json:"reason,omitzero"`
+	IsDeleted        bool                                      `json:"isDeleted"`
+	IsArchived       bool                                      `json:"isArchived"`
+	DeletedByUserID  optionalnullable.OptionalNullable[string] `json:"deletedByUserId,omitzero"`
+	// When a restore last brought this knowledge-base file back from
+	// the trash and queued it to be indexed again (epoch
+	// milliseconds). Absent on records never restored, on folders, and
+	// on files restored while their indexing was turned off.
+	//
+	RestoredAtTimestamp optionalnullable.OptionalNullable[int64]  `json:"restoredAtTimestamp,omitzero"`
+	IsDirty             optionalnullable.OptionalNullable[bool]   `json:"isDirty,omitzero"`
+	IsVLMOcrProcessed   *bool                                     `json:"isVLMOcrProcessed"`
+	MimeType            *string                                   `json:"mimeType"`
+	SizeInBytes         *int64                                    `json:"sizeInBytes"`
+	Md5Checksum         optionalnullable.OptionalNullable[string] `json:"md5Checksum,omitzero"`
+	VirtualRecordID     optionalnullable.OptionalNullable[string] `json:"virtualRecordId,omitzero"`
+	// Revision of the record's content, 16 lowercase hex characters:
+	// the start of the SHA-256 of the content the indexer received
+	// for the record. If a record still has no revision stored when
+	// its vectors are written, a digest of its parsed blocks is
+	// stored instead.
+	// Identical content gives the same value, and a copy whose content
+	// matches another record carries that record's value.
+	// `stageStates` describes this revision. Set when indexing
+	// starts; absent on records not indexed since pipeline stages
+	// were introduced.
+	//
+	ContentRev        optionalnullable.OptionalNullable[string] `json:"contentRev,omitzero"`
+	SummaryDocumentID optionalnullable.OptionalNullable[string] `json:"summaryDocumentId,omitzero"`
+	StorageDocumentID optionalnullable.OptionalNullable[string] `json:"storageDocumentId,omitzero"`
+	WebURL            *string                                   `json:"webUrl"`
+	PreviewRenderable optionalnullable.OptionalNullable[bool]   `json:"previewRenderable,omitzero"`
+	IsShared          optionalnullable.OptionalNullable[bool]   `json:"isShared,omitzero"`
+	IsDependentNode   optionalnullable.OptionalNullable[bool]   `json:"isDependentNode,omitzero"`
+	ParentNodeID      optionalnullable.OptionalNullable[string] `json:"parentNodeId,omitzero"`
+	HideWeburl        optionalnullable.OptionalNullable[bool]   `json:"hideWeburl,omitzero"`
+	IsInternal        optionalnullable.OptionalNullable[bool]   `json:"isInternal,omitzero"`
 	// True for placeholder/stub records standing in for an out-of-scope ancestor (rendered read-only, no content actions; excluded from search and indexing).
 	IsPlaceholder optionalnullable.OptionalNullable[bool] `json:"isPlaceholder,omitzero"`
-	FileRecord    *GetRecordByIDResponseSchemaFileRecord  `json:"fileRecord"`
-	MailRecord    *GetRecordByIDResponseSchemaMailRecord  `json:"mailRecord"`
+	FileRecord    *FileRecord                             `json:"fileRecord"`
+	MailRecord    *MailRecord                             `json:"mailRecord"`
 	TicketRecord  *TicketRecord                           `json:"ticketRecord"`
 }
 
@@ -318,6 +443,48 @@ func (g *GetRecordByIDResponseSchemaRecord) GetRootRecordGroupID() optionalnulla
 		return nil
 	}
 	return g.RootRecordGroupID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetAccessRule() *AccessRule {
+	if g == nil {
+		return nil
+	}
+	return g.AccessRule
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetUploadedBy() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.UploadedBy
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetSourceTimestampOrigin() *string {
+	if g == nil {
+		return nil
+	}
+	return g.SourceTimestampOrigin
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetUploadSourceCreatedAtTimestamp() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.UploadSourceCreatedAtTimestamp
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetUploadSourceLastModifiedTimestamp() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.UploadSourceLastModifiedTimestamp
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetUploadSourceTimestampOrigin() *string {
+	if g == nil {
+		return nil
+	}
+	return g.UploadSourceTimestampOrigin
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetConnectorID() string {
@@ -411,6 +578,41 @@ func (g *GetRecordByIDResponseSchemaRecord) GetLastExtractionTimestamp() *int64 
 	return g.LastExtractionTimestamp
 }
 
+func (g *GetRecordByIDResponseSchemaRecord) GetEntityExtractionStatus() *string {
+	if g == nil {
+		return nil
+	}
+	return g.EntityExtractionStatus
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetLastEntityExtractionTimestamp() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.LastEntityExtractionTimestamp
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetEntityExtractionStrategy() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.EntityExtractionStrategy
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetEntityExtractorVersion() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.EntityExtractorVersion
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetSecretsRedacted() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.SecretsRedacted
+}
+
 func (g *GetRecordByIDResponseSchemaRecord) GetProcessingStartedAt() optionalnullable.OptionalNullable[int64] {
 	if g == nil {
 		return nil
@@ -425,6 +627,13 @@ func (g *GetRecordByIDResponseSchemaRecord) GetQueuedAtTimestamp() optionalnulla
 	return g.QueuedAtTimestamp
 }
 
+func (g *GetRecordByIDResponseSchemaRecord) GetRetryNotBefore() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.RetryNotBefore
+}
+
 func (g *GetRecordByIDResponseSchemaRecord) GetParsingStatus() optionalnullable.OptionalNullable[string] {
 	if g == nil {
 		return nil
@@ -437,6 +646,13 @@ func (g *GetRecordByIDResponseSchemaRecord) GetIndexingStatus() string {
 		return ""
 	}
 	return g.IndexingStatus
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetHasIndexedCopy() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.HasIndexedCopy
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetExtractionStatus() string {
@@ -472,6 +688,13 @@ func (g *GetRecordByIDResponseSchemaRecord) GetDeletedByUserID() optionalnullabl
 		return nil
 	}
 	return g.DeletedByUserID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetRestoredAtTimestamp() optionalnullable.OptionalNullable[int64] {
+	if g == nil {
+		return nil
+	}
+	return g.RestoredAtTimestamp
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetIsDirty() optionalnullable.OptionalNullable[bool] {
@@ -514,6 +737,13 @@ func (g *GetRecordByIDResponseSchemaRecord) GetVirtualRecordID() optionalnullabl
 		return nil
 	}
 	return g.VirtualRecordID
+}
+
+func (g *GetRecordByIDResponseSchemaRecord) GetContentRev() optionalnullable.OptionalNullable[string] {
+	if g == nil {
+		return nil
+	}
+	return g.ContentRev
 }
 
 func (g *GetRecordByIDResponseSchemaRecord) GetSummaryDocumentID() optionalnullable.OptionalNullable[string] {
@@ -586,14 +816,14 @@ func (g *GetRecordByIDResponseSchemaRecord) GetIsPlaceholder() optionalnullable.
 	return g.IsPlaceholder
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetFileRecord() *GetRecordByIDResponseSchemaFileRecord {
+func (g *GetRecordByIDResponseSchemaRecord) GetFileRecord() *FileRecord {
 	if g == nil {
 		return nil
 	}
 	return g.FileRecord
 }
 
-func (g *GetRecordByIDResponseSchemaRecord) GetMailRecord() *GetRecordByIDResponseSchemaMailRecord {
+func (g *GetRecordByIDResponseSchemaRecord) GetMailRecord() *MailRecord {
 	if g == nil {
 		return nil
 	}
@@ -921,12 +1151,37 @@ func (g *GetRecordByIDResponseSchemaPermission) GetAccessType() string {
 }
 
 // GetRecordByIDResponseSchema - Response returned by GET /knowledgeBase/record/{recordId}.
+//
+// For a connected app with a limit, a collection or folder the limit
+// leaves out is not named: `knowledgeBase` and `folder` are `null` for
+// it, as are the record's own `recordGroupId` (with `externalGroupId`),
+// `rootRecordGroupId` and `parentNodeId` (with `externalParentId`).
+// `externalParentId` is also `null` when there is no `parentNodeId` to
+// check it by, unless the limit covers the record's whole app.
+// `fileRecord.path` is `null` unless the limit covers the whole app or
+// collection; `webUrl` is kept.
 type GetRecordByIDResponseSchema struct {
-	Record        GetRecordByIDResponseSchemaRecord         `json:"record"`
+	Record GetRecordByIDResponseSchemaRecord `json:"record"`
+	// Per-stage pipeline status for the record's current content revision.
+	// Empty for records indexed before pipeline stages existed. The
+	// `classify` stage's status is mirrored on `record.extractionStatus`.
+	//
+	StageStates   []StageStateSummary                       `json:"stageStates,omitzero"`
 	KnowledgeBase *GetRecordByIDResponseSchemaKnowledgeBase `json:"knowledgeBase"`
 	Folder        *GetRecordByIDResponseSchemaFolder        `json:"folder"`
 	Metadata      GetRecordByIDResponseSchemaMetadata       `json:"metadata"`
 	Permissions   []GetRecordByIDResponseSchemaPermission   `json:"permissions"`
+}
+
+func (g GetRecordByIDResponseSchema) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(g, "", false)
+}
+
+func (g *GetRecordByIDResponseSchema) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (g *GetRecordByIDResponseSchema) GetRecord() GetRecordByIDResponseSchemaRecord {
@@ -934,6 +1189,13 @@ func (g *GetRecordByIDResponseSchema) GetRecord() GetRecordByIDResponseSchemaRec
 		return GetRecordByIDResponseSchemaRecord{}
 	}
 	return g.Record
+}
+
+func (g *GetRecordByIDResponseSchema) GetStageStates() []StageStateSummary {
+	if g == nil {
+		return nil
+	}
+	return g.StageStates
 }
 
 func (g *GetRecordByIDResponseSchema) GetKnowledgeBase() *GetRecordByIDResponseSchemaKnowledgeBase {

@@ -3,8 +3,8 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type CancelConversationStreamRequestBody struct {
@@ -40,12 +40,12 @@ func (c *CancelConversationStreamRequest) GetBody() CancelConversationStreamRequ
 
 // CancelConversationStreamResponseBody - Cancellation requested, or the run had already finished.
 type CancelConversationStreamResponseBody struct {
-	Cancelled *bool `json:"cancelled,omitzero"`
+	Cancelled bool `json:"cancelled"`
 }
 
-func (c *CancelConversationStreamResponseBody) GetCancelled() *bool {
+func (c *CancelConversationStreamResponseBody) GetCancelled() bool {
 	if c == nil {
-		return nil
+		return false
 	}
 	return c.Cancelled
 }

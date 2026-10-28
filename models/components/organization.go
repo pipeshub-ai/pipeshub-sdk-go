@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 	"time"
 )
 
@@ -80,6 +80,10 @@ type Organization struct {
 	CreatedAt time.Time `json:"createdAt"`
 	// Last update timestamp (ISO 8601)
 	UpdatedAt time.Time `json:"updatedAt"`
+	// Where the signup came from: the `ref` tag it was made with, or `direct`. Absent on organizations created before it was recorded.
+	SignupChannel *string `json:"signupChannel,omitzero"`
+	// For a `direct` signup, the referring site's domain, when there was one.
+	SignupReferrerDomain *string `json:"signupReferrerDomain,omitzero"`
 }
 
 func (o Organization) MarshalJSON() ([]byte, error) {
@@ -182,4 +186,18 @@ func (o *Organization) GetUpdatedAt() time.Time {
 		return time.Time{}
 	}
 	return o.UpdatedAt
+}
+
+func (o *Organization) GetSignupChannel() *string {
+	if o == nil {
+		return nil
+	}
+	return o.SignupChannel
+}
+
+func (o *Organization) GetSignupReferrerDomain() *string {
+	if o == nil {
+		return nil
+	}
+	return o.SignupReferrerDomain
 }

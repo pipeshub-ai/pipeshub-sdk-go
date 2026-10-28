@@ -7,7 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/retry"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
 	"io"
 	"math"
 	"math/rand"

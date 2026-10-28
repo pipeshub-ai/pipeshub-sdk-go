@@ -1,14 +1,10 @@
 # ConversationMessageStreamRequestChatMode
 
-Optional execution mode for non-stream consumers of this shared
-request schema.
-
-
 ## Example Usage
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.ConversationMessageStreamRequestChatModeAgent

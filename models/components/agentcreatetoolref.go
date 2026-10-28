@@ -3,7 +3,9 @@
 package components
 
 type AgentCreateToolRef struct {
-	Name        string  `json:"name"`
+	// Surrounding whitespace is trimmed; a blank name is refused with `400`.
+	Name string `json:"name"`
+	// Surrounding whitespace is trimmed; a blank value is refused with `400`.
 	FullName    *string `json:"fullName,omitzero"`
 	Description *string `json:"description,omitzero"`
 }

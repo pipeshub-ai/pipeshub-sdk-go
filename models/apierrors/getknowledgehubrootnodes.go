@@ -4,134 +4,45 @@ package apierrors
 
 import (
 	"encoding/json"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
-// GetKnowledgeHubRootNodesInternalServerError - An unexpected error occurred on the server.
-type GetKnowledgeHubRootNodesInternalServerError struct {
-	Error_   operations.GetKnowledgeHubRootNodesErrorHTTPInternalServerError `json:"error"`
-	HTTPMeta components.HTTPMetadata                                         `json:"-"`
+// ServiceUnavailableError - The database could not give this listing the memory it needs right now, because other requests were using
+// it (nothing is wrong with the request). Retry after `Retry-After` seconds; the web app retries by itself.
+// The body is the gateway's own busy message, not the service's wording.
+type ServiceUnavailableError struct {
+	Error_   operations.GetKnowledgeHubRootNodesServiceUnavailableError `json:"error"`
+	HTTPMeta components.HTTPMetadata                                    `json:"-"`
 }
 
-var _ error = &GetKnowledgeHubRootNodesInternalServerError{}
+var _ error = &ServiceUnavailableError{}
 
-func (e *GetKnowledgeHubRootNodesInternalServerError) Error() string {
+func (e *ServiceUnavailableError) Error() string {
 	data, _ := json.Marshal(e)
 	return string(data)
 }
 
-// GetKnowledgeHubRootNodesForbiddenError - Insufficient OAuth scope.
-//
-// Only applies to OAuth tokens. The token did not carry the `kb:read`
-// scope required by this endpoint. Regular (non-OAuth) JWT bearer
-// tokens are not subject to scope enforcement and will not receive
-// this error.
-type GetKnowledgeHubRootNodesForbiddenError struct {
-	Error_   operations.GetKnowledgeHubRootNodesErrorHTTPForbidden `json:"error"`
-	HTTPMeta components.HTTPMetadata                               `json:"-"`
+// GetKnowledgeHubRootNodesUnprocessableEntityError - Either of:
+//   - A typed query parameter could not be read: `page` or `limit` is not an
+//     integer or is out of range (`page` below 1, `limit` outside 1-200),
+//     `onlyContainers` or `flattened` is not a boolean, or `page`/`limit` was
+//     sent more than once. `error.message` is the connector service's own
+//     validation text.
+//   - A listing that spans a whole connector (a flattened listing, a search or a filter) was too large for the
+//     database to hold in memory, so it was refused instead of cut short. No page is returned. Open a folder
+//     (`GET /knowledgeBase/knowledge-hub/nodes/{parentType}/{parentId}`) to see its records, or add a search (`q`),
+//     which keeps only matching records in memory. Choosing a connector, or a filter that keeps most records (such as
+//     `nodeTypes`), does not help. Sorting by name with no filters is served from stored visibility where the
+//     connector allows it and is not affected.
+type GetKnowledgeHubRootNodesUnprocessableEntityError struct {
+	Error_   operations.GetKnowledgeHubRootNodesUnprocessableEntityError `json:"error"`
+	HTTPMeta components.HTTPMetadata                                     `json:"-"`
 }
 
-var _ error = &GetKnowledgeHubRootNodesForbiddenError{}
+var _ error = &GetKnowledgeHubRootNodesUnprocessableEntityError{}
 
-func (e *GetKnowledgeHubRootNodesForbiddenError) Error() string {
-	data, _ := json.Marshal(e)
-	return string(data)
-}
-
-// GetKnowledgeHubRootNodesUnauthorizedError - Missing or invalid authentication token.
-//
-// The bearer token was absent, expired, malformed, or could not be
-// verified by the auth middleware.
-type GetKnowledgeHubRootNodesUnauthorizedError struct {
-	Error_   operations.GetKnowledgeHubRootNodesErrorHTTPUnauthorized `json:"error"`
-	HTTPMeta components.HTTPMetadata                                  `json:"-"`
-}
-
-var _ error = &GetKnowledgeHubRootNodesUnauthorizedError{}
-
-func (e *GetKnowledgeHubRootNodesUnauthorizedError) Error() string {
-	data, _ := json.Marshal(e)
-	return string(data)
-}
-
-// GetKnowledgeHubRootNodesBadRequestError - Invalid request parameters. The backend's validation message is
-// returned verbatim in `error.message`. See the examples below for
-// the common triggers.
-type GetKnowledgeHubRootNodesBadRequestError struct {
-	Error_   operations.GetKnowledgeHubRootNodesErrorHTTPBadRequest `json:"error"`
-	HTTPMeta components.HTTPMetadata                                `json:"-"`
-}
-
-var _ error = &GetKnowledgeHubRootNodesBadRequestError{}
-
-func (e *GetKnowledgeHubRootNodesBadRequestError) Error() string {
-	data, _ := json.Marshal(e)
-	return string(data)
-}
-
-// GetKnowledgeHubChildNodesNotFoundError - Parent node not found.
-//
-// The `parentId` does not correspond to an existing node of the
-// specified `parentType`, or the node has been deleted.
-type GetKnowledgeHubChildNodesNotFoundError struct {
-	Error_   operations.GetKnowledgeHubChildNodesNotFoundError `json:"error"`
-	HTTPMeta components.HTTPMetadata                           `json:"-"`
-}
-
-var _ error = &GetKnowledgeHubChildNodesNotFoundError{}
-
-func (e *GetKnowledgeHubChildNodesNotFoundError) Error() string {
-	data, _ := json.Marshal(e)
-	return string(data)
-}
-
-// GetKnowledgeHubChildNodesBadRequestError - Invalid request parameters or path values. The backend's validation
-// message is returned verbatim in `error.message`. See the examples
-// below for the common triggers.
-type GetKnowledgeHubChildNodesBadRequestError struct {
-	Error_   operations.GetKnowledgeHubChildNodesErrorHTTPBadRequest `json:"error"`
-	HTTPMeta components.HTTPMetadata                                 `json:"-"`
-}
-
-var _ error = &GetKnowledgeHubChildNodesBadRequestError{}
-
-func (e *GetKnowledgeHubChildNodesBadRequestError) Error() string {
-	data, _ := json.Marshal(e)
-	return string(data)
-}
-
-// GetAvailableModelsByTypeForbiddenError - Insufficient OAuth scope.
-//
-// Only applies to OAuth tokens. The token did not carry the `config:read`
-// scope required by this endpoint. Regular (non-OAuth) JWT bearer tokens
-// are not subject to scope enforcement and will not receive this error.
-type GetAvailableModelsByTypeForbiddenError struct {
-	Error_   operations.GetAvailableModelsByTypeErrorHTTPForbidden `json:"error"`
-	HTTPMeta components.HTTPMetadata                               `json:"-"`
-}
-
-var _ error = &GetAvailableModelsByTypeForbiddenError{}
-
-func (e *GetAvailableModelsByTypeForbiddenError) Error() string {
-	data, _ := json.Marshal(e)
-	return string(data)
-}
-
-// GetAvailableModelsByTypeBadRequestError - Invalid `modelType` path parameter.
-//
-// The `modelType` value was not one of the supported enum categories.
-// This response is produced by the Zod validation middleware **before**
-// the handler runs. The `error.metadata.errors` array contains
-// per-field detail about exactly which constraint failed.
-type GetAvailableModelsByTypeBadRequestError struct {
-	Error_   operations.GetAvailableModelsByTypeErrorValidationError `json:"error"`
-	HTTPMeta components.HTTPMetadata                                 `json:"-"`
-}
-
-var _ error = &GetAvailableModelsByTypeBadRequestError{}
-
-func (e *GetAvailableModelsByTypeBadRequestError) Error() string {
+func (e *GetKnowledgeHubRootNodesUnprocessableEntityError) Error() string {
 	data, _ := json.Marshal(e)
 	return string(data)
 }

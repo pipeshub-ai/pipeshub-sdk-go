@@ -3,13 +3,16 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type AddMessageRequest struct {
 	ConversationID string `pathParam:"style=simple,explode=false,name=conversationId"`
-	// The follow-up question, with optional scope and model overrides.
+	// The follow-up question, with optional scope and model overrides. A `query` of only
+	// whitespace is refused with `400` `HTTP_BAD_REQUEST` ("Query is required"), after the
+	// validator and before any model runs.
+	//
 	Body components.AddMessageRequest `request:"mediaType=application/json"`
 }
 

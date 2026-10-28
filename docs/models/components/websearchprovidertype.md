@@ -1,12 +1,12 @@
 # WebSearchProviderType
 
-Supported web search provider
+Supported web search provider. crawl4ai only reads pages (it backs up the built-in page reader) and cannot be the default; firecrawl both searches and reads pages. searxng, firecrawl and crawl4ai take a baseUrl; firecrawl defaults to its cloud API.
 
 ## Example Usage
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.WebSearchProviderTypeDuckduckgo
@@ -24,3 +24,7 @@ custom := components.WebSearchProviderType("custom_value")
 | `WebSearchProviderTypeSerper`     | serper                            |
 | `WebSearchProviderTypeTavily`     | tavily                            |
 | `WebSearchProviderTypeExa`        | exa                               |
+| `WebSearchProviderTypeBrave`      | brave                             |
+| `WebSearchProviderTypeSearxng`    | searxng                           |
+| `WebSearchProviderTypeFirecrawl`  | firecrawl                         |
+| `WebSearchProviderTypeCrawl4ai`   | crawl4ai                          |

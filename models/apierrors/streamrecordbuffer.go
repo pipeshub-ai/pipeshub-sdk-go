@@ -5,9 +5,154 @@ package apierrors
 import (
 	"encoding/json"
 	"errors"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
+
+type StreamRecordBufferInternalServerErrorType string
+
+const (
+	StreamRecordBufferInternalServerErrorTypeStreamRecordErrorResponse StreamRecordBufferInternalServerErrorType = "StreamRecordErrorResponse"
+	StreamRecordBufferInternalServerErrorTypeErrorResponse             StreamRecordBufferInternalServerErrorType = "ErrorResponse"
+	StreamRecordBufferInternalServerErrorTypeUnknown                   StreamRecordBufferInternalServerErrorType = "Unknown"
+)
+
+// StreamRecordBufferInternalServerError - Internal streaming failure, downstream conversion failure, or connector/backend
+// error proxied by the gateway.
+//
+// A JSON body larger than 10 MB, or a form-encoded body larger than 100 KB or with more than 1000 fields, is answered `413` by the app-wide body parsers instead, also before authentication.
+type StreamRecordBufferInternalServerError struct {
+	StreamRecordErrorResponse *StreamRecordErrorResponse `queryParam:"inline" union:"member"`
+	ErrorResponse             *ErrorResponse             `queryParam:"inline" union:"member"`
+	UnknownRaw                json.RawMessage            `json:"-" union:"unknown"`
+
+	Type StreamRecordBufferInternalServerErrorType
+
+	HTTPMeta components.HTTPMetadata `json:"-"`
+}
+
+var _ error = &StreamRecordBufferInternalServerError{}
+
+func CreateStreamRecordBufferInternalServerErrorStreamRecordErrorResponse(streamRecordErrorResponse StreamRecordErrorResponse) StreamRecordBufferInternalServerError {
+	typ := StreamRecordBufferInternalServerErrorTypeStreamRecordErrorResponse
+
+	return StreamRecordBufferInternalServerError{
+		StreamRecordErrorResponse: &streamRecordErrorResponse,
+		Type:                      typ,
+	}
+}
+
+func CreateStreamRecordBufferInternalServerErrorErrorResponse(errorResponse ErrorResponse) StreamRecordBufferInternalServerError {
+	typ := StreamRecordBufferInternalServerErrorTypeErrorResponse
+
+	return StreamRecordBufferInternalServerError{
+		ErrorResponse: &errorResponse,
+		Type:          typ,
+	}
+}
+
+func CreateStreamRecordBufferInternalServerErrorUnknown(raw json.RawMessage) StreamRecordBufferInternalServerError {
+	return StreamRecordBufferInternalServerError{
+		UnknownRaw: raw,
+		Type:       StreamRecordBufferInternalServerErrorTypeUnknown,
+	}
+}
+
+func (u StreamRecordBufferInternalServerError) GetUnknownRaw() json.RawMessage {
+	return u.UnknownRaw
+}
+
+func (u StreamRecordBufferInternalServerError) IsUnknown() bool {
+	return u.Type == StreamRecordBufferInternalServerErrorTypeUnknown
+}
+
+func (u *StreamRecordBufferInternalServerError) UnmarshalJSON(data []byte) error {
+	previous := *u
+	*u = StreamRecordBufferInternalServerError{
+		HTTPMeta: previous.HTTPMeta,
+	}
+
+	var candidates []utils.UnionCandidate
+
+	// Collect all valid candidates
+	var streamRecordErrorResponse StreamRecordErrorResponse = StreamRecordErrorResponse{}
+	if err := utils.UnmarshalJSON(data, &streamRecordErrorResponse, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  StreamRecordBufferInternalServerErrorTypeStreamRecordErrorResponse,
+			Value: &streamRecordErrorResponse,
+		})
+	}
+
+	var errorResponse ErrorResponse = ErrorResponse{}
+	if err := utils.UnmarshalJSON(data, &errorResponse, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  StreamRecordBufferInternalServerErrorTypeErrorResponse,
+			Value: &errorResponse,
+		})
+	}
+
+	if len(candidates) == 0 {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = StreamRecordBufferInternalServerErrorTypeUnknown
+		return nil
+	}
+
+	// Pick the best candidate using multi-stage filtering
+	best := utils.PickBestUnionCandidate(candidates, data)
+	if best == nil {
+		u.UnknownRaw = json.RawMessage(data)
+		u.Type = StreamRecordBufferInternalServerErrorTypeUnknown
+		return nil
+	}
+
+	// Set the union type and value based on the best candidate
+	u.Type = best.Type.(StreamRecordBufferInternalServerErrorType)
+	switch best.Type {
+	case StreamRecordBufferInternalServerErrorTypeStreamRecordErrorResponse:
+		u.StreamRecordErrorResponse = best.Value.(*StreamRecordErrorResponse)
+		return nil
+	case StreamRecordBufferInternalServerErrorTypeErrorResponse:
+		u.ErrorResponse = best.Value.(*ErrorResponse)
+		return nil
+	}
+
+	u.UnknownRaw = json.RawMessage(data)
+	u.Type = StreamRecordBufferInternalServerErrorTypeUnknown
+	return nil
+}
+
+func (u StreamRecordBufferInternalServerError) MarshalJSON() ([]byte, error) {
+	if u.StreamRecordErrorResponse != nil {
+		return utils.MarshalJSON(u.StreamRecordErrorResponse, "", true)
+	}
+
+	if u.ErrorResponse != nil {
+		return utils.MarshalJSON(u.ErrorResponse, "", true)
+	}
+
+	if u.UnknownRaw != nil {
+		return json.RawMessage(u.UnknownRaw), nil
+	}
+	return nil, errors.New("could not marshal union type StreamRecordBufferInternalServerError: all fields are null")
+}
+
+func (u StreamRecordBufferInternalServerError) Error() string {
+	switch u.Type {
+	case StreamRecordBufferInternalServerErrorTypeStreamRecordErrorResponse:
+		data, _ := json.Marshal(u.StreamRecordErrorResponse)
+		return string(data)
+	case StreamRecordBufferInternalServerErrorTypeErrorResponse:
+		data, _ := json.Marshal(u.ErrorResponse)
+		return string(data)
+	case StreamRecordBufferInternalServerErrorTypeUnknown:
+		if u.UnknownRaw != nil {
+			return string(u.UnknownRaw)
+		}
+		return "unknown error"
+	default:
+		return "unknown error"
+	}
+}
 
 type ForbiddenType string
 
@@ -17,8 +162,9 @@ const (
 	ForbiddenTypeUnknown                   ForbiddenType = "Unknown"
 )
 
-// Forbidden - Forbidden. Returned either when the OAuth token is missing the required
-// `kb:read` scope or when the authenticated user does not have access to the record.
+// Forbidden - Forbidden. Returned when the OAuth token is missing the required `kb:read` scope
+// (`ErrorResponse`), or as `{"error": "You do not have permission to access this record"}`
+// when the caller has no access to the record or the record is in the trash.
 type Forbidden struct {
 	ErrorResponse             *ErrorResponse             `queryParam:"inline" union:"member"`
 	StreamRecordErrorResponse *StreamRecordErrorResponse `queryParam:"inline" union:"member"`

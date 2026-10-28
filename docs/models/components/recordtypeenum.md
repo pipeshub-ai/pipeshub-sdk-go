@@ -39,7 +39,7 @@ may use any of the connector-specific types below.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.RecordTypeEnumFile

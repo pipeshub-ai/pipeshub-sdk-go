@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 // AuthProviderMicrosoftPublicConfig - Public Microsoft OAuth settings returned to clients
@@ -12,6 +12,8 @@ type AuthProviderMicrosoftPublicConfig struct {
 	TenantID *string `json:"tenantId,omitzero"`
 	// Microsoft OAuth client ID
 	ClientID *string `json:"clientId,omitzero"`
+	// Sign-in authority URL, built on save as `https://login.microsoftonline.com/{tenantId}`
+	Authority *string `json:"authority,omitzero"`
 	// Whether just-in-time user provisioning is enabled for Microsoft
 	EnableJit *bool `json:"enableJit,omitzero"`
 }
@@ -39,6 +41,13 @@ func (a *AuthProviderMicrosoftPublicConfig) GetClientID() *string {
 		return nil
 	}
 	return a.ClientID
+}
+
+func (a *AuthProviderMicrosoftPublicConfig) GetAuthority() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Authority
 }
 
 func (a *AuthProviderMicrosoftPublicConfig) GetEnableJit() *bool {

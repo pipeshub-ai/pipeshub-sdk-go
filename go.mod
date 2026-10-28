@@ -1,4 +1,4 @@
-module github.com/pipeshub-ai/pipeshub-sdk-go
+module github.com/pipeshub-ai/pipeshub-sdk-go/v2
 
 go 1.26.8
 

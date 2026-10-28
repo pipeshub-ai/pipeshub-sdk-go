@@ -3,14 +3,16 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type MoveRecordRequest struct {
 	// Knowledge base UUID
 	KbID string `pathParam:"style=simple,explode=false,name=kbId"`
-	// Record identifier (file or folder)
+	// Record identifier (file or folder). A record that is not in this knowledge base
+	// (unknown, or in another one) is answered `404`.
+	//
 	RecordID string `pathParam:"style=simple,explode=false,name=recordId"`
 	// Target location for the record
 	Body components.KnowledgeBaseMoveRecordRequestBody `request:"mediaType=application/json"`

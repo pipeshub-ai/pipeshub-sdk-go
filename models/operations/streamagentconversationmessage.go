@@ -3,8 +3,8 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types/stream"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types/stream"
 )
 
 type StreamAgentConversationMessageRequest struct {
@@ -37,7 +37,12 @@ func (s *StreamAgentConversationMessageRequest) GetBody() components.AgentAddMes
 
 type StreamAgentConversationMessageResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// SSE stream (text/event-stream)
+	// SSE stream (text/event-stream). The stream opens before the
+	// conversation is looked up, so a conversation that does not exist,
+	// belongs to another user or to another agent also answers 200: the
+	// stream carries one `RUN_ERROR` frame with `code: internal_error`
+	// and ends. There is no 404.
+	//
 	AgentMessageStreamSSEEvent *stream.EventStream[components.AgentMessageStreamSSEEvent]
 }
 

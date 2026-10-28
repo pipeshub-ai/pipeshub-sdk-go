@@ -3,12 +3,14 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type GetKnowledgeBaseRequest struct {
-	// Knowledge base ID (non-empty string)
+	// Knowledge base ID (non-empty string). It is not checked to be a UUID: any other
+	// value is looked up and answered `404`.
+	//
 	KbID string `pathParam:"style=simple,explode=false,name=kbId"`
 }
 

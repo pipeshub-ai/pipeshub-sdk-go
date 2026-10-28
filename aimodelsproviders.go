@@ -6,13 +6,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/config"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/hooks"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/apierrors"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/retry"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/config"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/hooks"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/apierrors"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
 	"net/http"
 )
 
@@ -44,12 +44,17 @@ func newAIModelsProviders(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, 
 //     `isDefault: true`; all subsequent models from the same entry get `false`.
 //   - `modelFriendlyName` is included **only** when the provider entry contains
 //     exactly one model name (not a comma-separated list).
+//   - `defaultReasoningEffort` is included on every model of an entry whose
+//     `configuration.defaultReasoningEffort` (or, when that is unset, a
+//     top-level `defaultReasoningEffort`) holds a valid effort. It is left out
+//     when no default is stored.
 //   - When no providers of the requested type are configured the endpoint still
 //     returns HTTP **200** with an empty `models` array — this is **not** an error.
 //
-// **Access control:** requires a valid bearer token. For OAuth tokens the
-// `config:read` scope must be present; regular JWT bearer tokens pass through
-// without scope enforcement.
+// **Access control:** requires a valid bearer token, from any member of the
+// organization (there is no admin check). For OAuth tokens the `config:read` scope
+// must be present; regular JWT bearer tokens pass through without scope enforcement.
+// The query string is not read.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelType components.ModelType, opts ...operations.Option) (*operations.GetAvailableModelsByTypeResponse, error) {
@@ -237,55 +242,9 @@ func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelT
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 400:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out apierrors.GetAvailableModelsByTypeBadRequestError
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
-			}
-
-			out.HTTPMeta = components.HTTPMetadata{
-				Request:  req,
-				Response: httpRes,
-			}
-			return nil, &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
+		fallthrough
 	case httpRes.StatusCode == 401:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out apierrors.GetKnowledgeHubRootNodesUnauthorizedError
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
-			}
-
-			out.HTTPMeta = components.HTTPMetadata{
-				Request:  req,
-				Response: httpRes,
-			}
-			return nil, &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
+		fallthrough
 	case httpRes.StatusCode == 403:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -294,7 +253,7 @@ func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelT
 				return nil, err
 			}
 
-			var out apierrors.GetAvailableModelsByTypeForbiddenError
+			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
@@ -319,7 +278,7 @@ func (s *AIModelsProviders) GetAvailableModelsByType(ctx context.Context, modelT
 				return nil, err
 			}
 
-			var out apierrors.GetKnowledgeHubRootNodesInternalServerError
+			var out apierrors.ErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}

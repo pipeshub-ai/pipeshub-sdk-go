@@ -3,19 +3,26 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
-// AppliedFilterNode - A single filter node selected by the user (used for display/persistence of active filters)
+// AppliedFilterNode - A single filter node selected by the user (used for display/persistence of active
+// filters). The gateway refuses a node that lacks any of the four fields.
 type AppliedFilterNode struct {
 	// Unique identifier of the filter node
-	ID *string `json:"id,omitzero"`
+	ID string `json:"id"`
 	// Display name of the filter node
-	Name *string `json:"name,omitzero"`
+	Name string `json:"name"`
 	// Type of the node (e.g. app, recordGroup, folder, record)
-	NodeType *string `json:"nodeType,omitzero"`
+	NodeType string `json:"nodeType"`
 	// Connector identifier associated with this node
-	Connector *string `json:"connector,omitzero"`
+	Connector string `json:"connector"`
+	// File extension of a record node, for its icon
+	Extension *string `json:"extension,omitzero"`
+	// MIME type of a record node, for its icon
+	MimeType *string `json:"mimeType,omitzero"`
+	// True when the node was picked with an @ mention in the message
+	Mentioned *bool `json:"mentioned,omitzero"`
 }
 
 func (a AppliedFilterNode) MarshalJSON() ([]byte, error) {
@@ -29,30 +36,51 @@ func (a *AppliedFilterNode) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *AppliedFilterNode) GetID() *string {
+func (a *AppliedFilterNode) GetID() string {
 	if a == nil {
-		return nil
+		return ""
 	}
 	return a.ID
 }
 
-func (a *AppliedFilterNode) GetName() *string {
+func (a *AppliedFilterNode) GetName() string {
 	if a == nil {
-		return nil
+		return ""
 	}
 	return a.Name
 }
 
-func (a *AppliedFilterNode) GetNodeType() *string {
+func (a *AppliedFilterNode) GetNodeType() string {
 	if a == nil {
-		return nil
+		return ""
 	}
 	return a.NodeType
 }
 
-func (a *AppliedFilterNode) GetConnector() *string {
+func (a *AppliedFilterNode) GetConnector() string {
+	if a == nil {
+		return ""
+	}
+	return a.Connector
+}
+
+func (a *AppliedFilterNode) GetExtension() *string {
 	if a == nil {
 		return nil
 	}
-	return a.Connector
+	return a.Extension
+}
+
+func (a *AppliedFilterNode) GetMimeType() *string {
+	if a == nil {
+		return nil
+	}
+	return a.MimeType
+}
+
+func (a *AppliedFilterNode) GetMentioned() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.Mentioned
 }

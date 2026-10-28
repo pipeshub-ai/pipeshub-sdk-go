@@ -3,13 +3,16 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type OauthIntrospectResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// Token introspection result
+	// Token introspection result. `{active: false}` alone when the token is unknown, expired,
+	// revoked, issued to another client, or when `client_secret` is missing (even for a live
+	// token). `username` is present only for a token that acts as a user.
+	//
 	OAuthIntrospectResponse *components.OAuthIntrospectResponse
 }
 

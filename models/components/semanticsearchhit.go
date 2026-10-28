@@ -3,8 +3,8 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 )
 
 // SemanticSearchHit - One search hit returned by the retrieval service. Most hits use string `content`;
@@ -25,6 +25,33 @@ type SemanticSearchHit struct {
 	//
 	BlockType  optionalnullable.OptionalNullable[string] `json:"block_type,omitzero"`
 	BlockIndex optionalnullable.OptionalNullable[int64]  `json:"block_index,omitzero"`
+	// For a block of source code, the symbol it holds, written `kind:Scope.name` (for example
+	// `method:Outer.Inner.run`). A span with no name is addressed by its lines instead:
+	// `kind:L{line}` for one line (`statements:L1`), `kind:L{start}-{end}` for several
+	// (`imports:L1-5`), or `kind:anonymous` when it has no line numbers. An empty string for a
+	// block that is not code.
+	// Present on a hit that is a code block, and on each passage of a list, thread, text
+	// section or code group brought back whole because of a match inside it. Absent on any
+	// other hit that matched directly, on the rows of a table brought back whole, and on
+	// every piece of a section split around an image: its text, the image, and the text that
+	// stands in for the image when it is not sent as an image.
+	//
+	QualifiedName *string `json:"qualified_name,omitzero"`
+	// Set on a passage returned because a match inside its section (a thread, a list,
+	// a table) brought the whole section back: how many blocks it sits from the passage
+	// the search matched nearest to it. `0` is a matched passage. Absent when the hit matched
+	// directly or the section matched as a whole.
+	//
+	DistanceFromMatch *int64 `json:"distanceFromMatch,omitzero"`
+	// Set on each passage of a section brought back whole (see `distanceFromMatch`): the
+	// index of that section in its record, so passages of two sections of one record can be
+	// told apart. Absent on a hit that matched directly.
+	//
+	BlockGroupIndex optionalnullable.OptionalNullable[int64] `json:"block_group_index,omitzero"`
+	// Set only on a search with `timeline`: the index in `timeline.periods` of the period
+	// this hit's record is dated in.
+	//
+	TimelinePeriod *int64 `json:"timelinePeriod,omitzero"`
 }
 
 func (s SemanticSearchHit) MarshalJSON() ([]byte, error) {
@@ -92,4 +119,32 @@ func (s *SemanticSearchHit) GetBlockIndex() optionalnullable.OptionalNullable[in
 		return nil
 	}
 	return s.BlockIndex
+}
+
+func (s *SemanticSearchHit) GetQualifiedName() *string {
+	if s == nil {
+		return nil
+	}
+	return s.QualifiedName
+}
+
+func (s *SemanticSearchHit) GetDistanceFromMatch() *int64 {
+	if s == nil {
+		return nil
+	}
+	return s.DistanceFromMatch
+}
+
+func (s *SemanticSearchHit) GetBlockGroupIndex() optionalnullable.OptionalNullable[int64] {
+	if s == nil {
+		return nil
+	}
+	return s.BlockGroupIndex
+}
+
+func (s *SemanticSearchHit) GetTimelinePeriod() *int64 {
+	if s == nil {
+		return nil
+	}
+	return s.TimelinePeriod
 }

@@ -9,6 +9,8 @@ User authentication including multi-step MFA, password reset, OTP login, and tok
 * [InitAuth](#initauth) - Initialize authentication session
 * [Authenticate](#authenticate) - Authenticate user with credentials
 * [RefreshToken](#refreshtoken) - Refresh access token
+* [GetPasswordStatus](#getpasswordstatus) - Get password status
+* [SendPasswordSetupEmail](#sendpasswordsetupemail) - Email a link to set a first password
 * [ResetPassword](#resetpassword) - Reset password
 
 ## InitAuth
@@ -50,8 +52,8 @@ package main
 
 import(
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 )
 
@@ -86,11 +88,12 @@ func main() {
 
 ### Errors
 
-| Error Type              | Status Code             | Content Type            |
-| ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400                     | application/json        |
-| apierrors.ErrorResponse | 500                     | application/json        |
-| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+| Error Type                       | Status Code                      | Content Type                     |
+| -------------------------------- | -------------------------------- | -------------------------------- |
+| apierrors.ErrorResponse          | 400                              | application/json                 |
+| apierrors.RateLimitErrorResponse | 429                              | application/json                 |
+| apierrors.ErrorResponse          | 500                              | application/json                 |
+| apierrors.APIError               | 4XX, 5XX                         | \*/\*                            |
 
 ## Authenticate
 
@@ -101,12 +104,13 @@ Requires a valid session token from `/initAuth`.
 
 - `password`: `{ "credentials": { "password": "your-password" } }`
 - `otp`: `{ "credentials": { "otp": "123456" } }` (6-digit code, valid for 10 minutes)
-- `google`: `{ "credentials": "google-id-token-string" }`
-- `microsoft`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
-- `azureAd`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
-- `oauth`: `{ "credentials": { "accessToken": "...", "idToken": "..." } }`
-- `samlSso`: not accepted here; this endpoint answers `400`. SAML sign-in runs as a browser
-  redirect: send the browser to `/saml/signIn` instead
+- `google`: `{ "credentials": "google-id-token-string" }`. The object form
+  `{ "credentials": { "credential": "..." } }` passes the first token check, but by code
+  reading the second check is handed the whole object, so it ends in `500`
+- `microsoft`: `{ "credentials": { "idToken": "..." } }` (only `idToken` is read)
+
+SAML (`samlSso`), generic OAuth (`oauth`) and Azure AD (`azureAd`) sign-in were removed in 1.0;
+this endpoint answers `400` for them. Azure AD accounts sign in with `microsoft`.
 
 **Multi-Step Response:**
 
@@ -120,12 +124,17 @@ After completing all steps:
 
 **Security:**
 
-- Account locks for 24 hours after 5 consecutive failed attempts, and the owner is
+- Account locks for 24 hours after 10 consecutive failed attempts, and the owner is
   sent an email saying so. While it is locked, sign-in is refused with the same answer
   as a wrong password or code, even when the password or code is right
 - CAPTCHA may be required if enabled (pass `cf-turnstile-response`)
 - An email with no account gets the same status and message as a real account given
   a wrong password (`400`) or a wrong, missing or expired sign-in code (`401`)
+- The session token is single-use for the final step: once tokens are returned the
+  session is gone, and sending it again answers `401`
+
+**Order of checks:** the session token is checked before the body, so a request
+without a valid `x-session-token` answers `401` whatever its body holds.
 
 
 ### Example Usage
@@ -136,8 +145,8 @@ package main
 
 import(
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"log"
 )
 
@@ -147,7 +156,7 @@ func main() {
     s := pipeshub.New()
 
     res, err := s.UserAccount.Authenticate(ctx, "<value>", components.AuthenticateRequest{
-        Method: components.MethodOauth,
+        Method: components.MethodMicrosoft,
         Credentials: components.CreateCredentialsPasswordCredentials(
             components.PasswordCredentials{
                 Password: "o_5N_tt72qMx3WV",
@@ -186,11 +195,12 @@ func main() {
 
 ### Errors
 
-| Error Type              | Status Code             | Content Type            |
-| ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
-| apierrors.ErrorResponse | 500                     | application/json        |
-| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+| Error Type                       | Status Code                      | Content Type                     |
+| -------------------------------- | -------------------------------- | -------------------------------- |
+| apierrors.ErrorResponse          | 400, 401                         | application/json                 |
+| apierrors.RateLimitErrorResponse | 429                              | application/json                 |
+| apierrors.ErrorResponse          | 500                              | application/json                 |
+| apierrors.APIError               | 4XX, 5XX                         | \*/\*                            |
 
 ## RefreshToken
 
@@ -200,6 +210,7 @@ Get a new access token using a valid refresh token.
 
 - Pass the refresh token as a Bearer token in the Authorization header
 - Returns a new access token and basic user information
+- The request body and query string are not read
 
 **Token Lifetimes:**
 
@@ -221,9 +232,9 @@ package main
 
 import(
 	"context"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -260,8 +271,120 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
+| apierrors.ErrorResponse | 400, 401                | application/json        |
 | apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+
+## GetPasswordStatus
+
+Returns whether the authenticated user has a password set. Users who signed in only through SSO do not.
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="getPasswordStatus" method="get" path="/userAccount/password/status" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.UserAccount.GetPasswordStatus(ctx)
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Object != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.GetPasswordStatusResponse](../../models/operations/getpasswordstatusresponse.md), error**
+
+### Errors
+
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 401                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+
+## SendPasswordSetupEmail
+
+Sends the authenticated user a single-use link, to the email on their account, for setting a first password.
+For users who have no password yet, for example those who signed in with Google. Users who already have one change it with `POST /userAccount/password/reset`.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="sendPasswordSetupEmail" method="post" path="/userAccount/password/setup/email" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.UserAccount.SendPasswordSetupEmail(ctx)
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.Object != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.SendPasswordSetupEmailResponse](../../models/operations/sendpasswordsetupemailresponse.md), error**
+
+### Errors
+
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 404, 429      | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## ResetPassword
@@ -271,6 +394,13 @@ Reset the password for the currently authenticated user.
 **Overview:**
 
 Allows a logged-in user to change their password by providing the current password and a new password.
+
+**Order of checks:** the access token is read before the body, so a request without
+an `Authorization` header answers `400` whatever its body holds. Body fields other
+than the three below are dropped by the validator, and the query string is not read.
+
+**Effect on sessions:** the change ends refresh tokens issued before it. The response
+carries a new access token.
 
 
 ### Example Usage
@@ -282,9 +412,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -324,8 +454,9 @@ func main() {
 
 ### Errors
 
-| Error Type              | Status Code             | Content Type            |
-| ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
-| apierrors.ErrorResponse | 500                     | application/json        |
-| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+| Error Type                       | Status Code                      | Content Type                     |
+| -------------------------------- | -------------------------------- | -------------------------------- |
+| apierrors.ErrorResponse          | 400, 401, 404                    | application/json                 |
+| apierrors.RateLimitErrorResponse | 429                              | application/json                 |
+| apierrors.ErrorResponse          | 500                              | application/json                 |
+| apierrors.APIError               | 4XX, 5XX                         | \*/\*                            |

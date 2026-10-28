@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types"
 )
 
 func GenerateURL(_ context.Context, serverURL, path string, pathParams interface{}, globals interface{}) (string, error) {

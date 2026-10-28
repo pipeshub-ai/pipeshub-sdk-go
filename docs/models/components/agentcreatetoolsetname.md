@@ -6,7 +6,7 @@ Registered toolset name (lowercase) accepted by the create-agent gateway.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.AgentCreateToolsetNameCalendar
@@ -24,6 +24,7 @@ custom := components.AgentCreateToolsetName("custom_value")
 | `AgentCreateToolsetNameClickup`              | clickup                                      |
 | `AgentCreateToolsetNameConfluence`           | confluence                                   |
 | `AgentCreateToolsetNameConfluencedatacenter` | confluencedatacenter                         |
+| `AgentCreateToolsetNameDocs`                 | docs                                         |
 | `AgentCreateToolsetNameDrive`                | drive                                        |
 | `AgentCreateToolsetNameGithub`               | github                                       |
 | `AgentCreateToolsetNameGmail`                | gmail                                        |
@@ -36,6 +37,7 @@ custom := components.AgentCreateToolsetName("custom_value")
 | `AgentCreateToolsetNameRedshift`             | redshift                                     |
 | `AgentCreateToolsetNameSalesforce`           | salesforce                                   |
 | `AgentCreateToolsetNameSharepoint`           | sharepoint                                   |
+| `AgentCreateToolsetNameSheets`               | sheets                                       |
 | `AgentCreateToolsetNameSlack`                | slack                                        |
 | `AgentCreateToolsetNameTeams`                | teams                                        |
 | `AgentCreateToolsetNameZoom`                 | zoom                                         |

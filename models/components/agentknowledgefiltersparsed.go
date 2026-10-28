@@ -3,17 +3,67 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
-// AgentKnowledgeFiltersParsed - Indexed scope for a knowledge connector: record-group ids and
-// individual record ids. On GET, `filtersParsed` is this shape parsed
-// from the stored `filters` JSON string.
+type AgentKnowledgeFiltersParsedNode struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// `recordGroup`, `folder` or `record`.
+	NodeType string `json:"nodeType"`
+}
+
+func (a AgentKnowledgeFiltersParsedNode) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(a, "", false)
+}
+
+func (a *AgentKnowledgeFiltersParsedNode) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &a, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *AgentKnowledgeFiltersParsedNode) GetID() string {
+	if a == nil {
+		return ""
+	}
+	return a.ID
+}
+
+func (a *AgentKnowledgeFiltersParsedNode) GetName() string {
+	if a == nil {
+		return ""
+	}
+	return a.Name
+}
+
+func (a *AgentKnowledgeFiltersParsedNode) GetNodeType() string {
+	if a == nil {
+		return ""
+	}
+	return a.NodeType
+}
+
+// AgentKnowledgeFiltersParsed - What a knowledge source is limited to. With both lists empty the agent
+// searches the whole source; otherwise it searches only the listed
+// record groups, folders and records, each with everything under it, and
+// a selection made in a chat must lie under them. On GET, `filtersParsed`
+// is this shape parsed from the stored `filters` JSON string.
+//
+// On create and update, `filters` may be this object or its JSON text.
+// The two lists must hold valid UUIDs, at most 200 across both; a value
+// that cannot be read is refused with 400 rather than saved as "no
+// limit", and so is a limit that covers more nodes than one search may
+// (50,000 by default). A stored limit that cannot be read limits the
+// source to nothing.
 type AgentKnowledgeFiltersParsed struct {
-	// Deprecated/legacy: record-group ids for connector record-group scoping (e.g. Confluence spaces, Jira projects). No longer set for KB (Collection) entries — a KB is identified by its own `connectorId`, not by an id in this list.
+	// Record-group ids (e.g. Confluence spaces, Jira projects), each with the groups nested in it. Not set for KB (Collection) entries — a KB is identified by its own `connectorId`; an id equal to a source's `connectorId` is ignored.
 	RecordGroups []string `json:"recordGroups,omitzero"`
-	// Individual record ids in scope.
+	// Folder or record ids, each with everything under it.
 	Records []string `json:"records,omitzero"`
+	// Names of the ids above, for display. Not used for search.
+	Nodes []AgentKnowledgeFiltersParsedNode `json:"nodes,omitzero"`
 }
 
 func (a AgentKnowledgeFiltersParsed) MarshalJSON() ([]byte, error) {
@@ -39,4 +89,11 @@ func (a *AgentKnowledgeFiltersParsed) GetRecords() []string {
 		return nil
 	}
 	return a.Records
+}
+
+func (a *AgentKnowledgeFiltersParsed) GetNodes() []AgentKnowledgeFiltersParsedNode {
+	if a == nil {
+		return nil
+	}
+	return a.Nodes
 }

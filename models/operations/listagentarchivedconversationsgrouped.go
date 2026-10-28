@@ -3,12 +3,19 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type ListAgentArchivedConversationsGroupedRequest struct {
-	AgentPage  *int64 `default:"1" queryParam:"style=form,explode=true,name=agentPage"`
+	// 1-based page over agent groups. Values below 1 are read as 1 and a
+	// non-numeric value as the default; neither is refused.
+	//
+	AgentPage *int64 `default:"1" queryParam:"style=form,explode=true,name=agentPage"`
+	// Agent groups per page. Values are clamped to 1..100 and a non-numeric
+	// value is read as the default; neither is refused. Each group carries at
+	// most 5 conversations.
+	//
 	AgentLimit *int64 `default:"5" queryParam:"style=form,explode=true,name=agentLimit"`
 }
 

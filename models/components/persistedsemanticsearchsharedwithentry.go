@@ -2,6 +2,7 @@
 
 package components
 
+// PersistedSemanticSearchSharedWithEntryAccessLevel - Access granted to that user.
 type PersistedSemanticSearchSharedWithEntryAccessLevel string
 
 const (
@@ -24,11 +25,25 @@ func (e *PersistedSemanticSearchSharedWithEntryAccessLevel) IsExact() bool {
 	return false
 }
 
-// PersistedSemanticSearchSharedWithEntry - Entry inside `sharedWith[]`. The schema sets `_id: false` on these
-// sub-docs, so no auto-injected `_id` is present.
+// PersistedSemanticSearchSharedWithEntry - Entry inside `sharedWith[]`: one user the search is shared with and
+// the access level they were given.
 type PersistedSemanticSearchSharedWithEntry struct {
-	UserID      string                                            `json:"userId"`
+	// Identifier of this share entry, generated when the entry is
+	// stored. It identifies the entry, not the user — use `userId`
+	// for the user.
+	//
+	ID *string `json:"_id,omitzero"`
+	// User the search is shared with.
+	UserID string `json:"userId"`
+	// Access granted to that user.
 	AccessLevel PersistedSemanticSearchSharedWithEntryAccessLevel `json:"accessLevel"`
+}
+
+func (p *PersistedSemanticSearchSharedWithEntry) GetID() *string {
+	if p == nil {
+		return nil
+	}
+	return p.ID
 }
 
 func (p *PersistedSemanticSearchSharedWithEntry) GetUserID() string {

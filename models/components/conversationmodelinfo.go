@@ -3,8 +3,34 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
+
+// ConversationModelInfoReasoningEffort - Reasoning effort requested for the turn, when one was set.
+type ConversationModelInfoReasoningEffort string
+
+const (
+	ConversationModelInfoReasoningEffortNone   ConversationModelInfoReasoningEffort = "none"
+	ConversationModelInfoReasoningEffortLow    ConversationModelInfoReasoningEffort = "low"
+	ConversationModelInfoReasoningEffortMedium ConversationModelInfoReasoningEffort = "medium"
+	ConversationModelInfoReasoningEffortHigh   ConversationModelInfoReasoningEffort = "high"
+	ConversationModelInfoReasoningEffortMax    ConversationModelInfoReasoningEffort = "max"
+)
+
+func (e ConversationModelInfoReasoningEffort) ToPointer() *ConversationModelInfoReasoningEffort {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ConversationModelInfoReasoningEffort) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "none", "low", "medium", "high", "max":
+			return true
+		}
+	}
+	return false
+}
 
 // ConversationModelInfo - AI model configuration recorded against a conversation or message.
 type ConversationModelInfo struct {
@@ -18,6 +44,8 @@ type ConversationModelInfo struct {
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	// Chat mode used for this turn (e.g. `quick`, `internal_search`)
 	ChatMode *string `json:"chatMode,omitzero"`
+	// Reasoning effort requested for the turn, when one was set.
+	ReasoningEffort *ConversationModelInfoReasoningEffort `json:"reasoningEffort,omitzero"`
 }
 
 func (c ConversationModelInfo) MarshalJSON() ([]byte, error) {
@@ -64,4 +92,11 @@ func (c *ConversationModelInfo) GetChatMode() *string {
 		return nil
 	}
 	return c.ChatMode
+}
+
+func (c *ConversationModelInfo) GetReasoningEffort() *ConversationModelInfoReasoningEffort {
+	if c == nil {
+		return nil
+	}
+	return c.ReasoningEffort
 }

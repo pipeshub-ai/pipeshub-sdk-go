@@ -30,6 +30,7 @@ const (
 	ConnectorNameEnumConfluenceDataCenterPersonal ConnectorNameEnum = "CONFLUENCE DATA CENTER PERSONAL"
 	ConnectorNameEnumJira                         ConnectorNameEnum = "JIRA"
 	ConnectorNameEnumJiraPersonal                 ConnectorNameEnum = "JIRA PERSONAL"
+	ConnectorNameEnumJiraCloudPersonal            ConnectorNameEnum = "JIRA CLOUD PERSONAL"
 	ConnectorNameEnumJiraDataCenter               ConnectorNameEnum = "JIRA DATA CENTER"
 	ConnectorNameEnumJiraDataCenterPersonal       ConnectorNameEnum = "JIRA DATA CENTER PERSONAL"
 	ConnectorNameEnumBox                          ConnectorNameEnum = "BOX"
@@ -50,6 +51,7 @@ const (
 	ConnectorNameEnumAzureFiles                   ConnectorNameEnum = "AZURE FILES"
 	ConnectorNameEnumLinear                       ConnectorNameEnum = "LINEAR"
 	ConnectorNameEnumZammad                       ConnectorNameEnum = "ZAMMAD"
+	ConnectorNameEnumZendesk                      ConnectorNameEnum = "ZENDESK"
 	ConnectorNameEnumZoom                         ConnectorNameEnum = "ZOOM"
 	ConnectorNameEnumGitlab                       ConnectorNameEnum = "GITLAB"
 	ConnectorNameEnumGitlabPersonal               ConnectorNameEnum = "GITLAB PERSONAL"
@@ -63,6 +65,9 @@ const (
 	ConnectorNameEnumDatabaseSandbox              ConnectorNameEnum = "DATABASE_SANDBOX"
 	ConnectorNameEnumImageGeneration              ConnectorNameEnum = "IMAGE_GENERATION"
 	ConnectorNameEnumAttachments                  ConnectorNameEnum = "ATTACHMENTS"
+	ConnectorNameEnumDemo                         ConnectorNameEnum = "DEMO"
+	ConnectorNameEnumSmb                          ConnectorNameEnum = "SMB"
+	ConnectorNameEnumCifs                         ConnectorNameEnum = "CIFS"
 )
 
 func (e ConnectorNameEnum) ToPointer() *ConnectorNameEnum {
@@ -73,7 +78,7 @@ func (e ConnectorNameEnum) ToPointer() *ConnectorNameEnum {
 func (e *ConnectorNameEnum) IsExact() bool {
 	if e != nil {
 		switch *e {
-		case "DRIVE", "DRIVE WORKSPACE", "GMAIL", "GMAIL WORKSPACE", "CALENDAR", "ONEDRIVE", "SHAREPOINT ONLINE", "OUTLOOK", "OUTLOOK PERSONAL", "OUTLOOK CALENDAR", "MICROSOFT TEAMS", "NOTION", "NOTION PERSONAL", "SLACK", "SLACK WORKSPACE", "KB", "CONFLUENCE", "CONFLUENCE DATA CENTER", "CONFLUENCE DATA CENTER PERSONAL", "JIRA", "JIRA PERSONAL", "JIRA DATA CENTER", "JIRA DATA CENTER PERSONAL", "BOX", "NEXTCLOUD", "DROPBOX", "DROPBOX PERSONAL", "WEB", "BOOKSTACK", "DRUPAL WIKI", "GITHUB", "GITHUB TEAMS", "SERVICENOW", "SALESFORCE", "S3", "MINIO", "GCS", "AZURE BLOB", "AZURE FILES", "LINEAR", "ZAMMAD", "ZOOM", "GITLAB", "GITLAB PERSONAL", "SNOWFLAKE", "POSTGRESQL", "MARIADB", "UNKNOWN", "RSS", "LOCAL_FS", "CODING_SANDBOX", "DATABASE_SANDBOX", "IMAGE_GENERATION", "ATTACHMENTS":
+		case "DRIVE", "DRIVE WORKSPACE", "GMAIL", "GMAIL WORKSPACE", "CALENDAR", "ONEDRIVE", "SHAREPOINT ONLINE", "OUTLOOK", "OUTLOOK PERSONAL", "OUTLOOK CALENDAR", "MICROSOFT TEAMS", "NOTION", "NOTION PERSONAL", "SLACK", "SLACK WORKSPACE", "KB", "CONFLUENCE", "CONFLUENCE DATA CENTER", "CONFLUENCE DATA CENTER PERSONAL", "JIRA", "JIRA PERSONAL", "JIRA CLOUD PERSONAL", "JIRA DATA CENTER", "JIRA DATA CENTER PERSONAL", "BOX", "NEXTCLOUD", "DROPBOX", "DROPBOX PERSONAL", "WEB", "BOOKSTACK", "DRUPAL WIKI", "GITHUB", "GITHUB TEAMS", "SERVICENOW", "SALESFORCE", "S3", "MINIO", "GCS", "AZURE BLOB", "AZURE FILES", "LINEAR", "ZAMMAD", "ZENDESK", "ZOOM", "GITLAB", "GITLAB PERSONAL", "SNOWFLAKE", "POSTGRESQL", "MARIADB", "UNKNOWN", "RSS", "LOCAL_FS", "CODING_SANDBOX", "DATABASE_SANDBOX", "IMAGE_GENERATION", "ATTACHMENTS", "DEMO", "SMB", "CIFS":
 			return true
 		}
 	}

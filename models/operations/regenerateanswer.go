@@ -3,9 +3,9 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types/stream"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types/stream"
 )
 
 type RegenerateAnswerRequest struct {
@@ -60,6 +60,16 @@ type RegenerateAnswerResponse struct {
 	// `{ type, message, code? }` on failure. Forwarded lifecycle and
 	// child-run events may contain `runId`, `threadId`, and
 	// `parentRunId`. Clients should ignore unknown event names.
+	//
+	// Refusals after validation are not HTTP errors. A missing, deleted
+	// or inaccessible conversation, a conversation with no messages, a
+	// target that is not the latest `bot_response`, or no preceding
+	// `user_query` each produce a 200 stream holding the opening
+	// `CUSTOM` `conversation_created` frame and one root `RUN_ERROR`
+	// (`code: streaming_error`) whose `message` names the cause.
+	//
+	// Two refusals about `answers` arrive the same way: `Answers can only replace the answers to a
+	// question card.` and `An edit cannot also replace the answers to a question card.`
 	//
 	SSEEvent *stream.EventStream[components.SSEEvent]
 }

@@ -6,20 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
-// Method - Authentication method to use
+// Method - Authentication method to use. It must be one the session's current step allows;
+// any other value, known or not, is answered `400`.
 type Method string
 
 const (
-	MethodSamlSso   Method = "samlSso"
 	MethodOtp       Method = "otp"
 	MethodPassword  Method = "password"
 	MethodGoogle    Method = "google"
 	MethodMicrosoft Method = "microsoft"
-	MethodAzureAd   Method = "azureAd"
-	MethodOauth     Method = "oauth"
 )
 
 func (e Method) ToPointer() *Method {
@@ -31,8 +29,6 @@ func (e *Method) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	switch v {
-	case "samlSso":
-		fallthrough
 	case "otp":
 		fallthrough
 	case "password":
@@ -40,10 +36,6 @@ func (e *Method) UnmarshalJSON(data []byte) error {
 	case "google":
 		fallthrough
 	case "microsoft":
-		fallthrough
-	case "azureAd":
-		fallthrough
-	case "oauth":
 		*e = Method(v)
 		return nil
 	default:
@@ -54,18 +46,26 @@ func (e *Method) UnmarshalJSON(data []byte) error {
 type CredentialsType string
 
 const (
-	CredentialsTypePasswordCredentials CredentialsType = "PasswordCredentials"
-	CredentialsTypeOtpCredentials      CredentialsType = "OtpCredentials"
-	CredentialsTypeOAuthCredentials    CredentialsType = "OAuthCredentials"
-	CredentialsTypeStr                 CredentialsType = "str"
+	CredentialsTypePasswordCredentials  CredentialsType = "PasswordCredentials"
+	CredentialsTypeOtpCredentials       CredentialsType = "OtpCredentials"
+	CredentialsTypeGoogleCredentials    CredentialsType = "GoogleCredentials"
+	CredentialsTypeMicrosoftCredentials CredentialsType = "MicrosoftCredentials"
+	CredentialsTypeStr                  CredentialsType = "str"
 )
 
-// Credentials based on the authentication method
+// Credentials based on the authentication method; the shape each method needs is
+// listed above. The validator only checks that this is a non-empty string or an
+// object whose `password`, `otp`, `token`, `code`, `accessToken` and `idToken`,
+// when present, are strings; other fields of the object are passed through. An
+// object without the field its method needs is refused later as a failed sign-in,
+// not as a validation error: `microsoft` without `idToken` answers `400`, and a Google
+// token that is not a JWT answers `500`.
 type Credentials struct {
-	PasswordCredentials *PasswordCredentials `queryParam:"inline" union:"member"`
-	OtpCredentials      *OtpCredentials      `queryParam:"inline" union:"member"`
-	OAuthCredentials    *OAuthCredentials    `queryParam:"inline" union:"member"`
-	Str                 *string              `queryParam:"inline" union:"member"`
+	PasswordCredentials  *PasswordCredentials  `queryParam:"inline" union:"member"`
+	OtpCredentials       *OtpCredentials       `queryParam:"inline" union:"member"`
+	GoogleCredentials    *GoogleCredentials    `queryParam:"inline" union:"member"`
+	MicrosoftCredentials *MicrosoftCredentials `queryParam:"inline" union:"member"`
+	Str                  *string               `queryParam:"inline" union:"member"`
 
 	Type CredentialsType
 }
@@ -88,12 +88,21 @@ func CreateCredentialsOtpCredentials(otpCredentials OtpCredentials) Credentials 
 	}
 }
 
-func CreateCredentialsOAuthCredentials(oAuthCredentials OAuthCredentials) Credentials {
-	typ := CredentialsTypeOAuthCredentials
+func CreateCredentialsGoogleCredentials(googleCredentials GoogleCredentials) Credentials {
+	typ := CredentialsTypeGoogleCredentials
 
 	return Credentials{
-		OAuthCredentials: &oAuthCredentials,
-		Type:             typ,
+		GoogleCredentials: &googleCredentials,
+		Type:              typ,
+	}
+}
+
+func CreateCredentialsMicrosoftCredentials(microsoftCredentials MicrosoftCredentials) Credentials {
+	typ := CredentialsTypeMicrosoftCredentials
+
+	return Credentials{
+		MicrosoftCredentials: &microsoftCredentials,
+		Type:                 typ,
 	}
 }
 
@@ -134,11 +143,19 @@ func (u *Credentials) UnmarshalJSON(data []byte) (err error) {
 		})
 	}
 
-	var oAuthCredentials OAuthCredentials = OAuthCredentials{}
-	if err := utils.UnmarshalJSON(data, &oAuthCredentials, "", true, nil); err == nil {
+	var googleCredentials GoogleCredentials = GoogleCredentials{}
+	if err := utils.UnmarshalJSON(data, &googleCredentials, "", true, nil); err == nil {
 		candidates = append(candidates, utils.UnionCandidate{
-			Type:  CredentialsTypeOAuthCredentials,
-			Value: &oAuthCredentials,
+			Type:  CredentialsTypeGoogleCredentials,
+			Value: &googleCredentials,
+		})
+	}
+
+	var microsoftCredentials MicrosoftCredentials = MicrosoftCredentials{}
+	if err := utils.UnmarshalJSON(data, &microsoftCredentials, "", true, nil); err == nil {
+		candidates = append(candidates, utils.UnionCandidate{
+			Type:  CredentialsTypeMicrosoftCredentials,
+			Value: &microsoftCredentials,
 		})
 	}
 
@@ -169,8 +186,11 @@ func (u *Credentials) UnmarshalJSON(data []byte) (err error) {
 	case CredentialsTypeOtpCredentials:
 		u.OtpCredentials = best.Value.(*OtpCredentials)
 		return nil
-	case CredentialsTypeOAuthCredentials:
-		u.OAuthCredentials = best.Value.(*OAuthCredentials)
+	case CredentialsTypeGoogleCredentials:
+		u.GoogleCredentials = best.Value.(*GoogleCredentials)
+		return nil
+	case CredentialsTypeMicrosoftCredentials:
+		u.MicrosoftCredentials = best.Value.(*MicrosoftCredentials)
 		return nil
 	case CredentialsTypeStr:
 		u.Str = best.Value.(*string)
@@ -189,8 +209,12 @@ func (u Credentials) MarshalJSON() ([]byte, error) {
 		return utils.MarshalJSON(u.OtpCredentials, "", true)
 	}
 
-	if u.OAuthCredentials != nil {
-		return utils.MarshalJSON(u.OAuthCredentials, "", true)
+	if u.GoogleCredentials != nil {
+		return utils.MarshalJSON(u.GoogleCredentials, "", true)
+	}
+
+	if u.MicrosoftCredentials != nil {
+		return utils.MarshalJSON(u.MicrosoftCredentials, "", true)
 	}
 
 	if u.Str != nil {
@@ -204,17 +228,32 @@ func (u Credentials) MarshalJSON() ([]byte, error) {
 // **Credential format varies by method:**
 // - `password`: `{ password: "string" }`
 // - `otp`: `{ otp: "123456" }` (6-digit code)
-// - `google`: `"google-id-token-string"`
-// - `microsoft`: `{ accessToken: "...", idToken: "..." }`
-// - `azureAd`: `{ accessToken: "...", idToken: "..." }`
-// - `oauth`: `{ accessToken: "...", idToken: "..." }`
-// - `samlSso`: not accepted by `/userAccount/authenticate`, which answers `400`. SAML sign-in runs as a browser redirect: send the browser to `/saml/signIn` instead
+// - `google`: `"google-id-token-string"`, or `{ credential: "google-id-token-string" }`
+// - `microsoft`: `{ idToken: "..." }`; an `accessToken` may be sent alongside but is not read
+//
+// SAML (`samlSso`), generic OAuth (`oauth`) and Azure AD (`azureAd`) sign-in were removed in 1.0
+// and are answered `400`. Azure AD accounts sign in with `microsoft`.
+//
+// Any top-level field not listed here is refused with `400`.
 type AuthenticateRequest struct {
-	// Authentication method to use
+	// Authentication method to use. It must be one the session's current step allows;
+	// any other value, known or not, is answered `400`.
+	//
 	Method Method `json:"method"`
-	// Credentials based on the authentication method
+	// Credentials based on the authentication method; the shape each method needs is
+	// listed above. The validator only checks that this is a non-empty string or an
+	// object whose `password`, `otp`, `token`, `code`, `accessToken` and `idToken`,
+	// when present, are strings; other fields of the object are passed through. An
+	// object without the field its method needs is refused later as a failed sign-in,
+	// not as a validation error: `microsoft` without `idToken` answers `400`, and a Google
+	// token that is not a JWT answers `500`.
+	//
 	Credentials Credentials `json:"credentials"`
-	// Optional email for verification (used with some OAuth methods)
+	// The account's email. Used when the session was started without one
+	// (`/initAuth` with no `email`); when neither carries an email, password and
+	// code sign-in answer `500`. Ignored by the external-provider methods, which
+	// take the email from the provider.
+	//
 	Email *string `json:"email,omitzero"`
 	// Cloudflare Turnstile CAPTCHA token (optional, if CAPTCHA is enabled)
 	CfTurnstileResponse *string `json:"cf-turnstile-response,omitzero"`

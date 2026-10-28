@@ -5,14 +5,15 @@ package operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 	"time"
 )
 
 // QueryParamSource - `owned` — owner list (`userId` filter only).
-// `shared` — explicit share grant list (`isShared` + `sharedWith`).
+// `shared` — explicit share grant list (`isShared` + `sharedWith`). Includes agent
+// conversations shared with the caller; those rows carry `agentKey`.
 // Defaults to `owned` when omitted.
 type QueryParamSource string
 
@@ -97,16 +98,54 @@ func (e *GetAllConversationsSortOrderEnum) UnmarshalJSON(data []byte) error {
 	}
 }
 
+// GetAllConversationsSharedEnum - When set, filters by `isShared`. Accepts exactly `true`,
+// `false`, `1` or `0`.
+type GetAllConversationsSharedEnum string
+
+const (
+	GetAllConversationsSharedEnumTrue  GetAllConversationsSharedEnum = "true"
+	GetAllConversationsSharedEnumFalse GetAllConversationsSharedEnum = "false"
+	GetAllConversationsSharedEnumOne   GetAllConversationsSharedEnum = "1"
+	GetAllConversationsSharedEnumZero  GetAllConversationsSharedEnum = "0"
+)
+
+func (e GetAllConversationsSharedEnum) ToPointer() *GetAllConversationsSharedEnum {
+	return &e
+}
+func (e *GetAllConversationsSharedEnum) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "true":
+		fallthrough
+	case "false":
+		fallthrough
+	case "1":
+		fallthrough
+	case "0":
+		*e = GetAllConversationsSharedEnum(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetAllConversationsSharedEnum: %v", v)
+	}
+}
+
 type GetAllConversationsRequest struct {
 	// `owned` — owner list (`userId` filter only).
-	// `shared` — explicit share grant list (`isShared` + `sharedWith`).
+	// `shared` — explicit share grant list (`isShared` + `sharedWith`). Includes agent
+	// conversations shared with the caller; those rows carry `agentKey`.
 	// Defaults to `owned` when omitted.
 	//
 	Source *QueryParamSource `default:"owned" queryParam:"style=form,explode=true,name=source"`
-	// Page number (1-based). Defaults to 1.
-	Page *int64 `queryParam:"style=form,explode=true,name=page"`
-	// Page size. Defaults to 20; capped by the server (max 100).
-	Limit *int64 `queryParam:"style=form,explode=true,name=limit"`
+	// Page number (1-based). Defaults to 1. The validator accepts any number, so a
+	// fraction such as `1.5` is not refused; it is truncated (`1.5` reads as page 1).
+	//
+	Page *float64 `queryParam:"style=form,explode=true,name=page"`
+	// Page size. Defaults to 10; values above 100, and fractions, are refused (`400 VALIDATION_ERROR`).
+	//
+	Limit *int64 `default:"10" queryParam:"style=form,explode=true,name=limit"`
 	// Sort field. Invalid values fall back to `lastActivityAt`.
 	SortBy *GetAllConversationsSortByEnum `queryParam:"style=form,explode=true,name=sortBy"`
 	// Sort direction. Defaults to `desc` unless set to `asc`.
@@ -115,14 +154,18 @@ type GetAllConversationsRequest struct {
 	ConversationID *string `queryParam:"style=form,explode=true,name=conversationId"`
 	// Case-insensitive match on title and message content (max 1000 characters).
 	Search *string `queryParam:"style=form,explode=true,name=search"`
-	// Filter by `createdAt` ≥ this ISO date.
-	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
-	// Filter by `createdAt` ≤ this ISO date.
-	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
-	// When set, filters by `isShared`. Accepts case-insensitive
-	// `true`/`false`, or `1`/`0`.
+	// Filter by `createdAt` ≥ this instant. Must be a full ISO 8601
+	// date-time with `Z` or a numeric offset; a bare date is refused.
 	//
-	Shared *string `queryParam:"style=form,explode=true,name=shared"`
+	StartDate *time.Time `queryParam:"style=form,explode=true,name=startDate"`
+	// Filter by `createdAt` ≤ this instant. Must be a full ISO 8601
+	// date-time with `Z` or a numeric offset; a bare date is refused.
+	//
+	EndDate *time.Time `queryParam:"style=form,explode=true,name=endDate"`
+	// When set, filters by `isShared`. Accepts exactly `true`,
+	// `false`, `1` or `0`.
+	//
+	Shared *GetAllConversationsSharedEnum `queryParam:"style=form,explode=true,name=shared"`
 	// Restrict results to a single project. Pass a project's `id` to
 	// list conversations linked to that project (visible to the
 	// caller — owner, member, or org-visible project with
@@ -150,7 +193,7 @@ func (g *GetAllConversationsRequest) GetSource() *QueryParamSource {
 	return g.Source
 }
 
-func (g *GetAllConversationsRequest) GetPage() *int64 {
+func (g *GetAllConversationsRequest) GetPage() *float64 {
 	if g == nil {
 		return nil
 	}
@@ -206,7 +249,7 @@ func (g *GetAllConversationsRequest) GetEndDate() *time.Time {
 	return g.EndDate
 }
 
-func (g *GetAllConversationsRequest) GetShared() *string {
+func (g *GetAllConversationsRequest) GetShared() *GetAllConversationsSharedEnum {
 	if g == nil {
 		return nil
 	}
@@ -450,7 +493,7 @@ func (g *GetAllConversationsApplied) GetValues() Values {
 	return g.Values
 }
 
-type GetAllConversationsShared struct {
+type GetAllConversationsSharedResponse struct {
 	// Accepted values for the `shared` query param.
 	Values      []string                                  `json:"values,omitzero"`
 	Description *string                                   `json:"description,omitzero"`
@@ -458,39 +501,39 @@ type GetAllConversationsShared struct {
 	Applied     *bool                                     `json:"applied,omitzero"`
 }
 
-func (g GetAllConversationsShared) MarshalJSON() ([]byte, error) {
+func (g GetAllConversationsSharedResponse) MarshalJSON() ([]byte, error) {
 	return utils.MarshalJSON(g, "", false)
 }
 
-func (g *GetAllConversationsShared) UnmarshalJSON(data []byte) error {
+func (g *GetAllConversationsSharedResponse) UnmarshalJSON(data []byte) error {
 	if err := utils.UnmarshalJSON(data, &g, "", false, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *GetAllConversationsShared) GetValues() []string {
+func (g *GetAllConversationsSharedResponse) GetValues() []string {
 	if g == nil {
 		return nil
 	}
 	return g.Values
 }
 
-func (g *GetAllConversationsShared) GetDescription() *string {
+func (g *GetAllConversationsSharedResponse) GetDescription() *string {
 	if g == nil {
 		return nil
 	}
 	return g.Description
 }
 
-func (g *GetAllConversationsShared) GetCurrent() optionalnullable.OptionalNullable[string] {
+func (g *GetAllConversationsSharedResponse) GetCurrent() optionalnullable.OptionalNullable[string] {
 	if g == nil {
 		return nil
 	}
 	return g.Current
 }
 
-func (g *GetAllConversationsShared) GetApplied() *bool {
+func (g *GetAllConversationsSharedResponse) GetApplied() *bool {
 	if g == nil {
 		return nil
 	}
@@ -1174,7 +1217,7 @@ func (g *GetAllConversationsSortingMessages) GetSortOrder() *GetAllConversations
 }
 
 type GetAllConversationsAvailable struct {
-	Shared          GetAllConversationsShared              `json:"shared"`
+	Shared          GetAllConversationsSharedResponse      `json:"shared"`
 	Tags            GetAllConversationsTags                `json:"tags"`
 	MinMessages     GetAllConversationsMinMessages         `json:"minMessages"`
 	Search          GetAllConversationsSearch              `json:"search"`
@@ -1185,9 +1228,9 @@ type GetAllConversationsAvailable struct {
 	SortingMessages GetAllConversationsSortingMessages     `json:"sortingMessages"`
 }
 
-func (g *GetAllConversationsAvailable) GetShared() GetAllConversationsShared {
+func (g *GetAllConversationsAvailable) GetShared() GetAllConversationsSharedResponse {
 	if g == nil {
-		return GetAllConversationsShared{}
+		return GetAllConversationsSharedResponse{}
 	}
 	return g.Shared
 }

@@ -3,12 +3,12 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type NavigateKnowledgeGraphRequest struct {
-	// The node to open. Take it from an `id` in a previous navigate or lookup response. Omit it entirely for the flat listing of everything reachable — the usual starting point. A URL or an issue key such as `PA-1787` also works: it is resolved to its record automatically.
+	// The node to open. Take it from an `id` in a previous navigate or lookup response. Omit it entirely for the flat listing of everything reachable — the usual starting point. A URL or an issue key such as `PA-1787` also works: it is resolved to its record automatically. The value is trimmed before it is checked, so a blank one is refused like an empty one.
 	NodeID *string `queryParam:"style=form,explode=true,name=nodeId"`
 	// Page number, 1-indexed.
 	Page *int64 `default:"1" queryParam:"style=form,explode=true,name=page"`
@@ -16,15 +16,15 @@ type NavigateKnowledgeGraphRequest struct {
 	Limit *int64 `default:"50" queryParam:"style=form,explode=true,name=limit"`
 	// Levels of descendants to return in one call. Above 1, `rows` is a flat list of all descendants down to that level rather than only direct children, and each row carries its own `level`.
 	Depth *int64 `default:"1" queryParam:"style=form,explode=true,name=depth"`
-	// Restrict children to these node types. Repeat the parameter for multiple types: `?nodeTypes=record&nodeTypes=folder`.
+	// Restrict children to these node types. Repeat the parameter for multiple types: `?nodeTypes=record&nodeTypes=folder`. A single value is read as a list of one. The types that filter are `app`, `recordGroup`, `record` and `folder`; any other value is accepted and ignored, so it does not narrow the listing.
 	NodeTypes []string `queryParam:"style=form,explode=true,name=nodeTypes"`
-	// Filter children by source creation time. ISO 8601 `YYYY-MM-DD`, or a full datetime that MUST carry a timezone offset — a naive datetime is rejected rather than assumed to be UTC.
+	// Filter children by source creation time. ISO 8601 `YYYY-MM-DD`, or a full datetime that MUST carry a timezone offset — a naive datetime is rejected rather than assumed to be UTC. Must not be in the future (5 minutes of clock skew are tolerated) and must not be after `createdBefore`. A `YYYY-MM-DD` day past the end of its month (`2024-02-31`) counts from the first day of the next month here, and as the month's last day in a `...Before` bound. A day above 31, a month above 12 or year 0 (`2024-02-32`) is refused with `400`.
 	CreatedAfter *string `queryParam:"style=form,explode=true,name=createdAfter"`
 	// Filter children by source creation time. `YYYY-MM-DD` is inclusive of the whole day.
 	CreatedBefore *string `queryParam:"style=form,explode=true,name=createdBefore"`
-	// Filter children by source modification time.
+	// Filter children by source modification time. Must not be after `modifiedBefore`.
 	ModifiedAfter *string `queryParam:"style=form,explode=true,name=modifiedAfter"`
-	// Filter children by source modification time.
+	// Filter children by source modification time. `YYYY-MM-DD` is inclusive of the whole day.
 	ModifiedBefore *string `queryParam:"style=form,explode=true,name=modifiedBefore"`
 }
 

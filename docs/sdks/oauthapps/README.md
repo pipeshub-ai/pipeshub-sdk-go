@@ -15,7 +15,7 @@ or organizations. Each app receives a client ID and secret for authentication.
 
 **Who authorizes vs. client credentials**
 - **Authorization code:** Any authenticated user in the workspace may complete consent for a valid `client_id`; issued tokens represent **that user**.
-- **Client credentials:** Access tokens represent the **OAuth app creator** (who registered the client), not the caller.
+- **Client credentials:** Access tokens represent the **service account the app is pointed at**, never the caller. An app that allows this grant must name one at creation, and only an administrator may choose it. Apps created before that rule, and never bound, still represent the **OAuth app creator** — the fallback this rule exists to remove.
 
 **Scopes**
 - `GET /oauth-clients/scopes` returns scopes grouped by category for the **signed-in user's role**.
@@ -64,8 +64,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -90,14 +90,14 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                            | Type                                                                                 | Required                                                                             | Description                                                                          |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| `ctx`                                                                                | [context.Context](https://pkg.go.dev/context#Context)                                | :heavy_check_mark:                                                                   | The context to use for the request.                                                  |
-| `page`                                                                               | `*int64`                                                                             | :heavy_minus_sign:                                                                   | Page number (matches `listAppsQuerySchema`: defaults to `1` when omitted or empty).<br/> |
-| `limit`                                                                              | `*int64`                                                                             | :heavy_minus_sign:                                                                   | Items per page (defaults to `20` when omitted or empty; max 100).<br/>               |
-| `status`                                                                             | [*operations.ListOAuthAppsStatus](../../models/operations/listoauthappsstatus.md)    | :heavy_minus_sign:                                                                   | Filter by status                                                                     |
-| `search`                                                                             | `*string`                                                                            | :heavy_minus_sign:                                                                   | Search by app name or description (case-insensitive)                                 |
-| `opts`                                                                               | [][operations.Option](../../models/operations/option.md)                             | :heavy_minus_sign:                                                                   | The options for this request.                                                        |
+| Parameter                                                                                                                                        | Type                                                                                                                                             | Required                                                                                                                                         | Description                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ctx`                                                                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                                                                            | :heavy_check_mark:                                                                                                                               | The context to use for the request.                                                                                                              |
+| `page`                                                                                                                                           | `*int64`                                                                                                                                         | :heavy_minus_sign:                                                                                                                               | Page number (matches `listAppsQuerySchema`: defaults to `1` when omitted or empty).<br/>                                                         |
+| `limit`                                                                                                                                          | `*int64`                                                                                                                                         | :heavy_minus_sign:                                                                                                                               | Items per page (defaults to `20` when omitted or empty; max 100).<br/>                                                                           |
+| `status`                                                                                                                                         | [*operations.ListOAuthAppsStatus](../../models/operations/listoauthappsstatus.md)                                                                | :heavy_minus_sign:                                                                                                                               | Filter by status. `revoked` always yields an empty page, because an app only becomes revoked by being deleted and deleted apps are never listed. |
+| `search`                                                                                                                                         | `*string`                                                                                                                                        | :heavy_minus_sign:                                                                                                                               | Search by app name or description (case-insensitive)                                                                                             |
+| `opts`                                                                                                                                           | [][operations.Option](../../models/operations/option.md)                                                                                         | :heavy_minus_sign:                                                                                                                               | The options for this request.                                                                                                                    |
 
 ### Response
 
@@ -107,8 +107,10 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
+| apierrors.ErrorResponse                       | 400                                           | application/json                              |
 | apierrors.ApplicationJSONErrorResponse        | 401, 403                                      | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## CreateOAuthApp
@@ -131,8 +133,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -147,6 +149,7 @@ func main() {
 
     res, err := s.OAuthApps.CreateOAuthApp(ctx, components.CreateOAuthAppRequest{
         Name: "My Integration App",
+        TokenIdentityUserID: pipeshub.Pointer("65f0c0ffee00000000000000"),
         Description: pipeshub.Pointer("Integrates PipesHub with our internal tools"),
         RedirectUris: []string{
             "https://myapp.com/callback",
@@ -188,8 +191,9 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403                                 | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## ListOAuthScopes
@@ -212,8 +216,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -251,8 +255,10 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 401                                           | application/json                              |
+| apierrors.ErrorResponse                       | 400                                           | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 401, 403                                      | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## GetOAuthApp
@@ -271,8 +277,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -311,17 +317,28 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 401, 403, 404                                 | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## UpdateOAuthApp
 
 Update an OAuth app's configuration. All body fields are optional — supply only what should change. URL fields (`homepageUrl`, `privacyPolicyUrl`, `termsOfServiceUrl`) accept `null` to clear them.
 
+**Adding `client_credentials`** to `allowedGrantTypes` requires an organisation administrator, because
+it settles whose documents the application's tokens reach. A non-administrator answers `403`, and that
+check runs first — so a member sees `403` whether or not a service account is bound.
+
+For an administrator, it answers `400` when no service account is bound or the bound account is
+disabled, and `404` when the bound identity no longer exists or is not a service account — distinct
+from the `404` for an application this caller cannot see. Point the application at one first with
+`PUT /oauth-clients/{appId}/token-identity`. An application that already allows the grant without a
+service account predates this rule and can still be edited.
+
 Creator-only: even org admins cannot edit apps owned by other users.
 
-When modifying `allowedScopes`, the new set must remain a subset of the caller's role-aware scope list (same rule as `GET /oauth-clients/scopes`). When adding `authorization_code` to `allowedGrantTypes`, `redirectUris` becomes required and must contain at least one URI; otherwise the request is rejected with `400` by the Zod refine on `updateAppSchema`.
+When modifying `allowedScopes`, the new set must remain a subset of the caller's role-aware scope list (same rule as `GET /oauth-clients/scopes`). The Zod refine on `updateAppSchema` only looks at the body: it refuses `allowedGrantTypes` containing `authorization_code` together with an empty `redirectUris` (`400 VALIDATION_ERROR`), but sending `authorization_code` without `redirectUris` is accepted even when the stored app has no redirect URI.
 
 This endpoint never rotates the client secret — use `POST /oauth-clients/{appId}/regenerate-secret` for that.
 
@@ -335,8 +352,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -349,7 +366,7 @@ func main() {
         }),
     )
 
-    res, err := s.OAuthApps.UpdateOAuthApp(ctx, "<id>", components.UpdateOAuthAppRequest{})
+    res, err := s.OAuthApps.UpdateOAuthApp(ctx, "<id>", &components.UpdateOAuthAppRequest{})
     if err != nil {
         log.Fatal(err)
     }
@@ -361,12 +378,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                            | Type                                                                                 | Required                                                                             | Description                                                                          |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| `ctx`                                                                                | [context.Context](https://pkg.go.dev/context#Context)                                | :heavy_check_mark:                                                                   | The context to use for the request.                                                  |
-| `appID`                                                                              | `string`                                                                             | :heavy_check_mark:                                                                   | OAuth app ID                                                                         |
-| `body`                                                                               | [components.UpdateOAuthAppRequest](../../models/components/updateoauthapprequest.md) | :heavy_check_mark:                                                                   | Request payload                                                                      |
-| `opts`                                                                               | [][operations.Option](../../models/operations/option.md)                             | :heavy_minus_sign:                                                                   | The options for this request.                                                        |
+| Parameter                                                                                                | Type                                                                                                     | Required                                                                                                 | Description                                                                                              |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                    | [context.Context](https://pkg.go.dev/context#Context)                                                    | :heavy_check_mark:                                                                                       | The context to use for the request.                                                                      |
+| `appID`                                                                                                  | `string`                                                                                                 | :heavy_check_mark:                                                                                       | OAuth app ID                                                                                             |
+| `body`                                                                                                   | [*components.UpdateOAuthAppRequest](../../models/components/updateoauthapprequest.md)                    | :heavy_minus_sign:                                                                                       | Fields to change. A request with no body, or `{}`, is accepted and changes nothing (`200` with the app). |
+| `opts`                                                                                                   | [][operations.Option](../../models/operations/option.md)                                                 | :heavy_minus_sign:                                                                                       | The options for this request.                                                                            |
 
 ### Response
 
@@ -376,8 +393,9 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404, 409                       | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## DeleteOAuthApp
@@ -396,8 +414,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -436,8 +454,9 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 401, 403, 404                                 | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## RegenerateOAuthAppSecret
@@ -458,8 +477,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -498,8 +517,9 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 401, 403, 404                                 | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## SuspendOAuthApp
@@ -520,8 +540,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -562,13 +582,14 @@ func main() {
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
 | apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## ActivateOAuthApp
 
 Moves a suspended OAuth app back to `status: "active"`, restoring its ability to authenticate and obtain new tokens via `POST /oauth2/token`.
 
-A revoked app cannot be reactivated (returns `400`); the only path back is to register a new app. Activating an app that is already active also returns `400`.
+Activating an app that is already active returns `400`. A deleted app (the only way an app becomes `revoked`) is hidden from every lookup, so activating it returns `404`, not the service's "Cannot activate a revoked app" `400`; the only path back is to register a new app.
 
 Creator-only.
 
@@ -582,8 +603,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -624,6 +645,7 @@ func main() {
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
 | apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## ListOAuthAppTokens
@@ -644,8 +666,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -684,15 +706,16 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 401, 403, 404                                 | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## RevokeAllOAuthAppTokens
 
 Revokes every access and refresh token currently issued to an OAuth app, in a single operation. Use this for emergency credential rotation, suspected secret leaks, or as a follow-up to `POST /oauth-clients/{appId}/regenerate-secret` when you want existing sessions invalidated immediately rather than letting them expire naturally.
 
-The response `count` is the total number of tokens revoked across both types. Clients of this app must then obtain new tokens via the standard OAuth flow.
+The response carries only a confirmation `message`; it does not say how many tokens were revoked. Clients of this app must then obtain new tokens via the standard OAuth flow.
 
 Creator-only.
 
@@ -706,8 +729,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -746,6 +769,7 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 401, 403, 404                                 | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |

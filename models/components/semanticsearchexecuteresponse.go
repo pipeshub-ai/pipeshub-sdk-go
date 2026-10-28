@@ -3,11 +3,13 @@
 package components
 
 // SemanticSearchExecuteResponse - Immediate POST `/search` response: persisted search id plus the raw retrieval payload.
+// `searchId` is absent when the request set `saveHistory` to `false`.
 // SDK-oriented modeling: named fields only at this level; dynamic-key maps inside `searchResponse` use
 // `additionalProperties` with a `$ref` (e.g. `virtual_to_record_map`) rather than boolean `additionalProperties: true`,
 // so generated clients retain typed values where possible.
 type SemanticSearchExecuteResponse struct {
-	SearchID string `json:"searchId"`
+	// The saved search, for `GET /search/{searchId}`. Absent when `saveHistory` is `false`.
+	SearchID *string `json:"searchId,omitzero"`
 	// Payload returned by the AI retrieval service for a semantic search (embedded in `searchResponse`).
 	// Optional `virtual_to_record_map` maps each virtual record id (string key) to one resolved graph record document.
 	// Empty responses from the retrieval layer omit `virtual_to_record_map`; success payloads may include it alongside hits and records.
@@ -15,9 +17,9 @@ type SemanticSearchExecuteResponse struct {
 	SearchResponse SemanticSearchAiResponse `json:"searchResponse"`
 }
 
-func (s *SemanticSearchExecuteResponse) GetSearchID() string {
+func (s *SemanticSearchExecuteResponse) GetSearchID() *string {
 	if s == nil {
-		return ""
+		return nil
 	}
 	return s.SearchID
 }

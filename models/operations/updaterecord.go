@@ -3,47 +3,14 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
-type UpdateRecordFile struct {
-	FileName string `multipartForm:"name=fileName"`
-	// This field accepts []byte data or io.Reader implementations, such as *os.File.
-	Content any `multipartForm:"content"`
-}
-
-func (u *UpdateRecordFile) GetFileName() string {
-	if u == nil {
-		return ""
-	}
-	return u.FileName
-}
-
-func (u *UpdateRecordFile) GetContent() any {
-	if u == nil {
-		return nil
-	}
-	return u.Content
-}
-
-// UpdateRecordRequestBody - Request payload
+// UpdateRecordRequestBody - Request payload. Optional: without one nothing changes.
 type UpdateRecordRequestBody struct {
-	// New name for the record
-	RecordName *string `multipartForm:"name=recordName"`
-	// Replacement file content
-	File *UpdateRecordFile `multipartForm:"file,name=file"`
-}
-
-func (u UpdateRecordRequestBody) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(u, "", false)
-}
-
-func (u *UpdateRecordRequestBody) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
-		return err
-	}
-	return nil
+	// New name for the record (rename only; a file needs the multipart form).
+	RecordName *string `json:"recordName,omitzero"`
 }
 
 func (u *UpdateRecordRequestBody) GetRecordName() *string {
@@ -53,18 +20,11 @@ func (u *UpdateRecordRequestBody) GetRecordName() *string {
 	return u.RecordName
 }
 
-func (u *UpdateRecordRequestBody) GetFile() *UpdateRecordFile {
-	if u == nil {
-		return nil
-	}
-	return u.File
-}
-
 type UpdateRecordRequest struct {
 	// Record ID
 	RecordID string `pathParam:"style=simple,explode=false,name=recordId"`
-	// Request payload
-	Body *UpdateRecordRequestBody `request:"mediaType=multipart/form-data"`
+	// Request payload. Optional: without one nothing changes.
+	Body *UpdateRecordRequestBody `request:"mediaType=application/json"`
 }
 
 func (u UpdateRecordRequest) MarshalJSON() ([]byte, error) {
@@ -92,115 +52,10 @@ func (u *UpdateRecordRequest) GetBody() *UpdateRecordRequestBody {
 	return u.Body
 }
 
-type Location string
-
-const (
-	LocationKbRoot Location = "kb_root"
-	LocationFolder Location = "folder"
-)
-
-func (e Location) ToPointer() *Location {
-	return &e
-}
-
-// IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *Location) IsExact() bool {
-	if e != nil {
-		switch *e {
-		case "kb_root", "folder":
-			return true
-		}
-	}
-	return false
-}
-
-// UpdateRecordResponseBody - Fields merged into successful record-update responses (Node gateway and Local KB connector).
-type UpdateRecordResponseBody struct {
-	Success *bool   `json:"success,omitzero"`
-	Message *string `json:"message,omitzero"`
-	// A record represents a single document, file, or content item within a knowledge base.
-	// Records can originate from file uploads or external connectors (Google Drive, OneDrive, etc.).
-	//
-	Record *components.Record `json:"record,omitzero"`
-	// Epoch milliseconds when the response was generated
-	Timestamp      *int64         `json:"timestamp,omitzero"`
-	FileUpdated    *bool          `json:"fileUpdated,omitzero"`
-	Location       *Location      `json:"location,omitzero"`
-	Kb             map[string]any `json:"kb,omitzero"`
-	UserPermission *string        `json:"userPermission,omitzero"`
-}
-
-func (u UpdateRecordResponseBody) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(u, "", false)
-}
-
-func (u *UpdateRecordResponseBody) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u *UpdateRecordResponseBody) GetSuccess() *bool {
-	if u == nil {
-		return nil
-	}
-	return u.Success
-}
-
-func (u *UpdateRecordResponseBody) GetMessage() *string {
-	if u == nil {
-		return nil
-	}
-	return u.Message
-}
-
-func (u *UpdateRecordResponseBody) GetRecord() *components.Record {
-	if u == nil {
-		return nil
-	}
-	return u.Record
-}
-
-func (u *UpdateRecordResponseBody) GetTimestamp() *int64 {
-	if u == nil {
-		return nil
-	}
-	return u.Timestamp
-}
-
-func (u *UpdateRecordResponseBody) GetFileUpdated() *bool {
-	if u == nil {
-		return nil
-	}
-	return u.FileUpdated
-}
-
-func (u *UpdateRecordResponseBody) GetLocation() *Location {
-	if u == nil {
-		return nil
-	}
-	return u.Location
-}
-
-func (u *UpdateRecordResponseBody) GetKb() map[string]any {
-	if u == nil {
-		return nil
-	}
-	return u.Kb
-}
-
-func (u *UpdateRecordResponseBody) GetUserPermission() *string {
-	if u == nil {
-		return nil
-	}
-	return u.UserPermission
-}
-
 type UpdateRecordResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// Record updated successfully
-	Object *UpdateRecordResponseBody
+	UpdateRecordResponseSchema *components.UpdateRecordResponseSchema
 }
 
 func (u UpdateRecordResponse) MarshalJSON() ([]byte, error) {
@@ -221,9 +76,9 @@ func (u *UpdateRecordResponse) GetHTTPMeta() components.HTTPMetadata {
 	return u.HTTPMeta
 }
 
-func (u *UpdateRecordResponse) GetObject() *UpdateRecordResponseBody {
+func (u *UpdateRecordResponse) GetUpdateRecordResponseSchema() *components.UpdateRecordResponseSchema {
 	if u == nil {
 		return nil
 	}
-	return u.Object
+	return u.UpdateRecordResponseSchema
 }

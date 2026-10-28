@@ -50,11 +50,42 @@ Use the `include` parameter to request additional sections:
 - `breadcrumbs` — adds the breadcrumb trail (empty at root level)
 - `permissions` — adds the caller's permission flags
 
+**A connected app with a limit**
+
+A token that may see only some sources pages and counts only what
+its limit lets it see:
+- Limited to whole sources (apps or collections) only: the listing
+  and the search cover those, with exact totals and counts.
+- Limited to any spaces, folders or files, alone or beside whole
+  sources: the listing returns each whole source, space (record
+  group), folder and file the limit names, one item each, to open
+  by its `id`. `totalItems` counts those items, not what is inside
+  them. A search reads
+  forward only (`prevCursor` is always null), and takes a `page`
+  number up to 5; for later pages, send `nextCursor`. Its `totalItems` counts
+  the matches found so far and can grow from page to page; it is
+  final once `hasNext` is false. `counts` is returned only when the
+  whole result fits in the first page read, and is `null` otherwise.
+- An item can sit in a folder the limit leaves out, as a file the
+  limit names does. Its `parentId` and `parent` are then `null`: the
+  item is returned, and the folder above it is not named.
+- A `nextCursor` or `prevCursor` belongs to the limit it was read
+  under. A token with a different limit that sends it gets a `400`;
+  start that listing again without a cursor.
+
 **Access control**
 
 Requires a valid bearer token. For OAuth tokens the `kb:read` scope
 must be present; regular JWT bearer tokens pass through without scope
-enforcement.
+enforcement. Only nodes the caller can access are listed.
+
+**Request checking**
+
+This route has no request validator of its own; the query is passed on and
+checked by the connector service. Query parameters not listed here are
+ignored. A wrong type for `page`, `limit`, `onlyContainers` or `flattened`
+(or `page` below 1 or `limit` outside 1-200, or either sent more than once) is answered
+`422`; a refused filter value is answered `400`.
 
 
 > :warning: **DEPRECATED**: Use the Knowledge Base API instead. This grouping will be removed in a future release.
@@ -68,9 +99,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -118,13 +149,13 @@ func main() {
 
 ### Errors
 
-| Error Type                                            | Status Code                                           | Content Type                                          |
-| ----------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
-| apierrors.GetKnowledgeHubRootNodesBadRequestError     | 400                                                   | application/json                                      |
-| apierrors.GetKnowledgeHubRootNodesUnauthorizedError   | 401                                                   | application/json                                      |
-| apierrors.GetKnowledgeHubRootNodesForbiddenError      | 403                                                   | application/json                                      |
-| apierrors.GetKnowledgeHubRootNodesInternalServerError | 500                                                   | application/json                                      |
-| apierrors.APIError                                    | 4XX, 5XX                                              | \*/\*                                                 |
+| Error Type                                                 | Status Code                                                | Content Type                                               |
+| ---------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| apierrors.ErrorResponse                                    | 400, 401, 403                                              | application/json                                           |
+| apierrors.GetKnowledgeHubRootNodesUnprocessableEntityError | 422                                                        | application/json                                           |
+| apierrors.ErrorResponse                                    | 500                                                        | application/json                                           |
+| apierrors.ServiceUnavailableError                          | 503                                                        | application/json                                           |
+| apierrors.APIError                                         | 4XX, 5XX                                                   | \*/\*                                                      |
 
 ## ~~GetKnowledgeHubChildNodes~~
 
@@ -155,14 +186,27 @@ provided, the search spans all descendants of the parent node.
 
 When `include=breadcrumbs` is set, the response contains a
 `breadcrumbs` array tracing the path from the root to the current
-node. The `currentNode` and `parentNode` objects are always populated
-for non-root requests.
+node. The `currentNode` object is always populated for non-root
+requests. `parentNode` is too, except at the top of a source and for
+a connected app whose limit leaves that parent out: it is `null` then.
 
 **Access control**
 
 Requires a valid bearer token. For OAuth tokens the `kb:read` scope
 must be present; regular JWT bearer tokens pass through without scope
 enforcement.
+
+A parent the caller may not see, one in the trash, and one that does not
+exist are all answered `404` with the same body, so the route does not reveal
+whether the node exists.
+
+**Request checking**
+
+This route has no request validator of its own; the path values and the query
+are checked by the connector service. Query parameters not listed here are
+ignored. A wrong type for `page`, `limit`, `onlyContainers` or `flattened`
+(or `page` below 1 or `limit` outside 1-200) is answered `422`; other refusals,
+`page` above 50 and an unusable `cursor` included, are `400`.
 
 
 > :warning: **DEPRECATED**: Use the Knowledge Base API instead. This grouping will be removed in a future release.
@@ -176,9 +220,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -228,11 +272,10 @@ func main() {
 
 ### Errors
 
-| Error Type                                            | Status Code                                           | Content Type                                          |
-| ----------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
-| apierrors.GetKnowledgeHubChildNodesBadRequestError    | 400                                                   | application/json                                      |
-| apierrors.GetKnowledgeHubRootNodesUnauthorizedError   | 401                                                   | application/json                                      |
-| apierrors.GetKnowledgeHubRootNodesForbiddenError      | 403                                                   | application/json                                      |
-| apierrors.GetKnowledgeHubChildNodesNotFoundError      | 404                                                   | application/json                                      |
-| apierrors.GetKnowledgeHubRootNodesInternalServerError | 500                                                   | application/json                                      |
-| apierrors.APIError                                    | 4XX, 5XX                                              | \*/\*                                                 |
+| Error Type                                                 | Status Code                                                | Content Type                                               |
+| ---------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| apierrors.ErrorResponse                                    | 400, 401, 403, 404                                         | application/json                                           |
+| apierrors.GetKnowledgeHubRootNodesUnprocessableEntityError | 422                                                        | application/json                                           |
+| apierrors.ErrorResponse                                    | 500                                                        | application/json                                           |
+| apierrors.ServiceUnavailableError                          | 503                                                        | application/json                                           |
+| apierrors.APIError                                         | 4XX, 5XX                                                   | \*/\*                                                      |

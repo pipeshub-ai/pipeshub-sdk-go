@@ -1,0 +1,9 @@
+# StopConnectorSyncResponse
+
+
+## Fields
+
+| Field                                                                                                 | Type                                                                                                  | Required                                                                                              | Description                                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `HTTPMeta`                                                                                            | [components.HTTPMetadata](../../models/components/httpmetadata.md)                                    | :heavy_check_mark:                                                                                    | N/A                                                                                                   |
+| `Object`                                                                                              | [*operations.StopConnectorSyncResponseBody](../../models/operations/stopconnectorsyncresponsebody.md) | :heavy_minus_sign:                                                                                    | Stop recorded, or nothing was running                                                                 |

@@ -3,15 +3,26 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type UpdateOAuthAppRequest struct {
 	// OAuth app ID
 	AppID string `pathParam:"style=simple,explode=false,name=appId"`
-	// Request payload
-	Body components.UpdateOAuthAppRequest `request:"mediaType=application/json"`
+	// Fields to change. A request with no body, or `{}`, is accepted and changes nothing (`200` with the app).
+	Body *components.UpdateOAuthAppRequest `request:"mediaType=application/json"`
+}
+
+func (u UpdateOAuthAppRequest) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(u, "", false)
+}
+
+func (u *UpdateOAuthAppRequest) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &u, "", false, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u *UpdateOAuthAppRequest) GetAppID() string {
@@ -21,9 +32,9 @@ func (u *UpdateOAuthAppRequest) GetAppID() string {
 	return u.AppID
 }
 
-func (u *UpdateOAuthAppRequest) GetBody() components.UpdateOAuthAppRequest {
+func (u *UpdateOAuthAppRequest) GetBody() *components.UpdateOAuthAppRequest {
 	if u == nil {
-		return components.UpdateOAuthAppRequest{}
+		return nil
 	}
 	return u.Body
 }

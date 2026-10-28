@@ -3,11 +3,13 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 type AgentCreateToolset struct {
-	// Registered toolset name (lowercase) accepted by the create-agent gateway.
+	// Toolset name. Surrounding whitespace is trimmed before the check, so
+	// `"  slack  "` is accepted.
+	//
 	Name         AgentCreateToolsetName `json:"name"`
 	DisplayName  *string                `json:"displayName,omitzero"`
 	Type         *string                `json:"type,omitzero"`

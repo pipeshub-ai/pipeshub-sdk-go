@@ -3,8 +3,8 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 	"time"
 )
 
@@ -19,12 +19,15 @@ import (
 // archived. The list endpoint already filters out currently-archived
 // rows, so a string user-id value never appears here in practice.
 type SemanticSearchHistoryItem struct {
-	ID          string   `json:"_id"`
-	V           int64    `json:"__v"`
-	Query       string   `json:"query"`
-	Limit       int64    `json:"limit"`
-	OrgID       string   `json:"orgId"`
-	UserID      string   `json:"userId"`
+	ID     string `json:"_id"`
+	V      int64  `json:"__v"`
+	Query  string `json:"query"`
+	Limit  int64  `json:"limit"`
+	OrgID  string `json:"orgId"`
+	UserID string `json:"userId"`
+	// Hit ids. For a search shared with the viewer the ids are not returned
+	// (they cannot be checked against the viewer's access), so the array is empty.
+	//
 	CitationIds []string `json:"citationIds"`
 	// Map of source-record id (or `_key`) to `JSON.stringify(<record>)`.
 	// Clients must `JSON.parse` each value to recover the underlying

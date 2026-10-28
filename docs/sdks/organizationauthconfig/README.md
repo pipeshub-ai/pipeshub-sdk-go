@@ -17,7 +17,10 @@ Retrieve the configured authentication methods for the organization.
 **Response Structure:**
 
 Returns an array of authentication steps, each containing:
-- `order`: Step number (1-3)
+- `order`: The step's position, 1, 2 or 3. Steps are returned in ascending order of the
+  `order` they were saved with and renumbered from 1. A method removed in 1.0 is left out
+  (`azureAd` reads as `microsoft`), a step left with no method is dropped, and when a
+  removed method was left out `password` is added to the first step
 - `allowedMethods`: Array of methods allowed for that step
 
 **Example Response:**
@@ -31,7 +34,8 @@ Returns an array of authentication steps, each containing:
 }
 ```
 
-**Admin Access Required:** Only organization admins can view auth configuration.
+**Admin Access Required:** Only organization admins can view auth configuration, with
+a session access token. The query string is not read.
 
 
 ### Example Usage
@@ -43,8 +47,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -82,7 +86,7 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
+| apierrors.ErrorResponse | 400, 403, 404           | application/json        |
 | apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
@@ -93,20 +97,25 @@ This allows admins to configure single or multi-factor authentication.
 
 **Validation Rules:**
 - Minimum 1 step, maximum 3 steps
-- Each step must have a unique order (1, 2, or 3)
+- Each step must have a unique `order`. `order` is only checked to be a number and is
+  stored as sent; sign-in runs the steps in ascending `order`
 - No duplicate methods within the same step
 - No method can appear in multiple steps
 - Each step must have at least one allowed method
-- `samlSso` is only allowed in a single-step policy; it can't be combined with other steps
+- `samlSso` and `oauth` were removed in 1.0 and are refused; use `microsoft` in place of `azureAd`
+
+The two rules that compare steps with each other (unique `order`, a method in only one
+step) are not expressed in the request schema below; the API refuses a request that
+breaks them with `400 VALIDATION_ERROR` naming `body.authMethod`.
+
+Unknown fields, at any level of the body, and any query string are dropped by the
+validator, not refused.
 
 **Available Methods:**
 - `password`: Email/password authentication
 - `otp`: One-time password via email
 - `google`: Google OAuth 2.0
 - `microsoft`: Microsoft OAuth 2.0
-- `azureAd`: Azure Active Directory
-- `samlSso`: SAML 2.0 Single Sign-On
-- `oauth`: Generic OAuth 2.0 provider
 
 **Example - Single Factor (Password or Google):**
 
@@ -141,9 +150,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -159,10 +168,10 @@ func main() {
     res, err := s.OrganizationAuthConfig.UpdateAuthMethod(ctx, operations.UpdateAuthMethodRequest{
         AuthMethod: []components.AuthStep{
             components.AuthStep{
-                Order: 195644,
+                Order: 195644.0,
                 AllowedMethods: []components.AuthMethod{
                     components.AuthMethod{
-                        Type: components.AuthMethodTypeSamlSso,
+                        Type: components.AuthMethodTypeMicrosoft,
                     },
                 },
             },
@@ -193,13 +202,19 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
+| apierrors.ErrorResponse | 400, 403, 404           | application/json        |
 | apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## SetUpAuthConfig
 
 Set up or initialize the organization's authentication configuration.
+
+First-run only: when the deployment already has a sign-in configuration the answer is
+`200` with `Org config already done`, and the request body is not read at all (a missing
+body, missing or mistyped fields and unknown fields are all accepted). The route has no
+validator; the body fields below are the ones read when the organization is created.
+The query string is not read.
 
 
 ### Example Usage
@@ -211,8 +226,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -255,6 +270,6 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 401, 404           | application/json        |
+| apierrors.ErrorResponse | 400, 403, 404           | application/json        |
 | apierrors.ErrorResponse | 500                     | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |

@@ -5,7 +5,7 @@ package components
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 type CreateOAuthAppRequestAllowedGrantType string
@@ -40,18 +40,39 @@ func (e *CreateOAuthAppRequestAllowedGrantType) UnmarshalJSON(data []byte) error
 // CreateOAuthAppRequest - Request to create a new OAuth app (`createAppSchema` in `oauth.validators.ts`).
 //
 // **Required:** `name`, `allowedScopes`. **Optional:** `description`, `redirectUris`, `allowedGrantTypes`,
-// `homepageUrl`, `privacyPolicyUrl`, `termsOfServiceUrl`, `isConfidential`, `accessTokenLifetime`, `refreshTokenLifetime`.
+// `homepageUrl`, `privacyPolicyUrl`, `termsOfServiceUrl`, `isConfidential`, `accessTokenLifetime`,
+// `refreshTokenLifetime`, `tokenIdentityUserId`.
 //
 // **Redirect rule (Zod refine):** If the effective grant list includes `authorization_code`
 // (including when `allowedGrantTypes` is omitted — defaults to `authorization_code` + `refresh_token`),
 // at least one redirect URI is required. If grants exclude `authorization_code`, `redirectUris` may be omitted.
+//
+// **Service account rule:** If the effective grant list includes `client_credentials`,
+// `tokenIdentityUserId` is **required** and the caller must be an organisation administrator.
+// That grant issues tokens with no person in them, so without a service account the app would act
+// as whoever created it. Omitting it answers `400`; a non-administrator answers `403`.
 type CreateOAuthAppRequest struct {
 	// App name (displayed to users during authorization)
 	Name string `json:"name"`
+	// The service account this app's own tokens act as. Required when
+	// `allowedGrantTypes` includes `client_credentials`, ignored otherwise.
+	//
+	// Must name a service account in the same organisation that is not disabled;
+	// an ordinary user's id is refused. Administrators only.
+	//
+	TokenIdentityUserID *string `json:"tokenIdentityUserId,omitzero"`
 	// App description
 	Description *string `json:"description,omitzero"`
 	// Allowed redirect URIs (max 10). Required when an effective grant list includes `authorization_code`
 	// (including the default when `allowedGrantTypes` is omitted).
+	// Each URI must parse as a URL (`VALIDATION_ERROR` otherwise), and the service then refuses with
+	// `400 OAUTH_INVALID_REDIRECT_URI` any URI that is not `https:` and whose host is not `localhost` or
+	// `127.0.0.1` (any scheme is let through on those two hosts), or that carries a fragment.
+	// The one exception is the literal `cursor://anysphere.cursor-mcp/oauth/callback`.
+	// Both checks use WHATWG `new URL()`, so the scheme and a `localhost` host match in any case,
+	// `https:` may be followed by any number of `/` or `\` (or none), and surrounding whitespace is
+	// allowed and trimmed before the URI is stored; the URI is otherwise stored as sent. `https://`
+	// with no host does not parse. The pattern approximates these rules.
 	//
 	RedirectUris []string `json:"redirectUris,omitzero"`
 	// Allowed grant types. Defaults to `["authorization_code", "refresh_token"]` if omitted (applied by the service, not Zod).
@@ -59,11 +80,11 @@ type CreateOAuthAppRequest struct {
 	AllowedGrantTypes []CreateOAuthAppRequestAllowedGrantType `json:"allowedGrantTypes,omitzero"`
 	// Scopes the app can request (non-empty)
 	AllowedScopes []string `json:"allowedScopes"`
-	// App homepage URL (shown during authorization)
+	// App homepage URL (shown during authorization). Must parse as a URL (`z.string().url()`); the pattern is the closest JSON Schema can say.
 	HomepageURL *string `json:"homepageUrl,omitzero"`
-	// Privacy policy URL
+	// Privacy policy URL. Must parse as a URL (`z.string().url()`); the pattern is the closest JSON Schema can say.
 	PrivacyPolicyURL *string `json:"privacyPolicyUrl,omitzero"`
-	// Terms of service URL
+	// Terms of service URL. Must parse as a URL (`z.string().url()`); the pattern is the closest JSON Schema can say.
 	TermsOfServiceURL *string `json:"termsOfServiceUrl,omitzero"`
 	// Whether the app can securely store secrets.
 	// - `true`: Server-side app (secret required for token requests)
@@ -74,6 +95,14 @@ type CreateOAuthAppRequest struct {
 	AccessTokenLifetime *int64 `default:"3600" json:"accessTokenLifetime"`
 	// Refresh token lifetime in seconds (3600–31536000)
 	RefreshTokenLifetime *int64 `default:"2592000" json:"refreshTokenLifetime"`
+	// What a connected app may see: an OAuth app's limit is picked by its
+	// creator and holds for every user who connects it; a personal access
+	// token's by its owner. Search, chat, agent chat and every record read by
+	// id stay inside it, and inside the connecting user's own permissions.
+	// Omit it for everything the user can see. Sent, it must name at least one id and at
+	// most 50 in all, since it is signed into every token the app gets.
+	//
+	KnowledgeLimit *KnowledgeLimit `json:"knowledgeLimit,omitzero"`
 }
 
 func (c CreateOAuthAppRequest) MarshalJSON() ([]byte, error) {
@@ -92,6 +121,13 @@ func (c *CreateOAuthAppRequest) GetName() string {
 		return ""
 	}
 	return c.Name
+}
+
+func (c *CreateOAuthAppRequest) GetTokenIdentityUserID() *string {
+	if c == nil {
+		return nil
+	}
+	return c.TokenIdentityUserID
 }
 
 func (c *CreateOAuthAppRequest) GetDescription() *string {
@@ -162,4 +198,11 @@ func (c *CreateOAuthAppRequest) GetRefreshTokenLifetime() *int64 {
 		return nil
 	}
 	return c.RefreshTokenLifetime
+}
+
+func (c *CreateOAuthAppRequest) GetKnowledgeLimit() *KnowledgeLimit {
+	if c == nil {
+		return nil
+	}
+	return c.KnowledgeLimit
 }

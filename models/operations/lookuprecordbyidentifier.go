@@ -3,15 +3,15 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type LookupRecordByIdentifierRequest struct {
 	// The reference(s) to resolve: a URL, an issue key such as `PA-1787`, or a bare external system ID. Repeat the parameter to batch: `?identifiers=PA-1787&identifiers=PA-1788`. Maximum 10.
 	Identifiers []string `queryParam:"style=form,explode=true,name=identifiers"`
-	// Optional hint that prioritises resolution order, e.g. `JIRA`, `CONFLUENCE`, `DRIVE`, `SLACK`. Allowed values are the `ConnectorNameEnum` values. It cannot widen the search beyond the connectors the caller can already access. Useful on a retry when a lookup came back empty.
-	ConnectorName *components.ConnectorNameEnum `queryParam:"style=form,explode=true,name=connectorName"`
+	// Optional hint that prioritises resolution order, e.g. `JIRA`, `CONFLUENCE`, `DRIVE`, `SLACK` (the `ConnectorNameEnum` values). Any other non-empty string is accepted too and simply matches no connector, so it changes nothing. It cannot widen the search beyond the connectors the caller can already access. Useful on a retry when a lookup came back empty. An empty or blank value is refused with `400` (the value is trimmed before it is checked).
+	ConnectorName *string `queryParam:"style=form,explode=true,name=connectorName"`
 }
 
 func (l *LookupRecordByIdentifierRequest) GetIdentifiers() []string {
@@ -21,7 +21,7 @@ func (l *LookupRecordByIdentifierRequest) GetIdentifiers() []string {
 	return l.Identifiers
 }
 
-func (l *LookupRecordByIdentifierRequest) GetConnectorName() *components.ConnectorNameEnum {
+func (l *LookupRecordByIdentifierRequest) GetConnectorName() *string {
 	if l == nil {
 		return nil
 	}

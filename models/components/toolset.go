@@ -3,8 +3,8 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 )
 
 type ToolsetTool struct {
@@ -77,10 +77,14 @@ type Toolset struct {
 	// Human-readable toolset product label (for example `Jira` or `Slack`).
 	DisplayName *string `json:"displayName,omitzero"`
 	Type        *string `json:"type,omitzero"`
-	// Admin-created toolset instance id
-	InstanceID *string `json:"instanceId,omitzero"`
-	// Human-readable instance label (e.g. sidebar instance name)
-	InstanceName *string `json:"instanceName,omitzero"`
+	// Admin-created toolset instance id. `null` when the toolset was
+	// attached to the agent without an instance.
+	//
+	InstanceID optionalnullable.OptionalNullable[string] `json:"instanceId,omitzero"`
+	// Human-readable instance label (e.g. sidebar instance name). `null`
+	// when the toolset was attached without an instance.
+	//
+	InstanceName optionalnullable.OptionalNullable[string] `json:"instanceName,omitzero"`
 	// Tool names explicitly selected for this toolset instance, when the
 	// instance was created with a subset selection. `null`/absent when the
 	// instance exposes all of the toolset's tools.
@@ -128,14 +132,14 @@ func (t *Toolset) GetType() *string {
 	return t.Type
 }
 
-func (t *Toolset) GetInstanceID() *string {
+func (t *Toolset) GetInstanceID() optionalnullable.OptionalNullable[string] {
 	if t == nil {
 		return nil
 	}
 	return t.InstanceID
 }
 
-func (t *Toolset) GetInstanceName() *string {
+func (t *Toolset) GetInstanceName() optionalnullable.OptionalNullable[string] {
 	if t == nil {
 		return nil
 	}

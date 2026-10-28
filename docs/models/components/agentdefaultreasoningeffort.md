@@ -6,7 +6,7 @@ Agent-level reasoning effort used when a chat request omits its own. Null when u
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.AgentDefaultReasoningEffortNone

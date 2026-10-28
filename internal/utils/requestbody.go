@@ -17,8 +17,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types"
 )
 
 const (

@@ -4,15 +4,15 @@ package apierrors
 
 import (
 	"encoding/json"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 // SearchHistoryInternalServerError - Error envelope for a failed request.
 type SearchHistoryInternalServerError struct {
 	// Error payload.
-	Error_   operations.SearchHistoryInternalServerErrorError `json:"error"`
-	HTTPMeta components.HTTPMetadata                          `json:"-"`
+	Error_   operations.InternalServerErrorError `json:"error"`
+	HTTPMeta components.HTTPMetadata             `json:"-"`
 }
 
 var _ error = &SearchHistoryInternalServerError{}
@@ -22,44 +22,44 @@ func (e *SearchHistoryInternalServerError) Error() string {
 	return string(data)
 }
 
-// SearchHistoryForbiddenError - Error envelope for a failed request.
-type SearchHistoryForbiddenError struct {
+// ForbiddenError - Error envelope for a failed request.
+type ForbiddenError struct {
 	// Error payload.
-	Error_   operations.SearchHistoryForbiddenError `json:"error"`
-	HTTPMeta components.HTTPMetadata                `json:"-"`
+	Error_   operations.ForbiddenError `json:"error"`
+	HTTPMeta components.HTTPMetadata   `json:"-"`
 }
 
-var _ error = &SearchHistoryForbiddenError{}
+var _ error = &ForbiddenError{}
 
-func (e *SearchHistoryForbiddenError) Error() string {
+func (e *ForbiddenError) Error() string {
 	data, _ := json.Marshal(e)
 	return string(data)
 }
 
-// SearchHistoryUnauthorizedError - Error envelope for a failed request.
-type SearchHistoryUnauthorizedError struct {
+// UnauthorizedError - Error envelope for a failed request.
+type UnauthorizedError struct {
 	// Error payload.
-	Error_   operations.SearchHistoryUnauthorizedError `json:"error"`
-	HTTPMeta components.HTTPMetadata                   `json:"-"`
+	Error_   operations.UnauthorizedError `json:"error"`
+	HTTPMeta components.HTTPMetadata      `json:"-"`
 }
 
-var _ error = &SearchHistoryUnauthorizedError{}
+var _ error = &UnauthorizedError{}
 
-func (e *SearchHistoryUnauthorizedError) Error() string {
+func (e *UnauthorizedError) Error() string {
 	data, _ := json.Marshal(e)
 	return string(data)
 }
 
-// SearchHistoryBadRequestError - Error envelope for a failed request.
-type SearchHistoryBadRequestError struct {
+// BadRequestError - Error envelope for a failed request.
+type BadRequestError struct {
 	// Error payload.
-	Error_   operations.SearchHistoryBadRequestError `json:"error"`
-	HTTPMeta components.HTTPMetadata                 `json:"-"`
+	Error_   operations.BadRequestError `json:"error"`
+	HTTPMeta components.HTTPMetadata    `json:"-"`
 }
 
-var _ error = &SearchHistoryBadRequestError{}
+var _ error = &BadRequestError{}
 
-func (e *SearchHistoryBadRequestError) Error() string {
+func (e *BadRequestError) Error() string {
 	data, _ := json.Marshal(e)
 	return string(data)
 }

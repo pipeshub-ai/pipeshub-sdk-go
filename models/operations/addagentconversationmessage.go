@@ -3,14 +3,17 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type AddAgentConversationMessageRequest struct {
 	AgentKey       string `pathParam:"style=simple,explode=false,name=agentKey"`
 	ConversationID string `pathParam:"style=simple,explode=false,name=conversationId"`
-	// The follow-up question, with optional scope, model and tool overrides.
+	// The follow-up question, with optional scope, model and tool overrides. A `query` that
+	// holds markup or a printf-style format specifier is refused with `400`
+	// `HTTP_BAD_REQUEST`, and so is one of only whitespace ("Query is required").
+	//
 	Body components.AgentAddMessageRequest `request:"mediaType=application/json"`
 }
 
@@ -38,8 +41,8 @@ func (a *AddAgentConversationMessageRequest) GetBody() components.AgentAddMessag
 type AddAgentConversationMessageResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
 	// The conversation with the new question and answer.
-	AddMessageResponse *components.AddMessageResponse
-	Headers            map[string][]string
+	AgentAddMessageResponse *components.AgentAddMessageResponse
+	Headers                 map[string][]string
 }
 
 func (a AddAgentConversationMessageResponse) MarshalJSON() ([]byte, error) {
@@ -60,11 +63,11 @@ func (a *AddAgentConversationMessageResponse) GetHTTPMeta() components.HTTPMetad
 	return a.HTTPMeta
 }
 
-func (a *AddAgentConversationMessageResponse) GetAddMessageResponse() *components.AddMessageResponse {
+func (a *AddAgentConversationMessageResponse) GetAgentAddMessageResponse() *components.AgentAddMessageResponse {
 	if a == nil {
 		return nil
 	}
-	return a.AddMessageResponse
+	return a.AgentAddMessageResponse
 }
 
 func (a *AddAgentConversationMessageResponse) GetHeaders() map[string][]string {

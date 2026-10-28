@@ -6,7 +6,7 @@ Type of AI model
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.ModelTypeLlm
@@ -29,3 +29,4 @@ custom := components.ModelType("custom_value")
 | `ModelTypeImageGeneration` | imageGeneration            |
 | `ModelTypeTts`             | tts                        |
 | `ModelTypeStt`             | stt                        |
+| `ModelTypeDecision`        | decision                   |

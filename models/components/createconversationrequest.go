@@ -5,7 +5,7 @@ package components
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 	"time"
 )
 
@@ -41,7 +41,10 @@ func (e *CreateConversationRequestProjectVisibility) UnmarshalJSON(data []byte) 
 }
 
 // CreateConversationRequestChatMode - Optional execution mode for non-stream consumers of this shared
-// request schema.
+// request schema. `deep`, `quick`, `verification` and `auto` are
+// legacy values: still accepted, they run as `internal_search`.
+// The streaming routes accept only `agent`, `internal_search` and
+// `web_search`. `agent:<mode>` is refused.
 // `agent` uses the universal agent loop, while `internal_search`
 // and `web_search` use their corresponding assistant search paths.
 type CreateConversationRequestChatMode string
@@ -50,6 +53,10 @@ const (
 	CreateConversationRequestChatModeAgent          CreateConversationRequestChatMode = "agent"
 	CreateConversationRequestChatModeInternalSearch CreateConversationRequestChatMode = "internal_search"
 	CreateConversationRequestChatModeWebSearch      CreateConversationRequestChatMode = "web_search"
+	CreateConversationRequestChatModeDeep           CreateConversationRequestChatMode = "deep"
+	CreateConversationRequestChatModeQuick          CreateConversationRequestChatMode = "quick"
+	CreateConversationRequestChatModeVerification   CreateConversationRequestChatMode = "verification"
+	CreateConversationRequestChatModeAuto           CreateConversationRequestChatMode = "auto"
 )
 
 func (e CreateConversationRequestChatMode) ToPointer() *CreateConversationRequestChatMode {
@@ -66,6 +73,14 @@ func (e *CreateConversationRequestChatMode) UnmarshalJSON(data []byte) error {
 	case "internal_search":
 		fallthrough
 	case "web_search":
+		fallthrough
+	case "deep":
+		fallthrough
+	case "quick":
+		fallthrough
+	case "verification":
+		fallthrough
+	case "auto":
 		*e = CreateConversationRequestChatMode(v)
 		return nil
 	default:
@@ -101,6 +116,70 @@ func (e *CreateConversationRequestProtocol) UnmarshalJSON(data []byte) error {
 	}
 }
 
+// CreateConversationRequestKeywordSearchBudget - How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+type CreateConversationRequestKeywordSearchBudget string
+
+const (
+	CreateConversationRequestKeywordSearchBudgetShort CreateConversationRequestKeywordSearchBudget = "short"
+	CreateConversationRequestKeywordSearchBudgetFull  CreateConversationRequestKeywordSearchBudget = "full"
+)
+
+func (e CreateConversationRequestKeywordSearchBudget) ToPointer() *CreateConversationRequestKeywordSearchBudget {
+	return &e
+}
+func (e *CreateConversationRequestKeywordSearchBudget) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "short":
+		fallthrough
+	case "full":
+		*e = CreateConversationRequestKeywordSearchBudget(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for CreateConversationRequestKeywordSearchBudget: %v", v)
+	}
+}
+
+// CreateConversationRequestReasoningEffort - How hard a reasoning model should think for this turn. Saved in
+// the conversation's `modelInfo`.
+type CreateConversationRequestReasoningEffort string
+
+const (
+	CreateConversationRequestReasoningEffortNone   CreateConversationRequestReasoningEffort = "none"
+	CreateConversationRequestReasoningEffortLow    CreateConversationRequestReasoningEffort = "low"
+	CreateConversationRequestReasoningEffortMedium CreateConversationRequestReasoningEffort = "medium"
+	CreateConversationRequestReasoningEffortHigh   CreateConversationRequestReasoningEffort = "high"
+	CreateConversationRequestReasoningEffortMax    CreateConversationRequestReasoningEffort = "max"
+)
+
+func (e CreateConversationRequestReasoningEffort) ToPointer() *CreateConversationRequestReasoningEffort {
+	return &e
+}
+func (e *CreateConversationRequestReasoningEffort) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "none":
+		fallthrough
+	case "low":
+		fallthrough
+	case "medium":
+		fallthrough
+	case "high":
+		fallthrough
+	case "max":
+		*e = CreateConversationRequestReasoningEffort(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for CreateConversationRequestReasoningEffort: %v", v)
+	}
+}
+
 // CreateConversationRequest - Request body for creating a new AI conversation.
 //
 // **Query Processing:**
@@ -111,6 +190,16 @@ func (e *CreateConversationRequestProtocol) UnmarshalJSON(data []byte) error {
 // - Retrieves relevant context from matching documents
 // - Generates a response with citations to source materials
 // - Suggests follow-up questions based on the conversation
+//
+// **History:** a new conversation starts with no history, and
+// history is never accepted from the caller. A body carrying
+// `previousConversations` with any value but an empty list (`null`, a
+// string or an object included) is rejected with 400; an empty list is
+// dropped. Send follow-up questions to
+// `POST /conversations/{conversationId}/messages`; the server replays
+// the stored conversation.
+//
+// Fields not listed here are dropped by the gateway's validator, not refused.
 type CreateConversationRequest struct {
 	// The user's question or prompt to start the conversation.
 	// Supports natural language queries of any complexity.
@@ -120,12 +209,28 @@ type CreateConversationRequest struct {
 	// When provided, only these records will be searched for context.
 	//
 	RecordIds []string `json:"recordIds,omitzero"`
-	// App connector instance ids and knowledge-base / record-group ids that narrow retrieval
-	// for a turn. For **org assistant** chat streams, send explicit `apps` / `kb` lists.
-	// For **agent** chat streams, send explicit id lists, or **omit** `filters` (and `tools`)
-	// to let the service use the agent’s stored knowledge and tool configuration. Sending
-	// `{ "apps": [], "kb": [] }` on an agent stream means **no** knowledge sources for that
-	// turn (it is not “full org default”).
+	// What retrieval is narrowed to for a turn: whole apps, and selections below app
+	// level (record groups, folders, records). The keys are a union. For **org assistant**
+	// chat streams, send explicit lists. For **agent** chat streams, send explicit id lists,
+	// or **omit** `filters` (and `tools`) to let the service use the agent’s stored knowledge
+	// and tool configuration. Sending `{ "apps": [], "kb": [] }` on an agent stream means
+	// **no** knowledge sources for that turn (it is not “full org default”).
+	//
+	// A selection below app level is the whole scope of the turn: with `recordGroups`,
+	// `records` or `recordsExact` present, an absent or empty `apps` / `kb` means none of
+	// them. A selected node that does not exist or that the caller cannot read contributes
+	// nothing; when nothing valid remains the turn searches nothing. `/search` answers 404
+	// for that; a chat turn is not failed, its search simply finds nothing.
+	// At most 200 ids may be sent in one request, counted across all keys, and every id must
+	// be a valid UUID. A key this schema does not list is refused with 400; the message names
+	// the key and lists the allowed ones. A value of the wrong type is refused with 400 too.
+	//
+	// A selection that covers more than the configured number of nodes (50,000 by default),
+	// or that touches a source still being prepared for folder-level search, is refused:
+	// `/search` and the non-streaming chat routes answer 422 with the message, and a chat
+	// stream ends with an error frame (`RUN_ERROR`, or `error` on the legacy protocol)
+	// whose `code` is `selection_too_large` or `selection_not_ready` and whose `message`
+	// says what to change. No model call is made for such a turn.
 	//
 	Filters *Filters `json:"filters,omitzero"`
 	// Rich filter state selected by the user, used for display and persistence only.
@@ -143,6 +248,9 @@ type CreateConversationRequest struct {
 	// `filters`/`attachments`, they are merged in as a fallback (the
 	// request always wins). Ignored on follow-up turns — only
 	// meaningful when creating a conversation.
+	// An OAuth token or PAT also needs `project:read`. An archived
+	// project answers `409`; a project the caller cannot see, `404`,
+	// before any stream opens.
 	//
 	ProjectID *string `json:"projectId,omitzero"`
 	// Only meaningful together with `projectId`. Overrides the
@@ -153,7 +261,12 @@ type CreateConversationRequest struct {
 	//
 	ProjectVisibility *CreateConversationRequestProjectVisibility `json:"projectVisibility,omitzero"`
 	// Identifier for the AI model configuration to use.
-	// Available models depend on organization settings.
+	// Available models depend on organization settings. When neither
+	// `modelKey` nor `modelName` is sent, the organization's default
+	// model answers and is saved in the conversation's `modelInfo`.
+	// A key that matches no configured model is not refused: the
+	// default model answers, and the unknown key is still saved in
+	// `modelInfo`.
 	//
 	ModelKey *string `json:"modelKey,omitzero"`
 	// Display name of the AI model
@@ -161,7 +274,10 @@ type CreateConversationRequest struct {
 	// Friendly display name of the selected model
 	ModelFriendlyName *string `json:"modelFriendlyName,omitzero"`
 	// Optional execution mode for non-stream consumers of this shared
-	// request schema.
+	// request schema. `deep`, `quick`, `verification` and `auto` are
+	// legacy values: still accepted, they run as `internal_search`.
+	// The streaming routes accept only `agent`, `internal_search` and
+	// `web_search`. `agent:<mode>` is refused.
 	// `agent` uses the universal agent loop, while `internal_search`
 	// and `web_search` use their corresponding assistant search paths.
 	//
@@ -176,7 +292,8 @@ type CreateConversationRequest struct {
 	// Optional list of tool identifiers (fully-qualified action names such as
 	// "jira.create_issue") that the AI agent is permitted to invoke for this
 	// request. When omitted the agent may use any configured tool. Applicable
-	// only when `chatMode` is `agent`.
+	// only when `chatMode` is `agent`. Web search is not governed by this
+	// list; `agentCapabilities.webSearch` turns it on or off.
 	//
 	Tools []string `json:"tools,omitzero"`
 	// AG-UI is the only supported wire protocol. When present must be
@@ -192,12 +309,29 @@ type CreateConversationRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Opt in to measurement frames on this stream: CUSTOM `retrieval_context` events naming the records and blocks that reached the model, and one CUSTOM `run_usage` event carrying the run's token totals and loop outcome. Identifiers only, never block text. Does not change the answer.
+	IncludeRetrievalContext *bool `default:"false" json:"includeRetrievalContext"`
+	// How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+	KeywordSearchBudget *CreateConversationRequestKeywordSearchBudget `json:"keywordSearchBudget,omitzero"`
+	// The person's answer to a tool approval card. The web app sends it with the query
+	// `Tool approval: allow` or `Tool approval: deny`, and the request carries on the turn that
+	// stopped on the card: the saved call runs (when allowed) and its result answers the call
+	// the model made, in the same reply. The call is the one saved server-side when the card was
+	// shown (answerable for 15 minutes, settled once, bound to the asking user and
+	// conversation); only its id and the answer travel here. A reply that answered a card
+	// can't be regenerated.
+	//
+	ToolApproval *ToolApprovalAnswer `json:"toolApproval,omitzero"`
 	// Client-generated identifier for this run. Send it here to enable
 	// `POST /conversations/{conversationId}/cancel {runId}` while the
 	// stream is still generating. Optional — a caller that never sends
 	// one just can't cooperatively cancel the run.
 	//
 	RunID *string `json:"runId,omitzero"`
+	// How hard a reasoning model should think for this turn. Saved in
+	// the conversation's `modelInfo`.
+	//
+	ReasoningEffort *CreateConversationRequestReasoningEffort `json:"reasoningEffort,omitzero"`
 }
 
 func (c CreateConversationRequest) MarshalJSON() ([]byte, error) {
@@ -323,9 +457,37 @@ func (c *CreateConversationRequest) GetAgentCapabilities() *AgentCapabilities {
 	return c.AgentCapabilities
 }
 
+func (c *CreateConversationRequest) GetIncludeRetrievalContext() *bool {
+	if c == nil {
+		return nil
+	}
+	return c.IncludeRetrievalContext
+}
+
+func (c *CreateConversationRequest) GetKeywordSearchBudget() *CreateConversationRequestKeywordSearchBudget {
+	if c == nil {
+		return nil
+	}
+	return c.KeywordSearchBudget
+}
+
+func (c *CreateConversationRequest) GetToolApproval() *ToolApprovalAnswer {
+	if c == nil {
+		return nil
+	}
+	return c.ToolApproval
+}
+
 func (c *CreateConversationRequest) GetRunID() *string {
 	if c == nil {
 		return nil
 	}
 	return c.RunID
+}
+
+func (c *CreateConversationRequest) GetReasoningEffort() *CreateConversationRequestReasoningEffort {
+	if c == nil {
+		return nil
+	}
+	return c.ReasoningEffort
 }

@@ -2,6 +2,11 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
+)
+
 // NodeType - Type of the node (app, recordGroup, folder, or record).
 type NodeType string
 
@@ -25,6 +30,65 @@ func (e *NodeType) IsExact() bool {
 		}
 	}
 	return false
+}
+
+// ParentNodeType - Parent node type; opened as `/nodes/{nodeType}/{id}`.
+type ParentNodeType string
+
+const (
+	ParentNodeTypeApp         ParentNodeType = "app"
+	ParentNodeTypeRecordGroup ParentNodeType = "recordGroup"
+	ParentNodeTypeFolder      ParentNodeType = "folder"
+	ParentNodeTypeRecord      ParentNodeType = "record"
+)
+
+func (e ParentNodeType) ToPointer() *ParentNodeType {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *ParentNodeType) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "app", "recordGroup", "folder", "record":
+			return true
+		}
+	}
+	return false
+}
+
+// Parent - The parent this node is listed under, with what a client needs to
+// open it and name it; `null` exactly when `parentId` is. It is the
+// node's placement parent: an ancestor the user cannot open is
+// replaced, never named.
+type Parent struct {
+	// Parent node ID.
+	ID string `json:"id"`
+	// Parent node type; opened as `/nodes/{nodeType}/{id}`.
+	NodeType ParentNodeType `json:"nodeType"`
+	// Parent display name.
+	Name optionalnullable.OptionalNullable[string] `json:"name,omitzero"`
+}
+
+func (p *Parent) GetID() string {
+	if p == nil {
+		return ""
+	}
+	return p.ID
+}
+
+func (p *Parent) GetNodeType() ParentNodeType {
+	if p == nil {
+		return ParentNodeType("")
+	}
+	return p.NodeType
+}
+
+func (p *Parent) GetName() optionalnullable.OptionalNullable[string] {
+	if p == nil {
+		return nil
+	}
+	return p.Name
 }
 
 // KnowledgeHubNodeOrigin - Origin type.
@@ -87,8 +151,17 @@ type KnowledgeHubNode struct {
 	Name string `json:"name"`
 	// Type of the node (app, recordGroup, folder, or record).
 	NodeType NodeType `json:"nodeType"`
-	// Parent node ID, or `null` at the root browse level.
+	// Parent node ID, or `null` at the root browse level. Also `null`
+	// for a connected app whose limit leaves the parent out: the node is
+	// listed, and the folder above it is not named.
+	//
 	ParentID *string `json:"parentId"`
+	// The parent this node is listed under, with what a client needs to
+	// open it and name it; `null` exactly when `parentId` is. It is the
+	// node's placement parent: an ancestor the user cannot open is
+	// replaced, never named.
+	//
+	Parent optionalnullable.OptionalNullable[Parent] `json:"parent,omitzero"`
 	// Origin type.
 	Origin KnowledgeHubNodeOrigin `json:"origin"`
 	// Connector display name / key when applicable; otherwise `null`.
@@ -127,6 +200,17 @@ type KnowledgeHubNode struct {
 	SharingStatus *string `json:"sharingStatus"`
 }
 
+func (k KnowledgeHubNode) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(k, "", false)
+}
+
+func (k *KnowledgeHubNode) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &k, "", false, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (k *KnowledgeHubNode) GetID() string {
 	if k == nil {
 		return ""
@@ -153,6 +237,13 @@ func (k *KnowledgeHubNode) GetParentID() *string {
 		return nil
 	}
 	return k.ParentID
+}
+
+func (k *KnowledgeHubNode) GetParent() optionalnullable.OptionalNullable[Parent] {
+	if k == nil {
+		return nil
+	}
+	return k.Parent
 }
 
 func (k *KnowledgeHubNode) GetOrigin() KnowledgeHubNodeOrigin {

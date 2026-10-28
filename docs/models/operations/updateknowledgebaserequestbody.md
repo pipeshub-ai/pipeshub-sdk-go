@@ -1,10 +1,10 @@
 # UpdateKnowledgeBaseRequestBody
 
-Fields to update. `kbName` is optional; an empty object is valid.
+The new name. `kbName` is the only field and it is required.
 
 
 ## Fields
 
-| Field                           | Type                            | Required                        | Description                     | Example                         |
-| ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
-| `KbName`                        | `*string`                       | :heavy_minus_sign:              | New name for the knowledge base | Updated Documentation Hub       |
+| Field                                                                                                                           | Type                                                                                                                            | Required                                                                                                                        | Description                                                                                                                     | Example                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `KbName`                                                                                                                        | `string`                                                                                                                        | :heavy_check_mark:                                                                                                              | New name for the knowledge base. Whitespace around it is removed first, so<br/>a name made only of whitespace is refused as empty.<br/> | Updated Documentation Hub                                                                                                       |

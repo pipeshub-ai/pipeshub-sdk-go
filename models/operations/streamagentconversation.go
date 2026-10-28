@@ -3,8 +3,8 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types/stream"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types/stream"
 )
 
 type StreamAgentConversationRequest struct {
@@ -30,7 +30,11 @@ func (s *StreamAgentConversationRequest) GetBody() components.AgentStreamCreateC
 
 type StreamAgentConversationResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// SSE stream (text/event-stream)
+	// SSE stream (text/event-stream). The conversation is saved and
+	// announced (`CUSTOM` `conversation_created`) before the agent is
+	// looked up, so an unknown `agentKey` or any later failure still
+	// answers 200 and ends the stream with a `RUN_ERROR` frame.
+	//
 	AgentStreamSSEEvent *stream.EventStream[components.AgentStreamSSEEvent]
 }
 

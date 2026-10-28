@@ -1,6 +1,13 @@
 # Credentials
 
-Credentials based on the authentication method
+Credentials based on the authentication method; the shape each method needs is
+listed above. The validator only checks that this is a non-empty string or an
+object whose `password`, `otp`, `token`, `code`, `accessToken` and `idToken`,
+when present, are strings; other fields of the object are passed through. An
+object without the field its method needs is refused later as a failed sign-in,
+not as a validation error: `microsoft` without `idToken` answers `400`, and a Google
+token that is not a JWT answers `500`.
+
 
 
 ## Supported Types
@@ -17,10 +24,16 @@ credentials := components.CreateCredentialsPasswordCredentials(components.Passwo
 credentials := components.CreateCredentialsOtpCredentials(components.OtpCredentials{/* values here */})
 ```
 
-### OAuthCredentials
+### GoogleCredentials
 
 ```go
-credentials := components.CreateCredentialsOAuthCredentials(components.OAuthCredentials{/* values here */})
+credentials := components.CreateCredentialsGoogleCredentials(components.GoogleCredentials{/* values here */})
+```
+
+### MicrosoftCredentials
+
+```go
+credentials := components.CreateCredentialsMicrosoftCredentials(components.MicrosoftCredentials{/* values here */})
 ```
 
 ### 
@@ -39,8 +52,10 @@ switch credentials.Type {
 		// credentials.PasswordCredentials is populated
 	case components.CredentialsTypeOtpCredentials:
 		// credentials.OtpCredentials is populated
-	case components.CredentialsTypeOAuthCredentials:
-		// credentials.OAuthCredentials is populated
+	case components.CredentialsTypeGoogleCredentials:
+		// credentials.GoogleCredentials is populated
+	case components.CredentialsTypeMicrosoftCredentials:
+		// credentials.MicrosoftCredentials is populated
 	case components.CredentialsTypeStr:
 		// credentials.Str is populated
 }

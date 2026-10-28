@@ -3,13 +3,13 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 // SchemeOauth2 - OAuth 2.0 authentication with fine-grained scopes.
 // Supports authorization_code (with PKCE) and client_credentials flows.
 // OAuth tokens are Bearer JWTs — use the same Authorization header as regular tokens.
-// For **client_credentials**, machine JWTs may use `userId === client_id`; the Node gateway resolves the OAuth app creator — see **OAuth Provider** tag.
+// For **client_credentials**, machine JWTs may use `userId === client_id`; the Node gateway resolves the application's token identity — the service account it is pointed at, or its creator for an application registered before that was required — see **OAuth Provider** tag.
 type SchemeOauth2 struct {
 	ClientID     string `security:"name=clientID,env=pipeshub_client_id"`
 	ClientSecret string `security:"name=clientSecret,env=pipeshub_client_secret"`

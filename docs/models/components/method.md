@@ -1,15 +1,17 @@
 # Method
 
-Authentication method to use
+Authentication method to use. It must be one the session's current step allows;
+any other value, known or not, is answered `400`.
+
 
 ## Example Usage
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
-value := components.MethodSamlSso
+value := components.MethodOtp
 ```
 
 
@@ -17,10 +19,7 @@ value := components.MethodSamlSso
 
 | Name              | Value             |
 | ----------------- | ----------------- |
-| `MethodSamlSso`   | samlSso           |
 | `MethodOtp`       | otp               |
 | `MethodPassword`  | password          |
 | `MethodGoogle`    | google            |
 | `MethodMicrosoft` | microsoft         |
-| `MethodAzureAd`   | azureAd           |
-| `MethodOauth`     | oauth             |

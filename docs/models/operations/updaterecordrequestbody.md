@@ -1,11 +1,10 @@
 # UpdateRecordRequestBody
 
-Request payload
+Request payload. Optional: without one nothing changes.
 
 
 ## Fields
 
-| Field                                                                       | Type                                                                        | Required                                                                    | Description                                                                 |
-| --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `RecordName`                                                                | `*string`                                                                   | :heavy_minus_sign:                                                          | New name for the record                                                     |
-| `File`                                                                      | [*operations.UpdateRecordFile](../../models/operations/updaterecordfile.md) | :heavy_minus_sign:                                                          | Replacement file content                                                    |
+| Field                                                                   | Type                                                                    | Required                                                                | Description                                                             |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `RecordName`                                                            | `*string`                                                               | :heavy_minus_sign:                                                      | New name for the record (rename only; a file needs the multipart form). |

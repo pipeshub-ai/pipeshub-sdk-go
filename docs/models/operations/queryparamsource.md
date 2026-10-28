@@ -1,7 +1,8 @@
 # QueryParamSource
 
 `owned` — owner list (`userId` filter only).
-`shared` — explicit share grant list (`isShared` + `sharedWith`).
+`shared` — explicit share grant list (`isShared` + `sharedWith`). Includes agent
+conversations shared with the caller; those rows carry `agentKey`.
 Defaults to `owned` when omitted.
 
 
@@ -9,7 +10,7 @@ Defaults to `owned` when omitted.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.QueryParamSourceOwned

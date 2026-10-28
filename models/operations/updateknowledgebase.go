@@ -3,19 +3,21 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
-// UpdateKnowledgeBaseRequestBody - Fields to update. `kbName` is optional; an empty object is valid.
+// UpdateKnowledgeBaseRequestBody - The new name. `kbName` is the only field and it is required.
 type UpdateKnowledgeBaseRequestBody struct {
-	// New name for the knowledge base
-	KbName *string `json:"kbName,omitzero"`
+	// New name for the knowledge base. Whitespace around it is removed first, so
+	// a name made only of whitespace is refused as empty.
+	//
+	KbName string `json:"kbName"`
 }
 
-func (u *UpdateKnowledgeBaseRequestBody) GetKbName() *string {
+func (u *UpdateKnowledgeBaseRequestBody) GetKbName() string {
 	if u == nil {
-		return nil
+		return ""
 	}
 	return u.KbName
 }
@@ -23,7 +25,7 @@ func (u *UpdateKnowledgeBaseRequestBody) GetKbName() *string {
 type UpdateKnowledgeBaseRequest struct {
 	// Knowledge base ID (UUID)
 	KbID string `pathParam:"style=simple,explode=false,name=kbId"`
-	// Fields to update. `kbName` is optional; an empty object is valid.
+	// The new name. `kbName` is the only field and it is required.
 	Body UpdateKnowledgeBaseRequestBody `request:"mediaType=application/json"`
 }
 

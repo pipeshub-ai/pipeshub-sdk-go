@@ -2,6 +2,10 @@
 
 package components
 
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
+)
+
 // GetKnowledgeBaseByIDUserRole - User's role in this knowledge base
 type GetKnowledgeBaseByIDUserRole string
 
@@ -20,6 +24,34 @@ func (e *GetKnowledgeBaseByIDUserRole) IsExact() bool {
 	if e != nil {
 		switch *e {
 		case "OWNER", "WRITER", "READER":
+			return true
+		}
+	}
+	return false
+}
+
+// GetKnowledgeBaseByIDStatus - `DELETING` while the knowledge base is being deleted: reads work, every write is refused with 409
+// (`error.code` `HTTP_KB_BEING_DELETED`), and deleting it again finishes the job. Otherwise its
+// processing state (`IDLE`, `QUEUED`, `SYNCING`, `FULL_SYNCING`), or null before it is first processed.
+type GetKnowledgeBaseByIDStatus string
+
+const (
+	GetKnowledgeBaseByIDStatusIdle        GetKnowledgeBaseByIDStatus = "IDLE"
+	GetKnowledgeBaseByIDStatusQueued      GetKnowledgeBaseByIDStatus = "QUEUED"
+	GetKnowledgeBaseByIDStatusSyncing     GetKnowledgeBaseByIDStatus = "SYNCING"
+	GetKnowledgeBaseByIDStatusFullSyncing GetKnowledgeBaseByIDStatus = "FULL_SYNCING"
+	GetKnowledgeBaseByIDStatusDeleting    GetKnowledgeBaseByIDStatus = "DELETING"
+)
+
+func (e GetKnowledgeBaseByIDStatus) ToPointer() *GetKnowledgeBaseByIDStatus {
+	return &e
+}
+
+// IsExact returns true if the value matches a known enum value, false otherwise.
+func (e *GetKnowledgeBaseByIDStatus) IsExact() bool {
+	if e != nil {
+		switch *e {
+		case "IDLE", "QUEUED", "SYNCING", "FULL_SYNCING", "DELETING":
 			return true
 		}
 	}
@@ -72,7 +104,15 @@ type GetKnowledgeBaseByID struct {
 	CreatedBy string `json:"createdBy"`
 	// User's role in this knowledge base
 	UserRole GetKnowledgeBaseByIDUserRole `json:"userRole"`
-	// Root-level folders in this knowledge base
+	// `DELETING` while the knowledge base is being deleted: reads work, every write is refused with 409
+	// (`error.code` `HTTP_KB_BEING_DELETED`), and deleting it again finishes the job. Otherwise its
+	// processing state (`IDLE`, `QUEUED`, `SYNCING`, `FULL_SYNCING`), or null before it is first processed.
+	//
+	Status optionalnullable.OptionalNullable[GetKnowledgeBaseByIDStatus] `json:"status,omitzero"`
+	// Every folder in this knowledge base, nested ones included, with nothing that tells
+	// a nested folder from a root-level one (no parent id). Files are not listed. A
+	// folder moved to the trash is still listed.
+	//
 	Folders []GetKnowledgeBaseByIDFolder `json:"folders"`
 }
 
@@ -123,6 +163,13 @@ func (g *GetKnowledgeBaseByID) GetUserRole() GetKnowledgeBaseByIDUserRole {
 		return GetKnowledgeBaseByIDUserRole("")
 	}
 	return g.UserRole
+}
+
+func (g *GetKnowledgeBaseByID) GetStatus() optionalnullable.OptionalNullable[GetKnowledgeBaseByIDStatus] {
+	if g == nil {
+		return nil
+	}
+	return g.Status
 }
 
 func (g *GetKnowledgeBaseByID) GetFolders() []GetKnowledgeBaseByIDFolder {

@@ -1,14 +1,15 @@
 # DeleteSearchByIDShared
 
-Additional `isShared` filter (`'true'` / `'false'`). The row is
-only deleted if it also matches this value.
+Additional `isShared` filter. `'true'` / `'1'` and `'false'` / `'0'`,
+case-insensitive; anything else is refused with `400`. The row is only deleted if
+it matches.
 
 
 ## Example Usage
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.DeleteSearchByIDSharedTrue
@@ -21,3 +22,5 @@ value := operations.DeleteSearchByIDSharedTrue
 | ----------------------------- | ----------------------------- |
 | `DeleteSearchByIDSharedTrue`  | true                          |
 | `DeleteSearchByIDSharedFalse` | false                         |
+| `DeleteSearchByIDSharedOne`   | 1                             |
+| `DeleteSearchByIDSharedZero`  | 0                             |

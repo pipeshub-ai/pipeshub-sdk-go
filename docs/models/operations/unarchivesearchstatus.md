@@ -6,7 +6,7 @@ Resulting status of the search after the operation.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.UnarchiveSearchStatusUnarchived

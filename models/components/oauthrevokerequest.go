@@ -43,7 +43,10 @@ type OAuthRevokeRequest struct {
 	TokenTypeHint *OAuthRevokeRequestTokenTypeHint `form:"name=token_type_hint" json:"token_type_hint,omitzero"`
 	// Client ID
 	ClientID string `form:"name=client_id" json:"client_id"`
-	// Client secret
+	// Client secret. Required for a confidential client (missing or empty: `401 invalid_client`);
+	// a public client, such as the first-party device app, is identified by `client_id` alone. A
+	// wrong secret is `401 invalid_client`.
+	//
 	ClientSecret *string `form:"name=client_secret" json:"client_secret,omitzero"`
 }
 

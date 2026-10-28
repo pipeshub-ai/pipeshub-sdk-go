@@ -5,10 +5,11 @@ package components
 import (
 	"errors"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 type AgentCreateModelEntry struct {
+	// Surrounding whitespace is trimmed; a blank key is refused with `400`.
 	ModelKey    string  `json:"modelKey"`
 	ModelName   *string `json:"modelName,omitzero"`
 	Provider    *string `json:"provider,omitzero"`

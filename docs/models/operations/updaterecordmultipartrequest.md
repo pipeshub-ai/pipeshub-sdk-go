@@ -1,0 +1,9 @@
+# UpdateRecordMultipartRequest
+
+
+## Fields
+
+| Field                                                                                                       | Type                                                                                                        | Required                                                                                                    | Description                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `RecordID`                                                                                                  | `string`                                                                                                    | :heavy_check_mark:                                                                                          | Record ID                                                                                                   |
+| `Body`                                                                                                      | [*operations.UpdateRecordMultipartRequestBody](../../models/operations/updaterecordmultipartrequestbody.md) | :heavy_minus_sign:                                                                                          | Request payload. Optional: without one nothing changes.                                                     |

@@ -3,10 +3,14 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 type ApplicationJSONErrorResponseError struct {
+	// Identifier for this request, echoed so a bug report can quote it.
+	// Absent when the request never reached the middleware that assigns one.
+	//
+	RequestID *string `json:"requestId,omitzero"`
 	// Machine-readable code (e.g. `HTTP_UNAUTHORIZED`, `HTTP_FORBIDDEN`).
 	Code    string `json:"code"`
 	Message string `json:"message"`
@@ -23,6 +27,13 @@ func (a *ApplicationJSONErrorResponseError) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (a *ApplicationJSONErrorResponseError) GetRequestID() *string {
+	if a == nil {
+		return nil
+	}
+	return a.RequestID
 }
 
 func (a *ApplicationJSONErrorResponseError) GetCode() string {

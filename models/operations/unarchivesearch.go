@@ -5,14 +5,69 @@ package operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"time"
 )
+
+// UnarchiveSearchShared - Additional `isShared` filter. `'true'` / `'1'` and `'false'` / `'0'`,
+// case-insensitive; anything else is refused with `400`. The search is only unarchived
+// if it matches, otherwise `404`.
+type UnarchiveSearchShared string
+
+const (
+	UnarchiveSearchSharedTrue  UnarchiveSearchShared = "true"
+	UnarchiveSearchSharedFalse UnarchiveSearchShared = "false"
+	UnarchiveSearchSharedOne   UnarchiveSearchShared = "1"
+	UnarchiveSearchSharedZero  UnarchiveSearchShared = "0"
+)
+
+func (e UnarchiveSearchShared) ToPointer() *UnarchiveSearchShared {
+	return &e
+}
+func (e *UnarchiveSearchShared) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "true":
+		fallthrough
+	case "false":
+		fallthrough
+	case "1":
+		fallthrough
+	case "0":
+		*e = UnarchiveSearchShared(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for UnarchiveSearchShared: %v", v)
+	}
+}
 
 type UnarchiveSearchRequest struct {
 	// Unique search identifier
 	SearchID string `pathParam:"style=simple,explode=false,name=searchId"`
+	// Validated, then dropped: a stored search has no title to match, so the search is
+	// unarchived whatever this says. More than 1000 characters, or HTML markup, is refused
+	// with `400`.
+	//
+	Search *string `queryParam:"style=form,explode=true,name=search"`
+	// Additional `isShared` filter. `'true'` / `'1'` and `'false'` / `'0'`,
+	// case-insensitive; anything else is refused with `400`. The search is only unarchived
+	// if it matches, otherwise `404`.
+	//
+	Shared *UnarchiveSearchShared `queryParam:"style=form,explode=true,name=shared"`
+	// ISO 8601 date or date-time lower bound for `createdAt`. The search is only unarchived
+	// if it was created on or after it, otherwise `404`. A value JavaScript's `Date`
+	// cannot parse is refused with `400`.
+	//
+	StartDate *string `queryParam:"style=form,explode=true,name=startDate"`
+	// ISO 8601 date or date-time upper bound for `createdAt`. The search is only unarchived
+	// if it was created on or before it, otherwise `404`. A value JavaScript's `Date`
+	// cannot parse is refused with `400`.
+	//
+	EndDate *string `queryParam:"style=form,explode=true,name=endDate"`
 }
 
 func (u *UnarchiveSearchRequest) GetSearchID() string {
@@ -20,6 +75,34 @@ func (u *UnarchiveSearchRequest) GetSearchID() string {
 		return ""
 	}
 	return u.SearchID
+}
+
+func (u *UnarchiveSearchRequest) GetSearch() *string {
+	if u == nil {
+		return nil
+	}
+	return u.Search
+}
+
+func (u *UnarchiveSearchRequest) GetShared() *UnarchiveSearchShared {
+	if u == nil {
+		return nil
+	}
+	return u.Shared
+}
+
+func (u *UnarchiveSearchRequest) GetStartDate() *string {
+	if u == nil {
+		return nil
+	}
+	return u.StartDate
+}
+
+func (u *UnarchiveSearchRequest) GetEndDate() *string {
+	if u == nil {
+		return nil
+	}
+	return u.EndDate
 }
 
 // UnarchiveSearchStatus - Resulting status of the search after the operation.

@@ -6,7 +6,7 @@ Type of the node (app, recordGroup, folder, or record).
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.NodeTypeApp

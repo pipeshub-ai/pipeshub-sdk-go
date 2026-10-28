@@ -1,0 +1,24 @@
+# IsArchived
+
+Optional archived flag applied to the `sharedWithMeConversations`
+branch before the route-level non-archived guard is enforced.
+Accepted values are `true` and `false`.
+
+
+## Example Usage
+
+```go
+import (
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
+)
+
+value := operations.IsArchivedTrue
+```
+
+
+## Values
+
+| Name              | Value             |
+| ----------------- | ----------------- |
+| `IsArchivedTrue`  | true              |
+| `IsArchivedFalse` | false             |

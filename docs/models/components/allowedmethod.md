@@ -4,10 +4,10 @@
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
-value := components.AllowedMethodSamlSso
+value := components.AllowedMethodOtp
 
 // Open enum: custom values can be created with a direct type cast
 custom := components.AllowedMethod("custom_value")
@@ -18,10 +18,7 @@ custom := components.AllowedMethod("custom_value")
 
 | Name                     | Value                    |
 | ------------------------ | ------------------------ |
-| `AllowedMethodSamlSso`   | samlSso                  |
 | `AllowedMethodOtp`       | otp                      |
 | `AllowedMethodPassword`  | password                 |
 | `AllowedMethodGoogle`    | google                   |
 | `AllowedMethodMicrosoft` | microsoft                |
-| `AllowedMethodAzureAd`   | azureAd                  |
-| `AllowedMethodOauth`     | oauth                    |

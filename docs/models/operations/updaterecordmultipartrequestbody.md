@@ -1,0 +1,11 @@
+# UpdateRecordMultipartRequestBody
+
+Request payload. Optional: without one nothing changes.
+
+
+## Fields
+
+| Field                                                                                                                                     | Type                                                                                                                                      | Required                                                                                                                                  | Description                                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `RecordName`                                                                                                                              | `*string`                                                                                                                                 | :heavy_minus_sign:                                                                                                                        | New name for the record. Ignored when `file` is sent. Must not contain<br/>HTML, an inline event handler or a printf-style format specifier.<br/> |
+| `File`                                                                                                                                    | [*operations.UpdateRecordMultipartFile](../../models/operations/updaterecordmultipartfile.md)                                             | :heavy_minus_sign:                                                                                                                        | Replacement file content; at most one file, with the stored file's extension.                                                             |

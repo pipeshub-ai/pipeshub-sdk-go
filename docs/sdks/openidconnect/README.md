@@ -38,6 +38,8 @@ with the `openid` scope.
 **Authentication:**
 Pass the access token as a Bearer token: `Authorization: Bearer {access_token}`
 
+The route takes no parameters; query parameters are ignored.
+
 
 ### Example Usage
 
@@ -48,8 +50,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -85,6 +87,9 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type                                 | Status Code                                | Content Type                               |
+| ------------------------------------------ | ------------------------------------------ | ------------------------------------------ |
+| apierrors.ErrorResponse                    | 400                                        | application/json                           |
+| apierrors.OAuthBearerTokenError            | 401, 403                                   | application/json                           |
+| apierrors.OauthUserInfoInternalServerError | 500                                        | application/json                           |
+| apierrors.APIError                         | 4XX, 5XX                                   | \*/\*                                      |

@@ -9,6 +9,9 @@ type AgentConversationDetailResponse struct {
 	// `userId`, `orgId`, `conversationSource`, and root-level `messages`
 	// metadata outside the selected slice are omitted.
 	//
+	// `sharedWith` is the owner's list of recipients, so it is present only for the
+	// owner. A recipient gets `sharedBy` (who shared the chat) instead.
+	//
 	Conversation AgentConversationDetail      `json:"conversation"`
 	Filters      SemanticSearchHistoryFilters `json:"filters"`
 	// Request-scoped metadata returned by the by-id GET route. `requestId`

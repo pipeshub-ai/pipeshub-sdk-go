@@ -5,14 +5,69 @@ package operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 	"time"
 )
+
+// ArchiveSearchShared - Additional `isShared` filter. `'true'` / `'1'` and `'false'` / `'0'`,
+// case-insensitive; anything else is refused with `400`. The search is only archived
+// if it matches, otherwise `404`.
+type ArchiveSearchShared string
+
+const (
+	ArchiveSearchSharedTrue  ArchiveSearchShared = "true"
+	ArchiveSearchSharedFalse ArchiveSearchShared = "false"
+	ArchiveSearchSharedOne   ArchiveSearchShared = "1"
+	ArchiveSearchSharedZero  ArchiveSearchShared = "0"
+)
+
+func (e ArchiveSearchShared) ToPointer() *ArchiveSearchShared {
+	return &e
+}
+func (e *ArchiveSearchShared) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "true":
+		fallthrough
+	case "false":
+		fallthrough
+	case "1":
+		fallthrough
+	case "0":
+		*e = ArchiveSearchShared(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for ArchiveSearchShared: %v", v)
+	}
+}
 
 type ArchiveSearchRequest struct {
 	// Unique search identifier
 	SearchID string `pathParam:"style=simple,explode=false,name=searchId"`
+	// Validated, then dropped: a stored search has no title to match, so the search is
+	// archived whatever this says. More than 1000 characters, or HTML markup, is refused
+	// with `400`.
+	//
+	Search *string `queryParam:"style=form,explode=true,name=search"`
+	// Additional `isShared` filter. `'true'` / `'1'` and `'false'` / `'0'`,
+	// case-insensitive; anything else is refused with `400`. The search is only archived
+	// if it matches, otherwise `404`.
+	//
+	Shared *ArchiveSearchShared `queryParam:"style=form,explode=true,name=shared"`
+	// ISO 8601 date or date-time lower bound for `createdAt`. The search is only archived
+	// if it was created on or after it, otherwise `404`. A value JavaScript's `Date`
+	// cannot parse is refused with `400`.
+	//
+	StartDate *string `queryParam:"style=form,explode=true,name=startDate"`
+	// ISO 8601 date or date-time upper bound for `createdAt`. The search is only archived
+	// if it was created on or before it, otherwise `404`. A value JavaScript's `Date`
+	// cannot parse is refused with `400`.
+	//
+	EndDate *string `queryParam:"style=form,explode=true,name=endDate"`
 }
 
 func (a *ArchiveSearchRequest) GetSearchID() string {
@@ -20,6 +75,34 @@ func (a *ArchiveSearchRequest) GetSearchID() string {
 		return ""
 	}
 	return a.SearchID
+}
+
+func (a *ArchiveSearchRequest) GetSearch() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Search
+}
+
+func (a *ArchiveSearchRequest) GetShared() *ArchiveSearchShared {
+	if a == nil {
+		return nil
+	}
+	return a.Shared
+}
+
+func (a *ArchiveSearchRequest) GetStartDate() *string {
+	if a == nil {
+		return nil
+	}
+	return a.StartDate
+}
+
+func (a *ArchiveSearchRequest) GetEndDate() *string {
+	if a == nil {
+		return nil
+	}
+	return a.EndDate
 }
 
 // ArchiveSearchStatus - Resulting status of the search after the operation.

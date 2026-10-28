@@ -3,13 +3,81 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"encoding/json"
+	"fmt"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
+
+// Extract - With `query`, in record mode and without `startBlock`: return only the passages that answer `query`, as the model assigned to the `reader` role (else the default model) copies them out, instead of the record's text. The model is told to copy word for word, and `extract.unverifiedLines` counts the lines it did not. The response's `order` is `extract`, and its `extract` object names the model and the tokens it used. When the model cannot be reached, the usual read is returned with `extract.error` set.
+type Extract string
+
+const (
+	ExtractTrue  Extract = "true"
+	ExtractFalse Extract = "false"
+)
+
+func (e Extract) ToPointer() *Extract {
+	return &e
+}
+func (e *Extract) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "true":
+		fallthrough
+	case "false":
+		*e = Extract(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Extract: %v", v)
+	}
+}
+
+// Mode - `record` (default) reads this record. `thread` reads every record of the Slack thread this message belongs to, oldest first. A Slack record in no single thread reads as itself, then the threads its messages started (at most 10). A record that is not from Slack answers `422`.
+type Mode string
+
+const (
+	ModeRecord Mode = "record"
+	ModeThread Mode = "thread"
+)
+
+func (e Mode) ToPointer() *Mode {
+	return &e
+}
+func (e *Mode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "record":
+		fallthrough
+	case "thread":
+		*e = Mode(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Mode: %v", v)
+	}
+}
 
 type GetRecordContentRequest struct {
 	// Record ID to fetch. Obtain it from a `pipeshub_search` result (`hits[*].recordId`) or a chat citation (`citations[*].recordId`).
 	RecordID string `pathParam:"style=simple,explode=false,name=recordId"`
+	// Most characters of `content` to return. Asks for a budgeted read; 40000 when another budgeted-read parameter is given without it.
+	MaxChars *int64 `queryParam:"style=form,explode=true,name=maxChars"`
+	// With `query`, in record mode and without `startBlock`: return only the passages that answer `query`, as the model assigned to the `reader` role (else the default model) copies them out, instead of the record's text. The model is told to copy word for word, and `extract.unverifiedLines` counts the lines it did not. The response's `order` is `extract`, and its `extract` object names the model and the tokens it used. When the model cannot be reached, the usual read is returned with `extract.error` set.
+	Extract *Extract `queryParam:"style=form,explode=true,name=extract"`
+	// Read in order from this block: the `nextStartBlock` of a previous read, or 0 for the top. Takes precedence over `query`. In thread mode it applies to the record at `startRecord`; later records are read from their start.
+	StartBlock *int64 `queryParam:"style=form,explode=true,name=startBlock"`
+	// What you are looking for in the record. When the record does not fit in `maxChars`, the blocks most relevant to it are shown first and the skipped ranges are marked.
+	Query *string `queryParam:"style=form,explode=true,name=query"`
+	// `record` (default) reads this record. `thread` reads every record of the Slack thread this message belongs to, oldest first. A Slack record in no single thread reads as itself, then the threads its messages started (at most 10). A record that is not from Slack answers `422`.
+	Mode *Mode `queryParam:"style=form,explode=true,name=mode"`
+	// Thread mode: start at this record of the thread, the `nextStartRecord` of a previous read. Pass the read's `nextStartBlock` with it.
+	StartRecord *int64 `queryParam:"style=form,explode=true,name=startRecord"`
 }
 
 func (g *GetRecordContentRequest) GetRecordID() string {
@@ -19,11 +87,57 @@ func (g *GetRecordContentRequest) GetRecordID() string {
 	return g.RecordID
 }
 
+func (g *GetRecordContentRequest) GetMaxChars() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.MaxChars
+}
+
+func (g *GetRecordContentRequest) GetExtract() *Extract {
+	if g == nil {
+		return nil
+	}
+	return g.Extract
+}
+
+func (g *GetRecordContentRequest) GetStartBlock() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.StartBlock
+}
+
+func (g *GetRecordContentRequest) GetQuery() *string {
+	if g == nil {
+		return nil
+	}
+	return g.Query
+}
+
+func (g *GetRecordContentRequest) GetMode() *Mode {
+	if g == nil {
+		return nil
+	}
+	return g.Mode
+}
+
+func (g *GetRecordContentRequest) GetStartRecord() *int64 {
+	if g == nil {
+		return nil
+	}
+	return g.StartRecord
+}
+
 type GetRecordContentResponse struct {
 	HTTPMeta components.HTTPMetadata `json:"-"`
-	// Successful operation. When the record has no available content
-	// (e.g. not indexed), `content` is the literal `No record found`
-	// rather than an error status.
+	// Successful operation. When the record exists but its content is
+	// not indexed yet, `content` describes the record (name, link,
+	// dates) and ends with a `Not indexed:` paragraph naming its
+	// indexing status. When the record is indexed but its stored
+	// content could not be loaded, `content` is the literal
+	// `No record found`. Neither is an error status. An id that does
+	// not exist, or a record the caller may not read, answers `403`.
 	//
 	GetRecordContentResponseSchema *components.GetRecordContentResponseSchema
 }

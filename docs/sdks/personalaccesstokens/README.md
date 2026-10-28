@@ -55,7 +55,8 @@ the app.
 Lists the caller's own active (non-revoked, unexpired) personal
 access tokens, newest first, capped at 100 rows server-side. Never
 returns another user's tokens — see `GET /personal-access-tokens/admin`
-for the org-admin, cross-user view.
+for the org-admin, cross-user view. The handler reads no query parameters
+and ignores any that are sent.
 
 Shares the same per-user rate limiter as `/oauth-clients/*`
 (default 1000 req/min, `MAX_OAUTH_CLIENT_REQUESTS_PER_MINUTE`).
@@ -70,8 +71,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -110,7 +111,9 @@ func main() {
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
 | apierrors.ApplicationJSONErrorResponse        | 401                                           | application/json                              |
+| apierrors.ErrorResponse                       | 400, 403                                      | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## CreatePersonalAccessToken
@@ -147,8 +150,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -198,6 +201,7 @@ func main() {
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
 | apierrors.ApplicationJSONErrorResponse        | 400, 401, 403                                 | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## ListPersonalAccessTokenScopes
@@ -206,7 +210,8 @@ Returns the org's configured `MCP_SCOPES` as a flat array of scope
 definitions, for populating the create-token scope picker. Unlike
 `GET /oauth-clients/scopes`, this is **not** grouped by category and
 **not** role-aware — every org member sees the same set, since PAT
-scope selection isn't gated by admin status.
+scope selection isn't gated by admin status. The handler reads no query
+parameters and ignores any that are sent.
 
 
 ### Example Usage
@@ -218,8 +223,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -258,7 +263,9 @@ func main() {
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
 | apierrors.ApplicationJSONErrorResponse        | 401                                           | application/json                              |
+| apierrors.ErrorResponse                       | 400, 403                                      | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## RevokePersonalAccessToken
@@ -280,8 +287,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -323,8 +330,10 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
+| apierrors.ErrorResponse                       | 400, 403                                      | application/json                              |
 | apierrors.ApplicationJSONErrorResponse        | 401, 404                                      | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## AdminListPersonalAccessTokens
@@ -336,9 +345,13 @@ who've since been deleted from the org — see `ownerDeleted` on
 compromised laptop, where only the token's own creator could
 otherwise see or revoke it.
 
-Requires org-admin privileges (`userAdminCheck`) — note this returns
-**`400`**, not `403`, for a non-admin caller (shared middleware
-behavior across the codebase, not specific to this route).
+Requires org-admin privileges (`userAdminCheck`): a non-admin caller
+gets `403` (`ForbiddenError`, message
+"You need admin access to do this. Ask an admin in your organisation.").
+The admin check runs before the query is validated, so a non-admin gets
+`403` even for an invalid `page` or `limit`. Query parameters other than
+`page` and `limit` are ignored. A page past the end answers `200` with an
+empty `data` array.
 
 
 ### Example Usage
@@ -350,8 +363,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -391,8 +404,9 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 400, 401                                      | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403                                 | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |
 
 ## AdminRevokePersonalAccessToken
@@ -400,8 +414,8 @@ func main() {
 Revokes a token by id, scoped to the org's PAT client but **not** to
 a specific owning user — the admin counterpart to
 `DELETE /personal-access-tokens/{tokenId}`. Requires org-admin
-privileges (`userAdminCheck`); returns `400` (not `403`) for a
-non-admin caller, same as `GET /personal-access-tokens/admin`.
+privileges (`userAdminCheck`); a non-admin caller gets `403`
+(`ForbiddenError`), same as `GET /personal-access-tokens/admin`.
 
 
 ### Example Usage
@@ -413,8 +427,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -456,6 +470,7 @@ func main() {
 
 | Error Type                                    | Status Code                                   | Content Type                                  |
 | --------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
-| apierrors.ApplicationJSONErrorResponse        | 400, 401, 404                                 | application/json                              |
+| apierrors.ApplicationJSONErrorResponse        | 400, 401, 403, 404                            | application/json                              |
 | apierrors.OAuthClientManagementRateLimitError | 429                                           | application/json                              |
+| apierrors.ErrorResponse                       | 500                                           | application/json                              |
 | apierrors.APIError                            | 4XX, 5XX                                      | \*/\*                                         |

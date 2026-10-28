@@ -3,8 +3,8 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type RevokeAllOAuthAppTokensRequest struct {
@@ -21,23 +21,14 @@ func (r *RevokeAllOAuthAppTokensRequest) GetAppID() string {
 
 // RevokeAllOAuthAppTokensResponseBody - All tokens revoked
 type RevokeAllOAuthAppTokensResponseBody struct {
-	Message *string `json:"message,omitzero"`
-	// Number of tokens revoked
-	Count *int64 `json:"count,omitzero"`
+	Message string `json:"message"`
 }
 
-func (r *RevokeAllOAuthAppTokensResponseBody) GetMessage() *string {
+func (r *RevokeAllOAuthAppTokensResponseBody) GetMessage() string {
 	if r == nil {
-		return nil
+		return ""
 	}
 	return r.Message
-}
-
-func (r *RevokeAllOAuthAppTokensResponseBody) GetCount() *int64 {
-	if r == nil {
-		return nil
-	}
-	return r.Count
 }
 
 type RevokeAllOAuthAppTokensResponse struct {

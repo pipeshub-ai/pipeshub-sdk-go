@@ -5,7 +5,7 @@ package components
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 	"time"
 )
 
@@ -91,9 +91,75 @@ func (e *AgentStreamCreateConversationRequestProtocol) UnmarshalJSON(data []byte
 	}
 }
 
+// AgentStreamCreateConversationRequestKeywordSearchBudget - How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+type AgentStreamCreateConversationRequestKeywordSearchBudget string
+
+const (
+	AgentStreamCreateConversationRequestKeywordSearchBudgetShort AgentStreamCreateConversationRequestKeywordSearchBudget = "short"
+	AgentStreamCreateConversationRequestKeywordSearchBudgetFull  AgentStreamCreateConversationRequestKeywordSearchBudget = "full"
+)
+
+func (e AgentStreamCreateConversationRequestKeywordSearchBudget) ToPointer() *AgentStreamCreateConversationRequestKeywordSearchBudget {
+	return &e
+}
+func (e *AgentStreamCreateConversationRequestKeywordSearchBudget) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "short":
+		fallthrough
+	case "full":
+		*e = AgentStreamCreateConversationRequestKeywordSearchBudget(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AgentStreamCreateConversationRequestKeywordSearchBudget: %v", v)
+	}
+}
+
+// AgentStreamCreateConversationRequestReasoningEffort - Reasoning effort for this turn, for models that support it. Stored on
+// the conversation's model info and forwarded to the AI backend.
+type AgentStreamCreateConversationRequestReasoningEffort string
+
+const (
+	AgentStreamCreateConversationRequestReasoningEffortNone   AgentStreamCreateConversationRequestReasoningEffort = "none"
+	AgentStreamCreateConversationRequestReasoningEffortLow    AgentStreamCreateConversationRequestReasoningEffort = "low"
+	AgentStreamCreateConversationRequestReasoningEffortMedium AgentStreamCreateConversationRequestReasoningEffort = "medium"
+	AgentStreamCreateConversationRequestReasoningEffortHigh   AgentStreamCreateConversationRequestReasoningEffort = "high"
+	AgentStreamCreateConversationRequestReasoningEffortMax    AgentStreamCreateConversationRequestReasoningEffort = "max"
+)
+
+func (e AgentStreamCreateConversationRequestReasoningEffort) ToPointer() *AgentStreamCreateConversationRequestReasoningEffort {
+	return &e
+}
+func (e *AgentStreamCreateConversationRequestReasoningEffort) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "none":
+		fallthrough
+	case "low":
+		fallthrough
+	case "medium":
+		fallthrough
+	case "high":
+		fallthrough
+	case "max":
+		*e = AgentStreamCreateConversationRequestReasoningEffort(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for AgentStreamCreateConversationRequestReasoningEffort: %v", v)
+	}
+}
+
 // AgentStreamCreateConversationRequest - Request body for `POST /agents/{agentKey}/conversations/stream`.
 // `query` and `chatMode: quick` are required; all other fields are
 // optional overrides. Unknown fields are stripped during validation.
+// Unlike the non-streaming route, a `query` of only whitespace is
+// accepted and starts a conversation.
 type AgentStreamCreateConversationRequest struct {
 	// User prompt for the first turn. Saved as the initial `user_query`
 	// message and sent to the agent backend.
@@ -120,6 +186,9 @@ type AgentStreamCreateConversationRequest struct {
 	// least viewer access to. Same fallback/merge semantics as
 	// `POST /conversations/create`. Ignored on follow-up turns — the
 	// session row is the source of truth once the conversation exists.
+	// An OAuth token or PAT also needs `project:read`. An archived
+	// project answers `409`; a project the caller cannot see, `404`,
+	// before any stream opens.
 	//
 	ProjectID *string `json:"projectId,omitzero"`
 	// Only meaningful together with `projectId`. Overrides the
@@ -132,7 +201,9 @@ type AgentStreamCreateConversationRequest struct {
 	//
 	ChatMode AgentStreamCreateConversationRequestChatMode `json:"chatMode"`
 	// AI model configuration id for this turn. Omit to use the agent's
-	// default model.
+	// default model. A key that names no configured model is not refused:
+	// the turn runs on the organization's default model and the unknown
+	// key is still stored in the conversation's `modelInfo`.
 	//
 	ModelKey *string `json:"modelKey,omitzero"`
 	// Provider model name (the underlying LLM identifier).
@@ -149,7 +220,8 @@ type AgentStreamCreateConversationRequest struct {
 	CurrentTime *time.Time `json:"currentTime,omitzero"`
 	// Allowed tool ids for this turn, such as `jira.create_issue`. Omit
 	// to let the agent use its default toolset; send `[]` to disable
-	// tools for this turn.
+	// tools for this turn. A list that leaves out `web_search` turns off
+	// the agent's web search for the turn.
 	//
 	Tools []string `json:"tools,omitzero"`
 	// AG-UI is the only supported wire protocol. When present must be
@@ -165,11 +237,28 @@ type AgentStreamCreateConversationRequest struct {
 	// `true`. Omitting the whole object applies every default.
 	//
 	AgentCapabilities *AgentCapabilities `json:"agentCapabilities,omitzero"`
+	// Opt in to measurement frames on this stream: CUSTOM `retrieval_context` events naming the records and blocks that reached the model, and one CUSTOM `run_usage` event carrying the run's token totals and loop outcome. Identifiers only, never block text. Does not change the answer.
+	IncludeRetrievalContext *bool `default:"false" json:"includeRetrievalContext"`
+	// How long each search waits for the keyword (grep) match after its semantic results are in. `short` waits at most 5 seconds and keeps the keyword matches found by then, for callers that would rather answer sooner, such as agents calling chat over MCP. `full`, or leaving it out, waits for all of it. Deployments running `HIGH_ACCURACY_MODE` always wait in full.
+	KeywordSearchBudget *AgentStreamCreateConversationRequestKeywordSearchBudget `json:"keywordSearchBudget,omitzero"`
+	// The person's answer to a tool approval card. The web app sends it with the query
+	// `Tool approval: allow` or `Tool approval: deny`, and the request carries on the turn that
+	// stopped on the card: the saved call runs (when allowed) and its result answers the call
+	// the model made, in the same reply. The call is the one saved server-side when the card was
+	// shown (answerable for 15 minutes, settled once, bound to the asking user and
+	// conversation); only its id and the answer travel here. A reply that answered a card
+	// can't be regenerated.
+	//
+	ToolApproval *ToolApprovalAnswer `json:"toolApproval,omitzero"`
 	// Client-generated identifier for this run. Send it here to enable
 	// `POST /agents/{agentKey}/conversations/{conversationId}/cancel
 	// {runId}` while the stream is still generating.
 	//
 	RunID *string `json:"runId,omitzero"`
+	// Reasoning effort for this turn, for models that support it. Stored on
+	// the conversation's model info and forwarded to the AI backend.
+	//
+	ReasoningEffort *AgentStreamCreateConversationRequestReasoningEffort `json:"reasoningEffort,omitzero"`
 }
 
 func (a AgentStreamCreateConversationRequest) MarshalJSON() ([]byte, error) {
@@ -295,9 +384,37 @@ func (a *AgentStreamCreateConversationRequest) GetAgentCapabilities() *AgentCapa
 	return a.AgentCapabilities
 }
 
+func (a *AgentStreamCreateConversationRequest) GetIncludeRetrievalContext() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.IncludeRetrievalContext
+}
+
+func (a *AgentStreamCreateConversationRequest) GetKeywordSearchBudget() *AgentStreamCreateConversationRequestKeywordSearchBudget {
+	if a == nil {
+		return nil
+	}
+	return a.KeywordSearchBudget
+}
+
+func (a *AgentStreamCreateConversationRequest) GetToolApproval() *ToolApprovalAnswer {
+	if a == nil {
+		return nil
+	}
+	return a.ToolApproval
+}
+
 func (a *AgentStreamCreateConversationRequest) GetRunID() *string {
 	if a == nil {
 		return nil
 	}
 	return a.RunID
+}
+
+func (a *AgentStreamCreateConversationRequest) GetReasoningEffort() *AgentStreamCreateConversationRequestReasoningEffort {
+	if a == nil {
+		return nil
+	}
+	return a.ReasoningEffort
 }

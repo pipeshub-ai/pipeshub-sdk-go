@@ -3,12 +3,12 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type ReindexRecordGroupRequest struct {
-	// Folder ID or KB ID
+	// Record group ID (from a connector sync; not a knowledge base or folder id)
 	RecordGroupID string `pathParam:"style=simple,explode=false,name=recordGroupId"`
 	// Request payload
 	Body *components.ReindexRecordGroupRequestBody `request:"mediaType=application/json"`

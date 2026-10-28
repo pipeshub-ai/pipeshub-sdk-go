@@ -18,12 +18,12 @@ AI-powered conversational chat management with citations and follow-up questions
 * [UpdateConversationTitle](#updateconversationtitle) - Update conversation title
 * [ArchiveConversation](#archiveconversation) - Archive conversation
 * [UnarchiveConversation](#unarchiveconversation) - Unarchive conversation
+* [PinConversation](#pinconversation) - Pin conversation
+* [UnpinConversation](#unpinconversation) - Unpin conversation
 * [RegenerateAnswer](#regenerateanswer) - Regenerate AI response
+* [ForkConversation](#forkconversation) - Fork conversation from a message
 * [CancelConversationStream](#cancelconversationstream) - Cancel an in-flight chat stream
 * [UpdateMessageFeedback](#updatemessagefeedback) - Submit feedback on AI response
-* [SetConversationProject](#setconversationproject) - Link or unlink a conversation to a project
-* [SetConversationProjectVisibility](#setconversationprojectvisibility) - Override a conversation's project visibility
-* [GetProjectConversations](#getprojectconversations) - List a project's conversations
 
 ## CreateConversation
 
@@ -55,10 +55,11 @@ timeout, or use the `/stream` variant for interactive clients.
 
 **Modes**
 
-`chatMode: agent` (or `agent:<mode>`) runs the universal agent and
-honours `tools` / `agentCapabilities`; `internal_search` and
-`web_search` run the search assistant and ignore `tools`. Omitted,
-it defaults to internal search.
+`chatMode: agent` runs the universal agent and honours `tools` /
+`agentCapabilities`; `internal_search` and `web_search` run the
+search assistant and ignore `tools`. The legacy values `deep`,
+`quick`, `verification` and `auto` are accepted and run as internal
+search. Omitted, it defaults to internal search.
 
 
 ### Example Usage: filtered
@@ -70,8 +71,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -110,8 +111,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -152,9 +153,9 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400                     | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404, 409 | application/json        |
 | apierrors.ErrorResponse | 424                     | application/json        |
-| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.ErrorResponse | 500, 503, 504           | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## StreamChat
@@ -204,9 +205,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types"
 	"log"
 )
 
@@ -265,9 +266,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404, 409 | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## GetAllConversations
 
@@ -289,6 +292,11 @@ Defaults to `owned` when omitted. Each call returns one list; call twice if you 
 **Sorting:**
 
 Conversations are sorted by last activity timestamp (most recent first) by default.
+With `source=owned`, conversations the caller pinned
+(`PATCH /conversations/{conversationId}/pin`) come first, in the same order,
+whatever `sortBy` is. `source=shared` is never pinned-first.
+
+Query parameters not listed here are ignored, not refused.
 
 
 ### Example Usage
@@ -300,9 +308,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -339,9 +347,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## GetArchivedConversations
 
@@ -351,13 +361,18 @@ Retrieve all archived conversations for the authenticated user.
 
 Archived conversations are hidden from the main list but preserved for reference.
 This endpoint returns only conversations where `isArchived: true` and `archivedBy`
-is set. Results include conversations the caller owns and those shared with them.
+is set. Results include conversations the caller owns and those shared with them
+(`isShared` and the caller listed in `sharedWith`). Deleted and agent
+conversations are never listed. Each item carries its `messages`.
 
 **Filtering and sorting:**
 
 Results can be narrowed using `search`, `shared`, `startDate`, `endDate`, and
 `conversationId`. Sorting is controlled by `sortBy` and `sortOrder`. Pagination
 is controlled by `page` and `limit`.
+
+Query parameters not listed here are dropped by the validator and
+ignored, including `projectId`, which `GET /conversations` accepts.
 
 **Unarchiving:**
 
@@ -374,9 +389,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -413,9 +428,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## SearchArchivedConversations
 
@@ -429,8 +446,13 @@ Results are merged server-side and sorted by `lastActivityAt` descending.
 
 **Search parameter:**
 
-The `search` query parameter is required, must be a non-empty string, and is capped at
-1000 characters. Requests that omit it or exceed the cap return `400`.
+The `search` query parameter is required, must contain a non-space character, and is
+capped at 1000 characters; it is trimmed before use. Requests that omit it, send only
+spaces or exceed the cap return `400 VALIDATION_ERROR`. A value holding markup or a
+printf-style format specifier (such as `%s`) is refused by the controller with
+`400 HTTP_BAD_REQUEST`.
+
+Query parameters not listed here are dropped by the validator and ignored.
 
 **Pagination:**
 
@@ -453,8 +475,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -467,7 +489,7 @@ func main() {
         }),
     )
 
-    res, err := s.Conversations.SearchArchivedConversations(ctx, "<value>", pipeshub.Pointer[int64](1), pipeshub.Pointer[int64](20))
+    res, err := s.Conversations.SearchArchivedConversations(ctx, "<value>", pipeshub.Pointer[float64](1.0), pipeshub.Pointer[float64](20.0))
     if err != nil {
         log.Fatal(err)
     }
@@ -479,13 +501,13 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                             | Type                                                                                  | Required                                                                              | Description                                                                           |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `ctx`                                                                                 | [context.Context](https://pkg.go.dev/context#Context)                                 | :heavy_check_mark:                                                                    | The context to use for the request.                                                   |
-| `search`                                                                              | `string`                                                                              | :heavy_check_mark:                                                                    | Search term to match against conversation titles and message content (max 1000 chars) |
-| `page`                                                                                | `*int64`                                                                              | :heavy_minus_sign:                                                                    | Page number (1-indexed)                                                               |
-| `limit`                                                                               | `*int64`                                                                              | :heavy_minus_sign:                                                                    | Items per page                                                                        |
-| `opts`                                                                                | [][operations.Option](../../models/operations/option.md)                              | :heavy_minus_sign:                                                                    | The options for this request.                                                         |
+| Parameter                                                                                                                                        | Type                                                                                                                                             | Required                                                                                                                                         | Description                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ctx`                                                                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                                                                            | :heavy_check_mark:                                                                                                                               | The context to use for the request.                                                                                                              |
+| `search`                                                                                                                                         | `string`                                                                                                                                         | :heavy_check_mark:                                                                                                                               | Search term to match against conversation titles and message content (max 1000 chars)                                                            |
+| `page`                                                                                                                                           | `*float64`                                                                                                                                       | :heavy_minus_sign:                                                                                                                               | Page number (1-indexed). The validator accepts any number, so a fraction such<br/>as `1.5` is not refused; it is truncated (`1.5` reads as page 1).<br/> |
+| `limit`                                                                                                                                          | `*float64`                                                                                                                                       | :heavy_minus_sign:                                                                                                                               | Items per page. A fraction is not refused; it is truncated (`5.5` reads as 5).<br/>                                                              |
+| `opts`                                                                                                                                           | [][operations.Option](../../models/operations/option.md)                                                                                         | :heavy_minus_sign:                                                                                                                               | The options for this request.                                                                                                                    |
 
 ### Response
 
@@ -493,9 +515,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## GetConversationByID
 
@@ -511,13 +535,15 @@ feedback, and metadata. Messages can be paginated for long conversations.
 For conversations with many messages, use pagination parameters:
 
 - `page`: Page number (default: 1)
-- `limit`: Messages per page (default: 10)
+- `limit`: Messages per page (default: 20)
 - `sortBy`: Sort field (default: createdAt)
 - `sortOrder`: 'asc' or 'desc' (default: desc)
 
 **Access Control:**
 
 Users can access conversations they own or that have been shared with them.
+
+Query parameters not listed here are ignored, not refused.
 
 
 ### Example Usage
@@ -529,9 +555,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -570,9 +596,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## DeleteConversationByID
 
@@ -586,9 +614,16 @@ referenced by messages in the conversation are also soft-deleted.
 
 **Permissions:**
 
-The conversation initiator can always delete. Users the conversation has
-been shared with may delete it only when their `sharedWith.accessLevel`
-is `write`.
+Only the conversation's owner can delete it. The lookup also allows a
+user the conversation is shared with at `write` access, but it
+requires the caller to be the owner as well, so such a user is
+answered `404`.
+
+**Artifacts:** before the conversation is marked deleted, every artifact
+the caller created in it is deleted for good (every version and stored
+file), and so are older stored outputs of the conversation. If that cannot
+be done the conversation is left in place and the error is returned
+(for example 503); repeating the request finishes the cleanup.
 
 
 ### Example Usage
@@ -600,8 +635,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -638,9 +673,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## AddMessage
 
@@ -682,9 +719,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types"
 	"log"
 )
 
@@ -717,12 +754,12 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                    | Type                                                                         | Required                                                                     | Description                                                                  |
-| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `ctx`                                                                        | [context.Context](https://pkg.go.dev/context#Context)                        | :heavy_check_mark:                                                           | The context to use for the request.                                          |
-| `conversationID`                                                             | `string`                                                                     | :heavy_check_mark:                                                           | N/A                                                                          |
-| `body`                                                                       | [components.AddMessageRequest](../../models/components/addmessagerequest.md) | :heavy_check_mark:                                                           | The follow-up question, with optional scope and model overrides.             |
-| `opts`                                                                       | [][operations.Option](../../models/operations/option.md)                     | :heavy_minus_sign:                                                           | The options for this request.                                                |
+| Parameter                                                                                                                                                                                                     | Type                                                                                                                                                                                                          | Required                                                                                                                                                                                                      | Description                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                                                                         | [context.Context](https://pkg.go.dev/context#Context)                                                                                                                                                         | :heavy_check_mark:                                                                                                                                                                                            | The context to use for the request.                                                                                                                                                                           |
+| `conversationID`                                                                                                                                                                                              | `string`                                                                                                                                                                                                      | :heavy_check_mark:                                                                                                                                                                                            | N/A                                                                                                                                                                                                           |
+| `body`                                                                                                                                                                                                        | [components.AddMessageRequest](../../models/components/addmessagerequest.md)                                                                                                                                  | :heavy_check_mark:                                                                                                                                                                                            | The follow-up question, with optional scope and model overrides. A `query` of only<br/>whitespace is refused with `400` `HTTP_BAD_REQUEST` ("Query is required"), after the<br/>validator and before any model runs.<br/> |
+| `opts`                                                                                                                                                                                                        | [][operations.Option](../../models/operations/option.md)                                                                                                                                                      | :heavy_minus_sign:                                                                                                                                                                                            | The options for this request.                                                                                                                                                                                 |
 
 ### Response
 
@@ -732,9 +769,9 @@ func main() {
 
 | Error Type              | Status Code             | Content Type            |
 | ----------------------- | ----------------------- | ----------------------- |
-| apierrors.ErrorResponse | 400, 404                | application/json        |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
 | apierrors.ErrorResponse | 424                     | application/json        |
-| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.ErrorResponse | 500, 503, 504           | application/json        |
 | apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## AddMessageStream
@@ -761,9 +798,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types"
 	"log"
 )
 
@@ -816,9 +853,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## UpdateConversationTitle
 
@@ -837,7 +876,12 @@ Use this endpoint to set a custom, more descriptive title.
 **Permissions:**
 
 The conversation must exist, belong to the calling user's organization,
-be owned by the caller (matched on `userId`), and not be soft-deleted.
+be owned by the caller (matched on `userId`), not be soft-deleted, and
+not be an agent conversation. A user it is shared with, even at
+`write` access, gets `404`.
+
+Body fields other than `title` are dropped by the validator, not
+refused.
 
 
 ### Example Usage
@@ -849,9 +893,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -891,9 +935,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## ArchiveConversation
 
@@ -906,8 +952,12 @@ Use archiving to clean up your workspace without permanently deleting conversati
 
 **Access:**
 
-The caller must be the conversation's initiator, or be listed in `sharedWith`
-with `accessLevel: write`. Already-archived conversations return `400`.
+Only the conversation's owner can archive it: the lookup filters on
+the caller's `userId`. It also has a branch for users the
+conversation is shared with at `write` access, but that branch can
+never match, so such users get `404` (a known defect). A missing,
+deleted or agent conversation is `404` too.
+Already-archived conversations return `400`.
 
 **Retrieval:**
 
@@ -924,8 +974,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -962,9 +1012,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## UnarchiveConversation
 
@@ -973,6 +1025,15 @@ Restore an archived conversation.
 - Path params: `conversationId`
 - Query params: none
 - Body: none
+
+**Access:**
+
+Only the conversation's owner can unarchive it: the lookup filters on
+the caller's `userId`. It also has a branch for users the
+conversation is shared with at `write` access, but that branch can
+never match, so such users get `404` (a known defect). A missing,
+deleted or agent conversation is `404` too.
+A conversation that is not archived returns `400`.
 
 
 ### Example Usage
@@ -984,8 +1045,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -1022,9 +1083,156 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+
+## PinConversation
+
+Pin a conversation so it is listed first in the caller's own conversation list.
+
+**Access:**
+
+Owner only: the caller must be the conversation's `initiator`. People the
+conversation is shared with, even with `write` access, cannot pin it, and
+their own lists are not affected by the owner's pin.
+
+**Behaviour:**
+
+Idempotent: pinning an already pinned conversation succeeds and changes nothing.
+Archived and deleted conversations cannot be pinned. Archiving a pinned
+conversation removes its pin. Pinning does not change `lastActivityAt` or
+`updatedAt`, so the conversation keeps its place among the other pinned chats.
+
+- Path params: `conversationId`
+- Query params: none
+- Body: none
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="pinConversation" method="patch" path="/conversations/{conversationId}/pin" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.PinConversation(ctx, "<value>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ConversationPinResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | Conversation identifier                                  |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.PinConversationResponse](../../models/operations/pinconversationresponse.md), error**
+
+### Errors
+
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+
+## UnpinConversation
+
+Remove a conversation's pin so it is listed by recent activity again.
+
+**Access:**
+
+Owner only, as for `PATCH /conversations/{conversationId}/pin`.
+
+**Behaviour:**
+
+Idempotent: unpinning a conversation that is not pinned succeeds and changes nothing.
+
+- Path params: `conversationId`
+- Query params: none
+- Body: none
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="unpinConversation" method="patch" path="/conversations/{conversationId}/unpin" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.UnpinConversation(ctx, "<value>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ConversationPinResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | Conversation identifier                                  |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.UnpinConversationResponse](../../models/operations/unpinconversationresponse.md), error**
+
+### Errors
+
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## RegenerateAnswer
 
@@ -1041,6 +1249,12 @@ response replaces the previous one in place.
 
 - Only the *last* message of the conversation can be regenerated.
 - The target message must be of type `bot_response`.
+
+**Editing the question:**
+
+Send `query` to re-ask the last question with new wording. The answer
+is regenerated for the edited question, which replaces the stored one
+once the new answer is saved.
 
 **Use Cases:**
 
@@ -1069,9 +1283,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types"
 	"log"
 )
 
@@ -1085,6 +1299,7 @@ func main() {
     )
 
     res, err := s.Conversations.RegenerateAnswer(ctx, "<value>", "<value>", &components.RegenerateRequest{
+        Answers: pipeshub.Pointer("User selections:\n1. \"Which region?\" → EU"),
         ModelKey: pipeshub.Pointer("05438a37-68f2-4641-a8dc-6c47e63278ca"),
         ModelName: pipeshub.Pointer("gpt-5.4-mini"),
         ModelFriendlyName: pipeshub.Pointer("mini"),
@@ -1127,9 +1342,79 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
+
+## ForkConversation
+
+Copy this conversation into a new private chat owned by the caller,
+including every message up to and including `messageId`. The original
+conversation is left unchanged.
+
+Only the owner of the conversation can fork it. A shared recipient or a
+project member gets 404, because their access to the original's
+attachments and artifacts is revoked on unshare. The fork does not
+inherit share settings. If the source is linked to a project the caller
+can still see, the fork stays in that project but is private to the
+caller; otherwise it is created outside the project.
+
+
+### Example Usage
+
+<!-- UsageSnippet language="go" operationID="forkConversation" method="post" path="/conversations/{conversationId}/message/{messageId}/fork" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.Conversations.ForkConversation(ctx, "<value>", "<value>")
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.ForkConversationResponse != nil {
+        // handle response
+    }
+}
+```
+
+### Parameters
+
+| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
+| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
+| `conversationID`                                         | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
+| `messageID`                                              | `string`                                                 | :heavy_check_mark:                                       | Inclusive last message to copy into the new chat         |
+| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
+
+### Response
+
+**[*operations.ForkConversationResponse](../../models/operations/forkconversationresponse.md), error**
+
+### Errors
+
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## CancelConversationStream
 
@@ -1142,9 +1427,14 @@ cancelled run's own stream (if still connected) receives a terminal
 frame with a `stopped` status and whatever partial answer had
 already generated; nothing further is delivered here.
 
-`{ cancelled: false }` — not an error — covers a `runId` that
-already finished or was never registered; the caller only needs to
-know the stream is not running anymore, not why.
+A `runId` that already finished or was never registered is not an
+error either, but it is answered `{ cancelled: true }`, not `false`:
+the query service's KV-backed run registry publishes the cancel for
+other workers and acknowledges it as cancelled (a known defect).
+`{ cancelled: false }` is only returned when that publish fails.
+
+Only the conversation's owner (matched on `userId`) can cancel; any
+other caller, or a missing, deleted or agent conversation, is `404`.
 
 `runId` must belong to a run started on THIS `conversationId` — a
 `runId` that exists but was registered under a different
@@ -1161,9 +1451,9 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 	"log"
 )
 
@@ -1203,9 +1493,11 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |
 
 ## UpdateMessageFeedback
 
@@ -1229,6 +1521,16 @@ preserved.
 Feedback can only be submitted on `bot_response` messages — user
 queries and system messages are rejected with `400`.
 
+**Who can submit**
+
+The conversation's initiator, or any user it is shared with (at any
+access level) while `isShared` is `true`. Agent conversations are
+`404` here.
+
+Body fields other than `isHelpful`, `categories` and `comments` are
+dropped by the validator, not refused. `metrics` is always computed
+by the server.
+
 
 ### Example Usage
 
@@ -1239,8 +1541,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -1279,211 +1581,8 @@ func main() {
 
 ### Errors
 
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## SetConversationProject
-
-Set (`projectId: <id>`) or clear (`projectId: null`) the project this
-conversation belongs to. Initiator-only.
-
-**Access:**
-
-The caller must be the conversation's initiator. Linking to a
-non-null `projectId` also requires at least viewer access to that
-project (`404` if not visible to the caller — never `403`, to avoid
-leaking project existence across an org boundary).
-
-**Visibility on link:**
-
-When linking, `projectVisibility` defaults from the project's
-`chatSharing` setting (`members` → `project`, otherwise `private`)
-unless the conversation was already `project`-visible, in which case
-that is preserved. Use
-`PATCH /conversations/{conversationId}/project-visibility` to
-override it explicitly. Unlinking (`projectId: null`) always clears
-both `projectId` and `projectVisibility`.
-
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="setConversationProject" method="put" path="/conversations/{conversationId}/project" -->
-```go
-package main
-
-import(
-	"context"
-	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := pipeshub.New(
-        pipeshub.WithSecurity(components.Security{
-            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
-        }),
-    )
-
-    res, err := s.Conversations.SetConversationProject(ctx, "<value>", operations.SetConversationProjectRequestBody{
-        ProjectID: pipeshub.Pointer("<value>"),
-    })
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.Object != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                                                                    | Type                                                                                                         | Required                                                                                                     | Description                                                                                                  |
-| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `ctx`                                                                                                        | [context.Context](https://pkg.go.dev/context#Context)                                                        | :heavy_check_mark:                                                                                           | The context to use for the request.                                                                          |
-| `conversationID`                                                                                             | `string`                                                                                                     | :heavy_check_mark:                                                                                           | Unique conversation identifier                                                                               |
-| `body`                                                                                                       | [operations.SetConversationProjectRequestBody](../../models/operations/setconversationprojectrequestbody.md) | :heavy_check_mark:                                                                                           | N/A                                                                                                          |
-| `opts`                                                                                                       | [][operations.Option](../../models/operations/option.md)                                                     | :heavy_minus_sign:                                                                                           | The options for this request.                                                                                |
-
-### Response
-
-**[*operations.SetConversationProjectResponse](../../models/operations/setconversationprojectresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## SetConversationProjectVisibility
-
-Explicitly set whether a project-linked conversation is visible to
-other members of that project (`project`) or only to its owner
-(`private`). Initiator-only. Requires the conversation to already be
-linked to a project via
-`PUT /conversations/{conversationId}/project`.
-
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="setConversationProjectVisibility" method="patch" path="/conversations/{conversationId}/project-visibility" -->
-```go
-package main
-
-import(
-	"context"
-	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := pipeshub.New(
-        pipeshub.WithSecurity(components.Security{
-            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
-        }),
-    )
-
-    res, err := s.Conversations.SetConversationProjectVisibility(ctx, "<value>", operations.SetConversationProjectVisibilityRequestBody{
-        Visibility: operations.SetConversationProjectVisibilityVisibilityProject,
-    })
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.Object != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                                                                                        | Type                                                                                                                             | Required                                                                                                                         | Description                                                                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `ctx`                                                                                                                            | [context.Context](https://pkg.go.dev/context#Context)                                                                            | :heavy_check_mark:                                                                                                               | The context to use for the request.                                                                                              |
-| `conversationID`                                                                                                                 | `string`                                                                                                                         | :heavy_check_mark:                                                                                                               | Unique conversation identifier                                                                                                   |
-| `body`                                                                                                                           | [operations.SetConversationProjectVisibilityRequestBody](../../models/operations/setconversationprojectvisibilityrequestbody.md) | :heavy_check_mark:                                                                                                               | N/A                                                                                                                              |
-| `opts`                                                                                                                           | [][operations.Option](../../models/operations/option.md)                                                                         | :heavy_minus_sign:                                                                                                               | The options for this request.                                                                                                    |
-
-### Response
-
-**[*operations.SetConversationProjectVisibilityResponse](../../models/operations/setconversationprojectvisibilityresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
-
-## GetProjectConversations
-
-Requires viewer access to the project. Returns both chat and agent
-sessions (`chatSessions`, discriminated by `sessionType`/`agentKey`)
-that the caller may see: rows they own, plus rows with
-`projectVisibility: project`. Access to the project is asserted
-first, so a private conversation belonging to a *different* project
-member never leaks through this endpoint.
-
-
-### Example Usage
-
-<!-- UsageSnippet language="go" operationID="getProjectConversations" method="get" path="/projects/{projectId}/conversations" -->
-```go
-package main
-
-import(
-	"context"
-	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
-	"log"
-)
-
-func main() {
-    ctx := context.Background()
-
-    s := pipeshub.New(
-        pipeshub.WithSecurity(components.Security{
-            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
-        }),
-    )
-
-    res, err := s.Conversations.GetProjectConversations(ctx, "<value>", pipeshub.Pointer[int64](1), pipeshub.Pointer[int64](20))
-    if err != nil {
-        log.Fatal(err)
-    }
-    if res.Object != nil {
-        // handle response
-    }
-}
-```
-
-### Parameters
-
-| Parameter                                                | Type                                                     | Required                                                 | Description                                              |
-| -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
-| `ctx`                                                    | [context.Context](https://pkg.go.dev/context#Context)    | :heavy_check_mark:                                       | The context to use for the request.                      |
-| `projectID`                                              | `string`                                                 | :heavy_check_mark:                                       | N/A                                                      |
-| `page`                                                   | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `limit`                                                  | `*int64`                                                 | :heavy_minus_sign:                                       | N/A                                                      |
-| `opts`                                                   | [][operations.Option](../../models/operations/option.md) | :heavy_minus_sign:                                       | The options for this request.                            |
-
-### Response
-
-**[*operations.GetProjectConversationsResponse](../../models/operations/getprojectconversationsresponse.md), error**
-
-### Errors
-
-| Error Type         | Status Code        | Content Type       |
-| ------------------ | ------------------ | ------------------ |
-| apierrors.APIError | 4XX, 5XX           | \*/\*              |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403, 404      | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |

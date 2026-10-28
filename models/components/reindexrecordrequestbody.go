@@ -3,21 +3,22 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
-// ReindexRecordRequestBody - Optional body for single-record reindex.
+// ReindexRecordRequestBody - Optional body for single-record reindex. Only `depth` and `statusFilters` are read;
+// any other field is dropped by the validator before the handler runs (there is no
+// `force` option: the handler always sends `force: false`). No body, an empty object
+// or an empty `statusFilters` list mean depth `0` and no status filter.
 type ReindexRecordRequestBody struct {
 	// Child traversal depth (`0` = record only; higher values include
-	// descendants; `100` is used by clients for folder-like reindex).
+	// descendants; `-1` = all of them; `100` is used by clients for folder-like reindex).
 	//
 	Depth *int64 `default:"0" json:"depth"`
-	// Force reindex even when the connector considers the record unchanged.
-	Force *bool `default:"false" json:"force"`
 	// When set, only records whose indexing status matches one of these
 	// values are reindexed (applies to the record and its descendants per `depth`).
 	//
-	StatusFilters []IndexingStatusFilter `json:"statusFilters,omitzero"`
+	StatusFilters []string `json:"statusFilters,omitzero"`
 }
 
 func (r ReindexRecordRequestBody) MarshalJSON() ([]byte, error) {
@@ -38,14 +39,7 @@ func (r *ReindexRecordRequestBody) GetDepth() *int64 {
 	return r.Depth
 }
 
-func (r *ReindexRecordRequestBody) GetForce() *bool {
-	if r == nil {
-		return nil
-	}
-	return r.Force
-}
-
-func (r *ReindexRecordRequestBody) GetStatusFilters() []IndexingStatusFilter {
+func (r *ReindexRecordRequestBody) GetStatusFilters() []string {
 	if r == nil {
 		return nil
 	}

@@ -3,9 +3,11 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types/stream"
+	"encoding/json"
+	"fmt"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types/stream"
 )
 
 type UploadRecordsFile struct {
@@ -28,15 +30,86 @@ func (u *UploadRecordsFile) GetContent() any {
 	return u.Content
 }
 
+type FilesMetadatum struct {
+	FilePath     string  `json:"file_path"`
+	LastModified float64 `json:"last_modified"`
+}
+
+func (f *FilesMetadatum) GetFilePath() string {
+	if f == nil {
+		return ""
+	}
+	return f.FilePath
+}
+
+func (f *FilesMetadatum) GetLastModified() float64 {
+	if f == nil {
+		return 0.0
+	}
+	return f.LastModified
+}
+
+// IsVersioned - Enable version tracking. `true`/`1` and `false`/`0`/empty are read as
+// booleans; any other text is answered `500` (the validator throws a plain
+// error).
+type IsVersioned string
+
+const (
+	IsVersionedTrue    IsVersioned = "true"
+	IsVersionedFalse   IsVersioned = "false"
+	IsVersionedOne     IsVersioned = "1"
+	IsVersionedZero    IsVersioned = "0"
+	IsVersionedUnknown IsVersioned = ""
+)
+
+func (e IsVersioned) ToPointer() *IsVersioned {
+	return &e
+}
+func (e *IsVersioned) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "true":
+		fallthrough
+	case "false":
+		fallthrough
+	case "1":
+		fallthrough
+	case "0":
+		fallthrough
+	case "":
+		*e = IsVersioned(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for IsVersioned: %v", v)
+	}
+}
+
 // UploadRecordsRequestBody - Request payload
 type UploadRecordsRequestBody struct {
 	// Files to upload (max 1000)
 	Files []UploadRecordsFile `multipartForm:"file,name=files"`
-	// JSON array with file_path and last_modified for each file
-	FilesMetadata *string `multipartForm:"name=files_metadata"`
-	// Enable version tracking
-	IsVersioned *bool `default:"true" multipartForm:"name=isVersioned"`
-	// Type of records to create
+	// JSON text: an array with one entry per file, in the order of the `files`
+	// parts, each `{file_path, last_modified}` with `last_modified` in epoch
+	// milliseconds (a number, not a date string). A file without an entry is
+	// named after its part and timed at the upload. Text that is not JSON, or an
+	// array whose length differs from the number of files, is refused with `400`
+	// (`HTTP_BAD_REQUEST`); an entry without a string `file_path` or a numeric
+	// `last_modified` is refused with `400` (`VALIDATION_ERROR`).
+	//
+	FilesMetadata []FilesMetadatum `multipartForm:"name=files_metadata,json"`
+	// Enable version tracking. `true`/`1` and `false`/`0`/empty are read as
+	// booleans; any other text is answered `500` (the validator throws a plain
+	// error).
+	//
+	IsVersioned *IsVersioned `default:"true" multipartForm:"name=isVersioned"`
+	// Validated, then ignored (records are named after their files).
+	RecordName *string `multipartForm:"name=recordName"`
+	// Validated, then ignored (records get origin `UPLOAD`).
+	Origin *string `multipartForm:"name=origin"`
+	// Validated, then ignored (records get type `FILE`).
 	RecordType *string `default:"FILE" multipartForm:"name=recordType"`
 }
 
@@ -58,18 +131,32 @@ func (u *UploadRecordsRequestBody) GetFiles() []UploadRecordsFile {
 	return u.Files
 }
 
-func (u *UploadRecordsRequestBody) GetFilesMetadata() *string {
+func (u *UploadRecordsRequestBody) GetFilesMetadata() []FilesMetadatum {
 	if u == nil {
 		return nil
 	}
 	return u.FilesMetadata
 }
 
-func (u *UploadRecordsRequestBody) GetIsVersioned() *bool {
+func (u *UploadRecordsRequestBody) GetIsVersioned() *IsVersioned {
 	if u == nil {
 		return nil
 	}
 	return u.IsVersioned
+}
+
+func (u *UploadRecordsRequestBody) GetRecordName() *string {
+	if u == nil {
+		return nil
+	}
+	return u.RecordName
+}
+
+func (u *UploadRecordsRequestBody) GetOrigin() *string {
+	if u == nil {
+		return nil
+	}
+	return u.Origin
 }
 
 func (u *UploadRecordsRequestBody) GetRecordType() *string {
@@ -80,9 +167,11 @@ func (u *UploadRecordsRequestBody) GetRecordType() *string {
 }
 
 type UploadRecordsRequest struct {
-	// Knowledge base ID
+	// Knowledge base ID (UUID)
 	KbID string `pathParam:"style=simple,explode=false,name=kbId"`
-	// Target folder ID. Omit to upload to the KB root.
+	// Target folder ID. Omit to upload to the KB root. A folder that is not in this
+	// knowledge base is answered `404`.
+	//
 	FolderID *string `queryParam:"style=form,explode=true,name=folderId"`
 	// Request payload
 	Body UploadRecordsRequestBody `request:"mediaType=multipart/form-data"`

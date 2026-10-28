@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 )
 
 // KnowledgeGraphNodeRowSchema - One row in a navigate listing. Carries the identity fields of
@@ -12,7 +12,7 @@ import (
 type KnowledgeGraphNodeRowSchema struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-	// One of `recordGroup`, `folder`, `record`. Listings never contain `app` nodes.
+	// One of `recordGroup`, `folder`, `record`, or `app`. A listing holds `app` nodes only at the root of a connected app whose limit names spaces, folders or files as well as whole sources: there it lists those sources.
 	NodeType string  `json:"node_type"`
 	SubType  *string `json:"sub_type"`
 	IsRecord bool    `json:"is_record"`

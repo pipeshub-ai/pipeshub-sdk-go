@@ -4,12 +4,13 @@ package components
 
 // WebSearchProviderItem - Web search provider configuration item returned by getWebSearchProviders
 type WebSearchProviderItem struct {
-	// Supported web search provider
+	// Supported web search provider. crawl4ai only reads pages (it backs up the built-in page reader) and cannot be the default; firecrawl both searches and reads pages. searxng, firecrawl and crawl4ai take a baseUrl; firecrawl defaults to its cloud API.
 	Provider WebSearchProviderType `json:"provider"`
 	// Unique key for the provider configuration
 	ProviderKey string `json:"providerKey"`
 	// Provider-specific configuration as stored and returned by the gateway (open record).
-	// Serper, Tavily, and Exa typically include `apiKey`; additional keys may be present.
+	// API providers include `apiKey` (masked for non-admins); searxng, firecrawl and crawl4ai
+	// include `baseUrl` (masked for non-admins too). Additional keys may be present.
 	//
 	Configuration map[string]any `json:"configuration"`
 	IsDefault     bool           `json:"isDefault"`

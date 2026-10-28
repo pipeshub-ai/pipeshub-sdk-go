@@ -5,13 +5,63 @@ package operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
+
+// GetSearchByIDShared - Return the search only if its `isShared` matches. `'true'` / `'1'` and `'false'` /
+// `'0'`, case-insensitive; anything else is refused with `400`.
+type GetSearchByIDShared string
+
+const (
+	GetSearchByIDSharedTrue  GetSearchByIDShared = "true"
+	GetSearchByIDSharedFalse GetSearchByIDShared = "false"
+	GetSearchByIDSharedOne   GetSearchByIDShared = "1"
+	GetSearchByIDSharedZero  GetSearchByIDShared = "0"
+)
+
+func (e GetSearchByIDShared) ToPointer() *GetSearchByIDShared {
+	return &e
+}
+func (e *GetSearchByIDShared) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case "true":
+		fallthrough
+	case "false":
+		fallthrough
+	case "1":
+		fallthrough
+	case "0":
+		*e = GetSearchByIDShared(v)
+		return nil
+	default:
+		return fmt.Errorf("invalid value for GetSearchByIDShared: %v", v)
+	}
+}
 
 type GetSearchByIDRequest struct {
 	// Unique search identifier
 	SearchID string `pathParam:"style=simple,explode=false,name=searchId"`
+	// Validated, then dropped: a stored search has no title to match, so it never
+	// filters anything. More than 1000 characters, or HTML markup, is refused with `400`.
+	//
+	Search *string `queryParam:"style=form,explode=true,name=search"`
+	// Return the search only if its `isShared` matches. `'true'` / `'1'` and `'false'` /
+	// `'0'`, case-insensitive; anything else is refused with `400`.
+	//
+	Shared *GetSearchByIDShared `queryParam:"style=form,explode=true,name=shared"`
+	// ISO 8601 date or date-time; return the search only if it was created on or after
+	// it. A value JavaScript's `Date` cannot parse is refused with `400`.
+	//
+	StartDate *string `queryParam:"style=form,explode=true,name=startDate"`
+	// ISO 8601 date or date-time; return the search only if it was created on or before
+	// it. A value JavaScript's `Date` cannot parse is refused with `400`.
+	//
+	EndDate *string `queryParam:"style=form,explode=true,name=endDate"`
 }
 
 func (g *GetSearchByIDRequest) GetSearchID() string {
@@ -21,321 +71,32 @@ func (g *GetSearchByIDRequest) GetSearchID() string {
 	return g.SearchID
 }
 
-// InternalServerErrorErrorCode - Machine-readable error code.
-//
-//   - `HTTP_INTERNAL_SERVER_ERROR` — explicit
-//     `InternalServerError` raised by the handler.
-//   - `INTERNAL_ERROR` — unhandled exception
-//     caught by the global error middleware.
-//   - `MIDDLEWARE_ERROR` — the error middleware
-//     itself failed while serializing the
-//     response.
-type InternalServerErrorErrorCode string
-
-const (
-	InternalServerErrorErrorCodeHTTPInternalServerError InternalServerErrorErrorCode = "HTTP_INTERNAL_SERVER_ERROR"
-	InternalServerErrorErrorCodeInternalError           InternalServerErrorErrorCode = "INTERNAL_ERROR"
-	InternalServerErrorErrorCodeMiddlewareError         InternalServerErrorErrorCode = "MIDDLEWARE_ERROR"
-)
-
-func (e InternalServerErrorErrorCode) ToPointer() *InternalServerErrorErrorCode {
-	return &e
-}
-
-// IsExact returns true if the value matches a known enum value, false otherwise.
-func (e *InternalServerErrorErrorCode) IsExact() bool {
-	if e != nil {
-		switch *e {
-		case "HTTP_INTERNAL_SERVER_ERROR", "INTERNAL_ERROR", "MIDDLEWARE_ERROR":
-			return true
-		}
-	}
-	return false
-}
-
-type GetSearchByIDInternalServerErrorError struct {
-	// Identifier for this request, echoed so a bug report can quote it.
-	// Absent when the request never reached the middleware that assigns one.
-	//
-	RequestID *string `json:"requestId,omitzero"`
-	// Machine-readable error code.
-	//
-	// - `HTTP_INTERNAL_SERVER_ERROR` — explicit
-	//   `InternalServerError` raised by the handler.
-	// - `INTERNAL_ERROR` — unhandled exception
-	//   caught by the global error middleware.
-	// - `MIDDLEWARE_ERROR` — the error middleware
-	//   itself failed while serializing the
-	//   response.
-	//
-	Code InternalServerErrorErrorCode `json:"code"`
-	// Human-readable description of the failure.
-	Message string `json:"message"`
-}
-
-func (g *GetSearchByIDInternalServerErrorError) GetRequestID() *string {
+func (g *GetSearchByIDRequest) GetSearch() *string {
 	if g == nil {
 		return nil
 	}
-	return g.RequestID
+	return g.Search
 }
 
-func (g *GetSearchByIDInternalServerErrorError) GetCode() InternalServerErrorErrorCode {
-	if g == nil {
-		return InternalServerErrorErrorCode("")
-	}
-	return g.Code
-}
-
-func (g *GetSearchByIDInternalServerErrorError) GetMessage() string {
-	if g == nil {
-		return ""
-	}
-	return g.Message
-}
-
-// GetSearchByIDNotFoundCode - Machine-readable error code. `HTTP_NOT_FOUND`
-// is emitted when the addressed resource does
-// not exist.
-type GetSearchByIDNotFoundCode string
-
-const (
-	GetSearchByIDNotFoundCodeHTTPNotFound GetSearchByIDNotFoundCode = "HTTP_NOT_FOUND"
-)
-
-func (e GetSearchByIDNotFoundCode) ToPointer() *GetSearchByIDNotFoundCode {
-	return &e
-}
-func (e *GetSearchByIDNotFoundCode) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "HTTP_NOT_FOUND":
-		*e = GetSearchByIDNotFoundCode(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for GetSearchByIDNotFoundCode: %v", v)
-	}
-}
-
-type GetSearchByIDNotFoundError struct {
-	// Identifier for this request, echoed so a bug report can quote it.
-	// Absent when the request never reached the middleware that assigns one.
-	//
-	RequestID *string `json:"requestId,omitzero"`
-	// Machine-readable error code. `HTTP_NOT_FOUND`
-	// is emitted when the addressed resource does
-	// not exist.
-	//
-	Code GetSearchByIDNotFoundCode `json:"code"`
-	// Human-readable description of the failure.
-	Message string `json:"message"`
-}
-
-func (g *GetSearchByIDNotFoundError) GetRequestID() *string {
+func (g *GetSearchByIDRequest) GetShared() *GetSearchByIDShared {
 	if g == nil {
 		return nil
 	}
-	return g.RequestID
+	return g.Shared
 }
 
-func (g *GetSearchByIDNotFoundError) GetCode() GetSearchByIDNotFoundCode {
-	if g == nil {
-		return GetSearchByIDNotFoundCode("")
-	}
-	return g.Code
-}
-
-func (g *GetSearchByIDNotFoundError) GetMessage() string {
-	if g == nil {
-		return ""
-	}
-	return g.Message
-}
-
-// GetSearchByIDForbiddenCode - Machine-readable error code. `HTTP_FORBIDDEN`
-// is emitted when the bearer token is valid but
-// lacks the required scope.
-type GetSearchByIDForbiddenCode string
-
-const (
-	GetSearchByIDForbiddenCodeHTTPForbidden GetSearchByIDForbiddenCode = "HTTP_FORBIDDEN"
-)
-
-func (e GetSearchByIDForbiddenCode) ToPointer() *GetSearchByIDForbiddenCode {
-	return &e
-}
-func (e *GetSearchByIDForbiddenCode) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "HTTP_FORBIDDEN":
-		*e = GetSearchByIDForbiddenCode(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for GetSearchByIDForbiddenCode: %v", v)
-	}
-}
-
-type GetSearchByIDErrorHTTPForbidden struct {
-	// Identifier for this request, echoed so a bug report can quote it.
-	// Absent when the request never reached the middleware that assigns one.
-	//
-	RequestID *string `json:"requestId,omitzero"`
-	// Machine-readable error code. `HTTP_FORBIDDEN`
-	// is emitted when the bearer token is valid but
-	// lacks the required scope.
-	//
-	Code GetSearchByIDForbiddenCode `json:"code"`
-	// Human-readable description of the failure.
-	Message string `json:"message"`
-}
-
-func (g *GetSearchByIDErrorHTTPForbidden) GetRequestID() *string {
+func (g *GetSearchByIDRequest) GetStartDate() *string {
 	if g == nil {
 		return nil
 	}
-	return g.RequestID
+	return g.StartDate
 }
 
-func (g *GetSearchByIDErrorHTTPForbidden) GetCode() GetSearchByIDForbiddenCode {
-	if g == nil {
-		return GetSearchByIDForbiddenCode("")
-	}
-	return g.Code
-}
-
-func (g *GetSearchByIDErrorHTTPForbidden) GetMessage() string {
-	if g == nil {
-		return ""
-	}
-	return g.Message
-}
-
-// GetSearchByIDUnauthorizedCode - Machine-readable error code. `HTTP_UNAUTHORIZED`
-// is emitted when the bearer token is missing,
-// invalid, or expired.
-type GetSearchByIDUnauthorizedCode string
-
-const (
-	GetSearchByIDUnauthorizedCodeHTTPUnauthorized GetSearchByIDUnauthorizedCode = "HTTP_UNAUTHORIZED"
-)
-
-func (e GetSearchByIDUnauthorizedCode) ToPointer() *GetSearchByIDUnauthorizedCode {
-	return &e
-}
-func (e *GetSearchByIDUnauthorizedCode) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "HTTP_UNAUTHORIZED":
-		*e = GetSearchByIDUnauthorizedCode(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for GetSearchByIDUnauthorizedCode: %v", v)
-	}
-}
-
-type GetSearchByIDErrorHTTPUnauthorized struct {
-	// Identifier for this request, echoed so a bug report can quote it.
-	// Absent when the request never reached the middleware that assigns one.
-	//
-	RequestID *string `json:"requestId,omitzero"`
-	// Machine-readable error code. `HTTP_UNAUTHORIZED`
-	// is emitted when the bearer token is missing,
-	// invalid, or expired.
-	//
-	Code GetSearchByIDUnauthorizedCode `json:"code"`
-	// Human-readable description of the failure.
-	Message string `json:"message"`
-}
-
-func (g *GetSearchByIDErrorHTTPUnauthorized) GetRequestID() *string {
+func (g *GetSearchByIDRequest) GetEndDate() *string {
 	if g == nil {
 		return nil
 	}
-	return g.RequestID
-}
-
-func (g *GetSearchByIDErrorHTTPUnauthorized) GetCode() GetSearchByIDUnauthorizedCode {
-	if g == nil {
-		return GetSearchByIDUnauthorizedCode("")
-	}
-	return g.Code
-}
-
-func (g *GetSearchByIDErrorHTTPUnauthorized) GetMessage() string {
-	if g == nil {
-		return ""
-	}
-	return g.Message
-}
-
-// GetSearchByIDCodeValidationError - Machine-readable error code. `VALIDATION_ERROR`
-// is emitted when the request fails Zod
-// validation.
-type GetSearchByIDCodeValidationError string
-
-const (
-	GetSearchByIDCodeValidationErrorValidationError GetSearchByIDCodeValidationError = "VALIDATION_ERROR"
-)
-
-func (e GetSearchByIDCodeValidationError) ToPointer() *GetSearchByIDCodeValidationError {
-	return &e
-}
-func (e *GetSearchByIDCodeValidationError) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case "VALIDATION_ERROR":
-		*e = GetSearchByIDCodeValidationError(v)
-		return nil
-	default:
-		return fmt.Errorf("invalid value for GetSearchByIDCodeValidationError: %v", v)
-	}
-}
-
-type GetSearchByIDErrorValidationError struct {
-	// Identifier for this request, echoed so a bug report can quote it.
-	// Absent when the request never reached the middleware that assigns one.
-	//
-	RequestID *string `json:"requestId,omitzero"`
-	// Machine-readable error code. `VALIDATION_ERROR`
-	// is emitted when the request fails Zod
-	// validation.
-	//
-	Code GetSearchByIDCodeValidationError `json:"code"`
-	// Human-readable description of the failure.
-	Message string `json:"message"`
-}
-
-func (g *GetSearchByIDErrorValidationError) GetRequestID() *string {
-	if g == nil {
-		return nil
-	}
-	return g.RequestID
-}
-
-func (g *GetSearchByIDErrorValidationError) GetCode() GetSearchByIDCodeValidationError {
-	if g == nil {
-		return GetSearchByIDCodeValidationError("")
-	}
-	return g.Code
-}
-
-func (g *GetSearchByIDErrorValidationError) GetMessage() string {
-	if g == nil {
-		return ""
-	}
-	return g.Message
+	return g.EndDate
 }
 
 type GetSearchByIDResponse struct {

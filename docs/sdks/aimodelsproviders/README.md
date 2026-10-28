@@ -22,12 +22,17 @@ receive a flat, enumerable collection.
   `isDefault: true`; all subsequent models from the same entry get `false`.
 - `modelFriendlyName` is included **only** when the provider entry contains
   exactly one model name (not a comma-separated list).
+- `defaultReasoningEffort` is included on every model of an entry whose
+  `configuration.defaultReasoningEffort` (or, when that is unset, a
+  top-level `defaultReasoningEffort`) holds a valid effort. It is left out
+  when no default is stored.
 - When no providers of the requested type are configured the endpoint still
   returns HTTP **200** with an empty `models` array — this is **not** an error.
 
-**Access control:** requires a valid bearer token. For OAuth tokens the
-`config:read` scope must be present; regular JWT bearer tokens pass through
-without scope enforcement.
+**Access control:** requires a valid bearer token, from any member of the
+organization (there is no admin check). For OAuth tokens the `config:read` scope
+must be present; regular JWT bearer tokens pass through without scope enforcement.
+The query string is not read.
 
 
 ### Example Usage: no_models_configured
@@ -39,8 +44,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -71,8 +76,8 @@ package main
 import(
 	"context"
 	"os"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"log"
 )
 
@@ -97,11 +102,11 @@ func main() {
 
 ### Parameters
 
-| Parameter                                                                                                                                         | Type                                                                                                                                              | Required                                                                                                                                          | Description                                                                                                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ctx`                                                                                                                                             | [context.Context](https://pkg.go.dev/context#Context)                                                                                             | :heavy_check_mark:                                                                                                                                | The context to use for the request.                                                                                                               |
-| `modelType`                                                                                                                                       | [components.ModelType](../../models/components/modeltype.md)                                                                                      | :heavy_check_mark:                                                                                                                                | Category of AI model to retrieve.<br/><br/>Must be one of: `llm`, `embedding`, `ocr`, `slm`, `reasoning`, `multiModal`, `imageGeneration`, `tts`, `stt`.<br/> |
-| `opts`                                                                                                                                            | [][operations.Option](../../models/operations/option.md)                                                                                          | :heavy_minus_sign:                                                                                                                                | The options for this request.                                                                                                                     |
+| Parameter                                                                                                                                                     | Type                                                                                                                                                          | Required                                                                                                                                                      | Description                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ctx`                                                                                                                                                         | [context.Context](https://pkg.go.dev/context#Context)                                                                                                         | :heavy_check_mark:                                                                                                                                            | The context to use for the request.                                                                                                                           |
+| `modelType`                                                                                                                                                   | [components.ModelType](../../models/components/modeltype.md)                                                                                                  | :heavy_check_mark:                                                                                                                                            | Category of AI model to retrieve.<br/><br/>Must be one of: `llm`, `embedding`, `ocr`, `slm`, `reasoning`, `multiModal`, `imageGeneration`, `tts`, `stt`, `decision`.<br/> |
+| `opts`                                                                                                                                                        | [][operations.Option](../../models/operations/option.md)                                                                                                      | :heavy_minus_sign:                                                                                                                                            | The options for this request.                                                                                                                                 |
 
 ### Response
 
@@ -109,10 +114,8 @@ func main() {
 
 ### Errors
 
-| Error Type                                            | Status Code                                           | Content Type                                          |
-| ----------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
-| apierrors.GetAvailableModelsByTypeBadRequestError     | 400                                                   | application/json                                      |
-| apierrors.GetKnowledgeHubRootNodesUnauthorizedError   | 401                                                   | application/json                                      |
-| apierrors.GetAvailableModelsByTypeForbiddenError      | 403                                                   | application/json                                      |
-| apierrors.GetKnowledgeHubRootNodesInternalServerError | 500                                                   | application/json                                      |
-| apierrors.APIError                                    | 4XX, 5XX                                              | \*/\*                                                 |
+| Error Type              | Status Code             | Content Type            |
+| ----------------------- | ----------------------- | ----------------------- |
+| apierrors.ErrorResponse | 400, 401, 403           | application/json        |
+| apierrors.ErrorResponse | 500                     | application/json        |
+| apierrors.APIError      | 4XX, 5XX                | \*/\*                   |

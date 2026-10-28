@@ -3,13 +3,16 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type CreateAgentConversationRequest struct {
 	AgentKey string `pathParam:"style=simple,explode=false,name=agentKey"`
-	// The first question, with optional scope, model, project and tool overrides.
+	// The first question, with optional scope, model, project and tool overrides. A `query`
+	// that holds markup or a printf-style format specifier is refused with `400`
+	// `HTTP_BAD_REQUEST`, and so is one of only whitespace ("Query is required").
+	//
 	Body components.AgentCreateConversationRequest `request:"mediaType=application/json"`
 }
 

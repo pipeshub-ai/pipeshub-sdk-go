@@ -3,21 +3,18 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
-// AuthProviders - Configuration for external authentication providers (returned when those methods are allowed)
+// AuthProviders - Settings of the external sign-in providers among the allowed methods, keyed by provider.
+// A provider is listed whenever its settings can be read, which is also the case when
+// nothing has been saved for it yet: its entry is then an empty object. Only `google`
+// and `microsoft` have a sign-in flow.
 type AuthProviders struct {
 	// Public Google OAuth settings returned to clients
 	Google *AuthProviderGooglePublicConfig `json:"google,omitzero"`
 	// Public Microsoft OAuth settings returned to clients
 	Microsoft *AuthProviderMicrosoftPublicConfig `json:"microsoft,omitzero"`
-	// Public Azure AD OAuth settings returned to clients
-	Azuread *AuthProviderAzureAdPublicConfig `json:"azuread,omitzero"`
-	// Public generic OAuth provider settings returned to clients
-	Oauth *AuthProviderOAuthPublicConfig `json:"oauth,omitzero"`
-	// Present when SAML SSO is an allowed method; may be an empty object
-	Saml map[string]any `json:"saml,omitzero"`
 }
 
 func (a AuthProviders) MarshalJSON() ([]byte, error) {
@@ -43,25 +40,4 @@ func (a *AuthProviders) GetMicrosoft() *AuthProviderMicrosoftPublicConfig {
 		return nil
 	}
 	return a.Microsoft
-}
-
-func (a *AuthProviders) GetAzuread() *AuthProviderAzureAdPublicConfig {
-	if a == nil {
-		return nil
-	}
-	return a.Azuread
-}
-
-func (a *AuthProviders) GetOauth() *AuthProviderOAuthPublicConfig {
-	if a == nil {
-		return nil
-	}
-	return a.Oauth
-}
-
-func (a *AuthProviders) GetSaml() map[string]any {
-	if a == nil {
-		return nil
-	}
-	return a.Saml
 }

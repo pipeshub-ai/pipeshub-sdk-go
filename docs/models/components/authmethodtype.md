@@ -5,19 +5,22 @@ Type of authentication method:
 - `otp`: One-time password via email (6-digit, expires in 10 minutes)
 - `google`: Google OAuth 2.0
 - `microsoft`: Microsoft OAuth 2.0
-- `azureAd`: Azure Active Directory
-- `samlSso`: SAML 2.0 Single Sign-On
-- `oauth`: Generic OAuth 2.0 provider
+- `github`: accepted and stored, but no sign-in flow implements it:
+  `/userAccount/initAuth` never lists it and `/userAccount/authenticate` answers `400`
+
+`samlSso`, `oauth` (removed in 1.0) and `azureAd` (now `microsoft`) are refused when a
+policy is saved. A stored policy that still names one is read without it (`azureAd`
+reads as `microsoft`), with `password` added to the first step.
 
 
 ## Example Usage
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
-value := components.AuthMethodTypeSamlSso
+value := components.AuthMethodTypeOtp
 
 // Open enum: custom values can be created with a direct type cast
 custom := components.AuthMethodType("custom_value")
@@ -28,10 +31,8 @@ custom := components.AuthMethodType("custom_value")
 
 | Name                      | Value                     |
 | ------------------------- | ------------------------- |
-| `AuthMethodTypeSamlSso`   | samlSso                   |
 | `AuthMethodTypeOtp`       | otp                       |
 | `AuthMethodTypePassword`  | password                  |
 | `AuthMethodTypeGoogle`    | google                    |
 | `AuthMethodTypeMicrosoft` | microsoft                 |
-| `AuthMethodTypeAzureAd`   | azureAd                   |
-| `AuthMethodTypeOauth`     | oauth                     |
+| `AuthMethodTypeGithub`    | github                    |

@@ -6,14 +6,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/config"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/hooks"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/apierrors"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/retry"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types/stream"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/config"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/hooks"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/apierrors"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types/stream"
 	"net/http"
 	"net/url"
 )
@@ -50,9 +50,17 @@ func newKnowledgeBase(rootSDK *Pipeshub, sdkConfig config.SDKConfiguration, hook
 //
 // **Naming Rules:**
 //
-// - Name must be 1-255 characters
-// - Special characters and HTML tags are sanitized
-// - Names don't need to be unique within organization
+//   - Name must be 1-255 characters and hold at least one character that is not whitespace
+//   - Whitespace around the name is removed before it is stored
+//   - A name that contains an HTML tag, a `javascript:` URL or an inline event handler
+//     (`onclick=` and the like) is refused with `400`; nothing is stripped out of it
+//   - Names don't need to be unique within organization
+//
+// **Request body:**
+//
+// Only `kbName` is read. Any other field is dropped before the handler runs, so a
+// knowledge base cannot be created hidden, or with another role or organization,
+// through this endpoint.
 //
 // **Creator Permissions:**
 //
@@ -337,7 +345,7 @@ func (s *KnowledgeBase) CreateKnowledgeBase(ctx context.Context, request operati
 //
 // **Filtering:**
 //
-// - **search:** Full-text search on KB names (max 1000 chars)
+// - **search:** Full-text search on KB names (max 1000 chars). A longer value is answered `500`, not `400`.
 // - **permissions:** Filter by user's role (comma-separated: OWNER, WRITER, READER)
 //
 // **Sorting Options:**
@@ -353,7 +361,11 @@ func (s *KnowledgeBase) CreateKnowledgeBase(ctx context.Context, request operati
 //
 // **Query parameters:**
 //
-// Only `page`, `limit`, `search`, `permissions`, `sortBy`, and `sortOrder` are allowed; unknown query keys are rejected.
+// Only `page`, `limit`, `search`, `permissions`, `sortBy`, and `sortOrder` are allowed; any other
+// query key is rejected with `400` (`VALIDATION_ERROR`: "These fields aren't accepted here: <key>.").
+// A parameter sent more than once is rejected the same way. `page`, `limit`, `search`,
+// `permissions` and `sortBy` sent with an empty value are read as not sent; an empty
+// `sortOrder` is rejected.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) ListKnowledgeBases(ctx context.Context, request operations.ListKnowledgeBasesRequest, opts ...operations.Option) (*operations.ListKnowledgeBasesResponse, error) {
@@ -627,11 +639,16 @@ func (s *KnowledgeBase) ListKnowledgeBases(ctx context.Context, request operatio
 //
 // **Overview:**
 //
-// Returns complete KB metadata including name, timestamps, root-level folders, and the requesting user's role.
+// Returns complete KB metadata including name, timestamps, every folder (nested ones
+// included, without their parent), and the requesting user's role.
 //
 // **Access Control:**
 //
-// User must have at least READER permission to view KB details.
+// User must have at least READER permission to view KB details. A knowledge base the
+// caller holds no role on is answered `404` with the same message as an unknown id, so
+// its existence is not revealed.
+//
+// **Request:** only the `kbId` path parameter is read; any query string or body is ignored.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) GetKnowledgeBase(ctx context.Context, kbID string, opts ...operations.Option) (*operations.GetKnowledgeBaseResponse, error) {
@@ -818,6 +835,8 @@ func (s *KnowledgeBase) GetKnowledgeBase(ctx context.Context, kbID string, opts 
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
+	case httpRes.StatusCode == 400:
+		fallthrough
 	case httpRes.StatusCode == 401:
 		fallthrough
 	case httpRes.StatusCode == 403:
@@ -907,9 +926,15 @@ func (s *KnowledgeBase) GetKnowledgeBase(ctx context.Context, kbID string, opts 
 //
 // **Validation:**
 //
-// - `kbId` path parameter must be a valid UUID (`updateKBSchema`)
-// - When provided, `kbName` must be 1–255 characters
-// - XSS and format-specifier checks are applied to `kbName` in the gateway controller
+//   - `kbId` path parameter must be a valid UUID (`updateKBSchema`)
+//   - `kbName` is trimmed first, then must be 1–255 characters
+//   - A `kbName` holding an HTML tag, a `javascript:` URL or an inline event handler is
+//     refused with `400` before authentication; one holding a printf-style format
+//     specifier (`%s`, `%n`, `%x`, `%p`, with flags and width such as `%08x`) is refused
+//     with `400` by the gateway controller. A plain `%` (`50% off`) is accepted.
+//   - `kbName` is the only field read. Other body fields and any query parameter are
+//     ignored, so a body without `kbName` (an empty object, no body, or only unknown
+//     fields) is refused by the connector service with `400` `No fields to update`.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) UpdateKnowledgeBase(ctx context.Context, kbID string, body operations.UpdateKnowledgeBaseRequestBody, opts ...operations.Option) (*operations.UpdateKnowledgeBaseResponse, error) {
@@ -1111,6 +1136,8 @@ func (s *KnowledgeBase) UpdateKnowledgeBase(ctx context.Context, kbID string, bo
 	case httpRes.StatusCode == 403:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 409:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -1201,6 +1228,8 @@ func (s *KnowledgeBase) UpdateKnowledgeBase(ctx context.Context, kbID string, bo
 // - Associated storage files
 //
 // **Warning:** This action is irreversible. Consider exporting data before deletion.
+//
+// **Request:** only the `kbId` path parameter is read; any query string or body is ignored.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) DeleteKnowledgeBase(ctx context.Context, kbID string, opts ...operations.Option) (*operations.DeleteKnowledgeBaseResponse, error) {
@@ -1387,6 +1416,8 @@ func (s *KnowledgeBase) DeleteKnowledgeBase(ctx context.Context, kbID string, op
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
+	case httpRes.StatusCode == 400:
+		fallthrough
 	case httpRes.StatusCode == 401:
 		fallthrough
 	case httpRes.StatusCode == 403:
@@ -1474,15 +1505,24 @@ func (s *KnowledgeBase) DeleteKnowledgeBase(ctx context.Context, kbID string, op
 //
 // Returns complete record metadata including name, type, indexing status, storage information, and version history.
 //
-// **File conversion:**
+// **Query parameters:**
 //
-// Use the optional `convertTo` parameter to request file format conversion (e.g., PDF to text). Supported conversions include PPT to PDF and PPTX to PDF.
+// `convertTo` and `version` are checked by the request validator but not used by this
+// endpoint: the response is the same JSON metadata whatever they hold. They take effect
+// on `GET /knowledgeBase/stream/record/{recordId}`, which shares the validator. Any other
+// query parameter is ignored.
+//
+// **Not found:**
+//
+// A record that does not exist, one the caller has no access to and one that is in the
+// trash all answer `404` with the same message, so a record's existence is not revealed.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
-func (s *KnowledgeBase) GetRecordByID(ctx context.Context, recordID string, convertTo *string, opts ...operations.Option) (*operations.GetRecordByIDResponse, error) {
+func (s *KnowledgeBase) GetRecordByID(ctx context.Context, recordID string, convertTo *string, version *string, opts ...operations.Option) (*operations.GetRecordByIDResponse, error) {
 	request := operations.GetRecordByIDRequest{
 		RecordID:  recordID,
 		ConvertTo: convertTo,
+		Version:   version,
 	}
 
 	o := operations.Options{}
@@ -1750,6 +1790,328 @@ func (s *KnowledgeBase) GetRecordByID(ctx context.Context, recordID string, conv
 
 }
 
+// UpdateRecordMultipart - Update record
+// Update a record's name and/or file content.
+//
+// **Overview:**
+//
+// Allows updating the display name and optionally replacing the file content. Triggers re-indexing when content changes.
+//
+// **Required permission:**
+//
+// WRITER or higher on the record's knowledge base. A READER is answered `403`; a caller
+// with no role is answered `404`.
+//
+// **Renaming:**
+//
+// Send `recordName` as a multipart field or in a JSON body. There is no length limit.
+// A request with no body, an empty JSON object or an empty `recordName` changes nothing
+// and still answers `200`. In a JSON body the name is trimmed first (so a blank name is
+// read as empty and changes nothing); in a multipart form it is not, and a blank name
+// is refused with `400`. Fields other than `recordName` and `file` are ignored.
+//
+// **Updating file content:**
+//
+// Include a new file in a multipart request to replace the existing content. The file
+// extension must match the original: a file with another extension is answered `500`,
+// not `400`. When a file is sent, `recordName` is ignored and the record is named after
+// the file (without its extension).
+//
+// **Side effects:**
+//
+//   - Updates `updatedAtTimestamp`
+//   - A new file is stored as the next version of the record's storage document and the
+//     record is queued for indexing again. The record's own `version` and `sizeInBytes`
+//     are not updated by this call.
+//
+// **Known gaps:**
+//
+//   - Renaming a record that is in the trash is not refused: the answer is `200` with the
+//     success message, but nothing changes, and `record` is the trashed record (`isDeleted: true`,
+//     with `deletedAtTimestamp`, `deleteBatchId` and `deleteSource`).
+//   - `fileBuffer` is an internal field filled by the upload parser. A JSON body that
+//     supplies an object under that name (`buffer`, `originalname`, `mimetype`, `size`,
+//     `lastModified`) is treated as an uploaded file and stored as the new version.
+//
+// **OAuth scopes:** `kb:write`, plus `kb:read`: replacing the file first reads the record and its knowledge base with the caller's token.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *KnowledgeBase) UpdateRecordMultipart(ctx context.Context, recordID string, body *operations.UpdateRecordMultipartRequestBody, opts ...operations.Option) (*operations.UpdateRecordMultipartResponse, error) {
+	request := operations.UpdateRecordMultipartRequest{
+		RecordID: recordID,
+		Body:     body,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/knowledgeBase/record/{recordId}", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "updateRecord_multipart",
+		OAuth2Scopes:     []string{"kb:write", "kb:read"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "Body", "multipart", `request:"mediaType=multipart/form-data"`)
+	if err != nil {
+		return nil, err
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "PUT", opURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+	if reqContentType != "" {
+		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.UpdateRecordMultipartResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out components.UpdateRecordResponseSchema
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.UpdateRecordResponseSchema = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 409:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		fallthrough
+	case httpRes.StatusCode == 503:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
 // UpdateRecord - Update record
 // Update a record's name and/or file content.
 //
@@ -1759,17 +2121,41 @@ func (s *KnowledgeBase) GetRecordByID(ctx context.Context, recordID string, conv
 //
 // **Required permission:**
 //
-// # WRITER or higher
+// WRITER or higher on the record's knowledge base. A READER is answered `403`; a caller
+// with no role is answered `404`.
+//
+// **Renaming:**
+//
+// Send `recordName` as a multipart field or in a JSON body. There is no length limit.
+// A request with no body, an empty JSON object or an empty `recordName` changes nothing
+// and still answers `200`. In a JSON body the name is trimmed first (so a blank name is
+// read as empty and changes nothing); in a multipart form it is not, and a blank name
+// is refused with `400`. Fields other than `recordName` and `file` are ignored.
 //
 // **Updating file content:**
 //
-// Include a new file in the request to replace the existing content. The file extension must match the original.
+// Include a new file in a multipart request to replace the existing content. The file
+// extension must match the original: a file with another extension is answered `500`,
+// not `400`. When a file is sent, `recordName` is ignored and the record is named after
+// the file (without its extension).
 //
 // **Side effects:**
 //
-// - Updates `updatedAtTimestamp`
-// - Increments version if file content changed
-// - Triggers re-indexing for content changes
+//   - Updates `updatedAtTimestamp`
+//   - A new file is stored as the next version of the record's storage document and the
+//     record is queued for indexing again. The record's own `version` and `sizeInBytes`
+//     are not updated by this call.
+//
+// **Known gaps:**
+//
+//   - Renaming a record that is in the trash is not refused: the answer is `200` with the
+//     success message, but nothing changes, and `record` is the trashed record (`isDeleted: true`,
+//     with `deletedAtTimestamp`, `deleteBatchId` and `deleteSource`).
+//   - `fileBuffer` is an internal field filled by the upload parser. A JSON body that
+//     supplies an object under that name (`buffer`, `originalname`, `mimetype`, `size`,
+//     `lastModified`) is treated as an uploaded file and stored as the new version.
+//
+// **OAuth scopes:** `kb:write`, plus `kb:read`: replacing the file first reads the record and its knowledge base with the caller's token.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body *operations.UpdateRecordRequestBody, opts ...operations.Option) (*operations.UpdateRecordResponse, error) {
@@ -1807,10 +2193,10 @@ func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body 
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "updateRecord",
-		OAuth2Scopes:     []string{"kb:write"},
+		OAuth2Scopes:     []string{"kb:write", "kb:read"},
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
-	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "Body", "multipart", `request:"mediaType=multipart/form-data"`)
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "Body", "json", `request:"mediaType=application/json"`)
 	if err != nil {
 		return nil, err
 	}
@@ -1951,12 +2337,12 @@ func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body 
 				return nil, err
 			}
 
-			var out operations.UpdateRecordResponseBody
+			var out components.UpdateRecordResponseSchema
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.Object = &out
+			res.UpdateRecordResponseSchema = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -1971,6 +2357,330 @@ func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body 
 	case httpRes.StatusCode == 403:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 409:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		fallthrough
+	case httpRes.StatusCode == 503:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
+// UpdateRecordForm - Update record
+// Update a record's name and/or file content.
+//
+// **Overview:**
+//
+// Allows updating the display name and optionally replacing the file content. Triggers re-indexing when content changes.
+//
+// **Required permission:**
+//
+// WRITER or higher on the record's knowledge base. A READER is answered `403`; a caller
+// with no role is answered `404`.
+//
+// **Renaming:**
+//
+// Send `recordName` as a multipart field or in a JSON body. There is no length limit.
+// A request with no body, an empty JSON object or an empty `recordName` changes nothing
+// and still answers `200`. In a JSON body the name is trimmed first (so a blank name is
+// read as empty and changes nothing); in a multipart form it is not, and a blank name
+// is refused with `400`. Fields other than `recordName` and `file` are ignored.
+//
+// **Updating file content:**
+//
+// Include a new file in a multipart request to replace the existing content. The file
+// extension must match the original: a file with another extension is answered `500`,
+// not `400`. When a file is sent, `recordName` is ignored and the record is named after
+// the file (without its extension).
+//
+// **Side effects:**
+//
+//   - Updates `updatedAtTimestamp`
+//   - A new file is stored as the next version of the record's storage document and the
+//     record is queued for indexing again. The record's own `version` and `sizeInBytes`
+//     are not updated by this call.
+//
+// **Known gaps:**
+//
+//   - Renaming a record that is in the trash is not refused: the answer is `200` with the
+//     success message, but nothing changes, and `record` is the trashed record (`isDeleted: true`,
+//     with `deletedAtTimestamp`, `deleteBatchId` and `deleteSource`).
+//   - `fileBuffer` is an internal field filled by the upload parser. A JSON body that
+//     supplies an object under that name (`buffer`, `originalname`, `mimetype`, `size`,
+//     `lastModified`) is treated as an uploaded file and stored as the new version.
+//
+// **OAuth scopes:** `kb:write`, plus `kb:read`: replacing the file first reads the record and its knowledge base with the caller's token.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *KnowledgeBase) UpdateRecordForm(ctx context.Context, recordID string, body *operations.UpdateRecordFormRequestBody, opts ...operations.Option) (*operations.UpdateRecordFormResponse, error) {
+	request := operations.UpdateRecordFormRequest{
+		RecordID: recordID,
+		Body:     body,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/knowledgeBase/record/{recordId}", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "updateRecord_form",
+		OAuth2Scopes:     []string{"kb:write", "kb:read"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "Body", "form", `request:"mediaType=application/x-www-form-urlencoded"`)
+	if err != nil {
+		return nil, err
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "PUT", opURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+	if reqContentType != "" {
+		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.UpdateRecordFormResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out components.UpdateRecordResponseSchema
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.UpdateRecordResponseSchema = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 409:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -2047,11 +2757,13 @@ func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body 
 }
 
 // DeleteRecord - Delete record
-// Permanently delete a record from the knowledge base.
+// Delete a record from the knowledge base.
 //
 // **Required permission:**
 //
-// # WRITER or higher
+// WRITER or higher on the record's knowledge base. A READER is answered `403`; a caller
+// with no role, an unknown id and a record that is already in the trash are all answered `404`.
+// The query string and any request body are ignored.
 //
 // **What gets deleted:**
 //
@@ -2059,7 +2771,15 @@ func (s *KnowledgeBase) UpdateRecord(ctx context.Context, recordID string, body 
 // - Associated storage file
 // - Indexed content and embeddings
 //
-// **Warning:** This action is irreversible.
+// **Trash:** With "Move Deleted Records to the Trash" on in Labs, the record
+// goes to the trash instead: it disappears from search, chat and lists at once,
+// its embeddings are removed, and the record and its file stay until the scheduled
+// purge. The response then carries `softDeleted: true` and the `batchId`, and the
+// record can be brought back with `POST /knowledgeBase/record/{recordId}/restore`.
+// With the setting off, the delete is immediate and cannot be undone.
+// A folder sent to the trash this way goes alone: the records inside it stay live and
+// readable. `DELETE /knowledgeBase/{kbId}/folder/{folderId}` trashes a folder with its
+// contents.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) DeleteRecord(ctx context.Context, recordID string, opts ...operations.Option) (*operations.DeleteRecordResponse, error) {
@@ -2253,6 +2973,881 @@ func (s *KnowledgeBase) DeleteRecord(ctx context.Context, recordID string, opts 
 	case httpRes.StatusCode == 403:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 409:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		fallthrough
+	case httpRes.StatusCode == 503:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
+// RestoreRecord - Restore a deleted record
+// Bring a record back from the trash, together with everything deleted in the
+// same action: a folder comes back with its contents, a file with its
+// attachments, a multi-select delete with every item it removed.
+//
+// Needs "Move Deleted Records to the Trash" on in Labs.
+//
+// **Required permission:** the role the delete needed. A single file needs
+// OWNER, WRITER or FILEORGANIZER on its collection; a folder or several items
+// need OWNER or WRITER.
+//
+// **Names:** an item whose name another item next to it now uses comes back
+// as "name (restored)" (a file keeps its extension: "report (restored).pdf").
+//
+// **Search:** restored files are indexed again, so they return to search and
+// chat once indexing finishes. `reindexPending` lists any that could not be
+// queued; reindex those by hand. A file that is back but whose indexing never
+// started is queued again when it is restored again, and the indexing service
+// queues it on its own after about an hour.
+//
+// A record that is not in the trash answers 200 with nothing restored.
+// The query string and any request body are ignored.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *KnowledgeBase) RestoreRecord(ctx context.Context, recordID string, opts ...operations.Option) (*operations.RestoreRecordResponse, error) {
+	request := operations.RestoreRecordRequest{
+		RecordID: recordID,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/knowledgeBase/record/{recordId}/restore", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "restoreRecord",
+		OAuth2Scopes:     []string{"kb:delete"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", opURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.RestoreRecordResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out components.RestoreRecordResponseSchema
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.RestoreRecordResponseSchema = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 409:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		fallthrough
+	case httpRes.StatusCode == 503:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
+// RestoreRecords - Restore several deleted records
+// Restore up to 100 records from the trash. Each id is restored as
+// `POST /knowledgeBase/record/{recordId}/restore` restores it, with everything
+// deleted along with it; ids from one delete are restored once. Every id gets its
+// own outcome in `results`, so one refusal does not hold the others back, and the
+// answer is 200 whatever the outcomes: with the trash turned off in Labs every id is
+// refused with `code: 403` inside a 200. An id listed twice is answered once. Body
+// fields other than `recordIds` are ignored.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *KnowledgeBase) RestoreRecords(ctx context.Context, request components.RestoreRecordsRequestBody, opts ...operations.Option) (*operations.RestoreRecordsResponse, error) {
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := url.JoinPath(baseURL, "/knowledgeBase/records/restore")
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "restoreRecords",
+		OAuth2Scopes:     []string{"kb:delete"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Request", "json", `request:"mediaType=application/json"`)
+	if err != nil {
+		return nil, err
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+	if reqContentType != "" {
+		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.RestoreRecordsResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out components.RestoreRecordsResponseSchema
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.RestoreRecordsResponseSchema = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode == 409:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		fallthrough
+	case httpRes.StatusCode == 503:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
+// ListTrash - List a collection's recently deleted items
+// One page of what was deleted from a collection and can still be restored,
+// newest first. Each item is what one delete removed, as a restore brings it back
+// whole: a folder deleted with its contents is one item, and so is a multi-select
+// delete (`rootCount` items selected, some named in `otherRootNames`). `itemCount`
+// says how many records it holds, the folder included.
+//
+// A folder deleted with `DELETE /knowledgeBase/{kbId}/folder/{folderId}` takes its
+// contents along. A folder deleted with `DELETE /knowledgeBase/record/{recordId}`
+// goes to the trash alone (`itemCount` 1): the records inside it stay live.
+// Restore an item with `POST /knowledgeBase/record/{recordId}/restore`, using its `id`.
+//
+// Needs "Move Deleted Records to the Trash" on in Labs.
+//
+// **Who sees what:** the list holds what the caller may restore. OWNER and
+// WRITER see every item; FILEORGANIZER sees single files only; other roles are
+// refused. The workspace and user always come from the sign-in.
+//
+// **Removed for good:** the scheduled cleanup may remove an item from
+// `removableAfterTimestamp` on (at least 14 days after it was deleted by
+// default; it runs every 14 days, so an item stays 14 to 28 days). It is
+// absent when the retention settings can't be read.
+//
+// An item whose folder is also in the trash (`parentInTrash`) can only be
+// restored after that folder.
+//
+// **Request:** query parameters other than `page` and `limit` are ignored. A page past
+// the last one is answered `200` with no items.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *KnowledgeBase) ListTrash(ctx context.Context, kbID string, page *int64, limit *int64, opts ...operations.Option) (*operations.ListTrashResponse, error) {
+	request := operations.ListTrashRequest{
+		KbID:  kbID,
+		Page:  page,
+		Limit: limit,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/knowledgeBase/{kbId}/trash", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "listTrash",
+		OAuth2Scopes:     []string{"kb:delete"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", opURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
+		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.ListTrashResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out components.ListTrashResponseSchema
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.ListTrashResponseSchema = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode == 404:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -2333,7 +3928,10 @@ func (s *KnowledgeBase) DeleteRecord(ctx context.Context, recordID string, opts 
 //
 // **Overview:**
 //
-// Returns the raw file content with appropriate `Content-Type` and `Content-Disposition` headers for download or inline viewing.
+// Returns the stored file's bytes with the file's own `Content-Type` (for an uploaded
+// file, the MIME type it was uploaded with, followed by `; charset=utf-8`, for example
+// `text/plain; charset=utf-8` or `application/json; charset=utf-8`). No
+// `Content-Disposition` header is sent for uploaded files.
 //
 // **Use cases:**
 //
@@ -2343,13 +3941,27 @@ func (s *KnowledgeBase) DeleteRecord(ctx context.Context, recordID string, opts 
 //
 // **Format conversion:**
 //
-// Use the `convertTo` parameter to convert between formats (e.g. DOCX to PDF).
+// `convertTo=application/pdf` asks for a PDF rendering of documents that can be
+// converted. Any other value, and the conversion request for a plain-text file, is
+// ignored: the original file is returned.
+//
+// **Access:** the caller needs access to the record (any role on its knowledge base).
+// Without it, and for a record in the trash, the answer is `403`. An unknown record, or
+// an id that is not a record (a knowledge base id), is `404`. A folder has no content:
+// the answer is `502`.
+//
+// **Errors** that come from the connector service are relayed with its status as
+// `{"error": "<message>"}` (`StreamRecordErrorResponse`); errors raised by the gateway
+// itself (`400`, `401`, scope `403`, malformed body `500`) use `ErrorResponse`.
+//
+// **Request:** unknown query parameters are ignored.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
-func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string, convertTo *string, opts ...operations.Option) (*operations.StreamRecordBufferResponse, error) {
+func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string, convertTo *string, version *int64, opts ...operations.Option) (*operations.StreamRecordBufferResponse, error) {
 	request := operations.StreamRecordBufferRequest{
 		RecordID:  recordID,
 		ConvertTo: convertTo,
+		Version:   version,
 	}
 
 	o := operations.Options{}
@@ -2623,6 +4235,31 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 				return nil, err
 			}
 
+			var out apierrors.StreamRecordBufferInternalServerError
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 502:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
 			var out apierrors.StreamRecordErrorResponse
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
@@ -2674,15 +4311,27 @@ func (s *KnowledgeBase) StreamRecordBuffer(ctx context.Context, recordID string,
 // **Folder features:**
 //
 // - Organize records hierarchically
-// - Support nested subfolders (unlimited depth)
+// - Support nested subfolders, up to 20 levels deep
 // - Inherit parent KB permissions
 //
 // **Naming rules:**
 //
-// - 1–255 characters
-// - XSS protection applied
-// - Spaces and special characters allowed
-// - Duplicate names rejected within the same parent (`409`)
+//   - Whitespace around the name is removed first; then 1–255 characters
+//   - A name holding an HTML tag, a `javascript:` URL or an inline event handler is
+//     refused with `400` before authentication; one holding a printf-style format
+//     specifier (`%s`, `%x`, `%n`, `%p`) is refused with `400` by the gateway controller
+//   - Spaces and special characters allowed
+//   - A name already used by a folder in the same parent is refused with `409`, ignoring
+//     case (`Reports` and `rEPORTS` clash). A file of the same name, or a folder of the
+//     same name under another parent, does not clash.
+//
+// **Request:** only `folderName` and the `folderId` query parameter are read; other body
+// fields and query parameters are ignored, except a `folderId`, `parentId` or
+// `parent_id` in the body and a `parentId` or `parent_id` query parameter, which are
+// refused with `400`.
+//
+// **Access:** a caller with no role on the knowledge base gets `404`
+// (`Knowledge base <kbId> not found`), a `READER` gets `403`.
 //
 // **Response:** Returns `id` and `name` for the created folder.
 //
@@ -2968,10 +4617,339 @@ func (s *KnowledgeBase) CreateFolder(ctx context.Context, kbID string, body oper
 
 }
 
-// UpdateFolder - Update folder
-// Rename a folder.
+// CreateSubfolder - Create subfolder
+// Create a nested subfolder inside an existing parent folder, named by the `folderId`
+// path parameter. It runs the same validator and handler as
+// `POST /knowledgeBase/{kbId}/folder`. A `folderId` query parameter is still read: one
+// that names a different folder than the path is refused with `400`.
 //
 // **Required permission:** WRITER or higher
+//
+// **Folder features:**
+//
+// - Organize records hierarchically
+// - Support nested subfolders, up to 20 levels deep
+// - Inherit parent KB permissions
+//
+// **Naming rules:**
+//
+//   - Whitespace around the name is removed first; then 1–255 characters
+//   - A name holding an HTML tag, a `javascript:` URL or an inline event handler is
+//     refused with `400` before authentication; one holding a printf-style format
+//     specifier (`%s`, `%x`, `%n`, `%p`) is refused with `400` by the gateway controller
+//   - Spaces and special characters allowed
+//   - A name already used by a folder in the same parent is refused with `409`, ignoring
+//     case (`Reports` and `rEPORTS` clash). A file of the same name, or a folder of the
+//     same name under another parent, does not clash.
+//
+// **Request:** only `folderName` and the `folderId` query parameter are read; other body
+// fields and query parameters are ignored, except a `folderId`, `parentId` or
+// `parent_id` in the body and a `parentId` or `parent_id` query parameter, which are
+// refused with `400`.
+//
+// **Access:** a caller with no role on the knowledge base gets `404`
+// (`Knowledge base <kbId> not found`), a `READER` gets `403`.
+//
+// **Response:** Returns `id` and `name` for the created folder.
+//
+// If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
+func (s *KnowledgeBase) CreateSubfolder(ctx context.Context, kbID string, folderIDPathParameter string, body operations.CreateSubfolderRequestBody, folderIDQueryParameter *string, opts ...operations.Option) (*operations.CreateSubfolderResponse, error) {
+	request := operations.CreateSubfolderRequest{
+		KbID:                   kbID,
+		FolderIDPathParameter:  folderIDPathParameter,
+		FolderIDQueryParameter: folderIDQueryParameter,
+		Body:                   body,
+	}
+
+	o := operations.Options{}
+	supportedOptions := []string{
+		operations.SupportedOptionRetries,
+		operations.SupportedOptionTimeout,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&o, supportedOptions...); err != nil {
+			return nil, fmt.Errorf("error applying option: %w", err)
+		}
+	}
+
+	var baseURL string
+	if o.ServerURL == nil {
+		baseURL = utils.ReplaceParameters(s.sdkConfiguration.GetServerDetails())
+	} else {
+		baseURL = *o.ServerURL
+	}
+	opURL, err := utils.GenerateURL(ctx, baseURL, "/knowledgeBase/{kbId}/folder/{folderId}/subfolder", request, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating URL: %w", err)
+	}
+
+	hookCtx := hooks.HookContext{
+		SDK:              s.rootSDK,
+		SDKConfiguration: s.sdkConfiguration,
+		BaseURL:          baseURL,
+		Context:          ctx,
+		OperationID:      "createSubfolder",
+		OAuth2Scopes:     []string{"kb:write"},
+		SecuritySource:   s.sdkConfiguration.Security,
+	}
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "json", `request:"mediaType=application/json"`)
+	if err != nil {
+		return nil, err
+	}
+
+	timeout := o.Timeout
+	if timeout == nil {
+		timeout = s.sdkConfiguration.Timeout
+	}
+
+	if timeout != nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, *timeout)
+		defer cancel()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", opURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+	if reqContentType != "" {
+		req.Header.Set("Content-Type", reqContentType)
+	}
+
+	if err := utils.PopulateQueryParams(ctx, req, request, nil, nil); err != nil {
+		return nil, fmt.Errorf("error populating query params: %w", err)
+	}
+
+	if err := utils.PopulateSecurity(ctx, req, s.sdkConfiguration.Security, "BearerAuth", "Oauth2"); err != nil {
+		return nil, err
+	}
+
+	for k, v := range o.SetHeaders {
+		req.Header.Set(k, v)
+	}
+
+	globalRetryConfig := s.sdkConfiguration.RetryConfig
+	retryConfig := o.Retries
+	if retryConfig == nil {
+		if globalRetryConfig != nil {
+			retryConfig = globalRetryConfig
+		}
+	}
+
+	var httpRes *http.Response
+	if retryConfig != nil {
+		httpRes, err = utils.Retry(ctx, utils.Retries{
+			Config: retryConfig,
+			StatusCodes: []string{
+				"429",
+				"500",
+				"502",
+				"503",
+				"504",
+			},
+		}, func() (*http.Response, error) {
+			if req.Body != nil && req.Body != http.NoBody && req.GetBody != nil {
+				copyBody, err := req.GetBody()
+
+				if err != nil {
+					return nil, err
+				}
+
+				req.Body = copyBody
+			}
+
+			req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+			if err != nil {
+				if retry.IsPermanentError(err) || retry.IsTemporaryError(err) {
+					return nil, err
+				}
+
+				return nil, retry.Permanent(err)
+			}
+
+			httpRes, err := s.sdkConfiguration.Client.Do(req)
+			if err != nil || httpRes == nil {
+				if err != nil {
+					err = fmt.Errorf("error sending request: %w", err)
+				} else {
+					err = fmt.Errorf("error sending request: no response")
+				}
+
+				_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			}
+			return httpRes, err
+		})
+
+		if err != nil {
+			return nil, err
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		req, err = s.hooks.BeforeRequest(hooks.BeforeRequestContext{HookContext: hookCtx}, req)
+		if err != nil {
+			return nil, err
+		}
+
+		httpRes, err = s.sdkConfiguration.Client.Do(req)
+		if err != nil || httpRes == nil {
+			if err != nil {
+				err = fmt.Errorf("error sending request: %w", err)
+			} else {
+				err = fmt.Errorf("error sending request: no response")
+			}
+
+			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
+			return nil, err
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX"}, httpRes.StatusCode) {
+			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
+			if err != nil {
+				return nil, err
+			} else if _httpRes != nil {
+				httpRes = _httpRes
+			}
+		} else {
+			httpRes, err = s.hooks.AfterSuccess(hooks.AfterSuccessContext{HookContext: hookCtx}, httpRes)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &operations.CreateSubfolderResponse{
+		HTTPMeta: components.HTTPMetadata{
+			Request:  req,
+			Response: httpRes,
+		},
+	}
+
+	switch {
+	case httpRes.StatusCode == 200:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out components.FolderCreateResponseSchema
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.FolderCreateResponseSchema = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
+		fallthrough
+	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 409:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
+		fallthrough
+	case httpRes.StatusCode == 503:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	case httpRes.StatusCode >= 500 && httpRes.StatusCode < 600:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
+	default:
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, apierrors.NewAPIError("unknown status code returned", httpRes.StatusCode, string(rawBody), httpRes)
+	}
+
+	return res, nil
+
+}
+
+// UpdateFolder - Update folder
+// Rename a folder, at the root or nested.
+//
+// **Required permission:** WRITER or higher. A `READER` gets `403`; a caller with no
+// role on the knowledge base gets `404` (`Knowledge base not found`).
+//
+// **Naming rules:** the same as for creating a folder. Whitespace around the name is
+// removed first; HTML is refused with `400` before authentication and a printf-style
+// format specifier with `400` by the gateway controller. A name already used by another
+// folder in the same parent is refused with `409`, ignoring case; renaming a folder to
+// its own name, or to the name of a file, is allowed.
+//
+// **Request:** `kbId` and `folderId` are only checked to be non-empty (an id that is not
+// a UUID is looked up and answered `404`). Only `folderName` is read; other body fields
+// and any query parameter are ignored.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) UpdateFolder(ctx context.Context, kbID string, folderID string, body operations.UpdateFolderRequestBody, opts ...operations.Option) (*operations.UpdateFolderResponse, error) {
@@ -3254,13 +5232,19 @@ func (s *KnowledgeBase) UpdateFolder(ctx context.Context, kbID string, folderID 
 // DeleteFolder - Delete folder
 // Delete a folder and all its contents.
 //
-// **Required permission:** WRITER or higher
+// **Required permission:** WRITER or higher. A `READER` gets `403`; a caller with no
+// role on the knowledge base gets `404`.
 //
 // **Cascade delete:**
 //
-// All subfolders and records within will be permanently deleted.
+// All subfolders and records within are deleted for good, unless "Move Deleted Records
+// to the Trash" (Labs flag `ENABLE_SOFT_DELETE`) is on: then they all go to the trash and
+// can be brought back with `POST /knowledgeBase/record/{folderId}/restore`. The response
+// is the same in both cases. Known gap: while in the trash, the folder is still listed
+// in `folders` by `GET /knowledgeBase/{kbId}`, although its records answer `404`.
 //
-// **Warning:** This action is irreversible.
+// **Request:** `kbId` and `folderId` are only checked to be non-empty; any query string
+// or body is ignored.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) DeleteFolder(ctx context.Context, kbID string, folderID string, opts ...operations.Option) (*operations.DeleteFolderResponse, error) {
@@ -3455,6 +5439,33 @@ func (s *KnowledgeBase) DeleteFolder(ctx context.Context, kbID string, folderID 
 	case httpRes.StatusCode == 403:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 409:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -3524,6 +5535,30 @@ func (s *KnowledgeBase) DeleteFolder(ctx context.Context, kbID string, folderID 
 // **File Metadata**
 //
 // Use `files_metadata` to provide additional info like file paths and last modified timestamps.
+// A path with folders (`docs/2026/a.txt`) creates those folders, as a folder upload does.
+//
+// **Rejected files**
+//
+// A file whose extension is not supported, or that is larger than the size limit, does
+// not fail the request: it is reported as a `file:failed` event (`reason`
+// `UNSUPPORTED_TYPE` or `EXCEEDS_SIZE_LIMIT`, `stage: upload`) and the other files go on.
+// A file whose name is already used in the same place fails the same way with `reason`
+// `DUPLICATE_NAME` and `stage: index`. The request still answers `200` when every file
+// failed. There is no `413`.
+//
+// **Ignored fields**
+//
+// `recordName`, `recordType` and `origin` are validated (non-empty, and `recordName` is
+// checked for HTML and format specifiers) but do not affect the records: each record is
+// named after its file, with origin `UPLOAD` and type `FILE`. Other fields and unknown
+// query parameters are ignored; `rejectedFiles` and `fileBuffers` are set by the gateway
+// itself, so a value sent for them is replaced.
+//
+// **Access**
+//
+// `OWNER` and `WRITER` may upload. A `READER` gets `403`; a caller with no role on the
+// knowledge base gets `404`. Only a multipart body is read: a JSON body has no files and
+// is refused with `400`.
 //
 // **Versioning**
 //
@@ -3575,7 +5610,7 @@ func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body ope
 		BaseURL:          baseURL,
 		Context:          ctx,
 		OperationID:      "uploadRecords",
-		OAuth2Scopes:     []string{"kb:upload"},
+		OAuth2Scopes:     []string{"kb:upload", "kb:read"},
 		SecuritySource:   s.sdkConfiguration.Security,
 	}
 	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "Body", "multipart", `request:"mediaType=multipart/form-data"`)
@@ -3749,7 +5784,7 @@ func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body ope
 		fallthrough
 	case httpRes.StatusCode == 404:
 		fallthrough
-	case httpRes.StatusCode == 413:
+	case httpRes.StatusCode == 409:
 		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
@@ -3830,6 +5865,14 @@ func (s *KnowledgeBase) UploadRecords(ctx context.Context, kbID string, body ope
 //
 // **Use case:** Call this before uploads to validate file sizes on the client
 // side and display appropriate limits to users.
+//
+// `maxFilesPerRequest` is a fixed 1000. `maxFileSizeBytes` is the organization's
+// `fileUploadMaxSizeBytes` platform setting, read on every call (30 MB when the
+// setting cannot be read). Any signed-in member gets the same values; no knowledge
+// base role is needed.
+//
+// **Request:** there is no validator and nothing from the request is read; any query
+// string is ignored.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) GetUploadLimits(ctx context.Context, opts ...operations.Option) (*operations.GetUploadLimitsResponse, error) {
@@ -4012,7 +6055,36 @@ func (s *KnowledgeBase) GetUploadLimits(ctx context.Context, opts ...operations.
 			}
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
+	case httpRes.StatusCode == 400:
+		fallthrough
 	case httpRes.StatusCode == 401:
+		fallthrough
+	case httpRes.StatusCode == 403:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -4075,7 +6147,14 @@ func (s *KnowledgeBase) GetUploadLimits(ctx context.Context, opts ...operations.
 // **Status filters:**
 //
 // Optional `statusFilters` array limits reindex to records in matching indexing states
-// (e.g. `FAILED`, `AUTO_INDEX_OFF`).
+// (e.g. `FAILED`, `AUTO_INDEX_OFF`, `PASSWORD_PROTECTED`). Any string is accepted.
+//
+// **Access:** any role on the record's knowledge base may reindex it, `READER` included.
+// For a connector record, read access to the record is enough. A record of a disabled
+// connector is refused with `409`, a record in the trash with `400`.
+//
+// **Request:** only `depth` and `statusFilters` are read; other body fields (`force`
+// included) and any query parameter are ignored. The body is optional.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) ReindexRecord(ctx context.Context, recordID string, body *components.ReindexRecordRequestBody, opts ...operations.Option) (*operations.ReindexRecordResponse, error) {
@@ -4355,15 +6434,26 @@ func (s *KnowledgeBase) ReindexRecord(ctx context.Context, recordID string, body
 }
 
 // ReindexRecordGroup - Reindex record group
-// Trigger reindexing for all records in a folder or knowledge base.
+// Trigger reindexing for all records in a record group.
 //
 // **Overview:**
 //
-// Batch reindex operation for entire containers. The `recordGroupId` can be a folder ID or KB ID.
+// Batch reindex operation for a connector's container (a drive, a space, a channel, a
+// crawled site). Record groups are written by connector syncs only: a knowledge base id
+// or a knowledge base folder id is not a record group and is answered `404` (reindex
+// those with `POST /knowledgeBase/reindex/record/{recordId}` and a depth).
 //
 // **Status filters:**
 //
-// Optional `statusFilters` limit which child records are queued (e.g. failed-only or manual-indexing).
+// Optional `statusFilters` limit which child records are queued (e.g. failed-only or
+// manual-indexing). Any string is accepted.
+//
+// **Access:** the caller needs access to the record group (an organization-wide
+// connector gives it to every member; a personal one only to its owner); without it the
+// answer is `403`. A record group of a disabled connector is refused with `409`.
+//
+// **Request:** only `depth` and `statusFilters` are read; other body fields (`force`
+// included) and any query parameter are ignored. The body is optional.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) ReindexRecordGroup(ctx context.Context, recordGroupID string, body *components.ReindexRecordGroupRequestBody, opts ...operations.Option) (*operations.ReindexRecordGroupResponse, error) {
@@ -4645,9 +6735,15 @@ func (s *KnowledgeBase) ReindexRecordGroup(ctx context.Context, recordGroupID st
 // MoveRecord - Move record to another location
 // Move a file or folder record to a different location within the same knowledge base.
 //
-// Set `newParentId` to a folder ID to move the record into that folder, or `null` to move it to the knowledge base root.
+// Set `newParentId` to a folder ID to move the record into that folder, or `null` (or an
+// empty string) to move it to the knowledge base root. A folder moves with everything in
+// it. Moving a record to where it already is answers `200` with the same body.
 //
-// **Required Permission:** OWNER or WRITER
+// **Required Permission:** OWNER or WRITER. A `READER` gets `403`; a caller with no role
+// on the knowledge base gets `404` (`Knowledge base not found`).
+//
+// **Request:** only `newParentId` is read; other body fields and any query parameter
+// are ignored.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 func (s *KnowledgeBase) MoveRecord(ctx context.Context, kbID string, recordID string, body components.KnowledgeBaseMoveRecordRequestBody, opts ...operations.Option) (*operations.MoveRecordResponse, error) {
@@ -4850,6 +6946,8 @@ func (s *KnowledgeBase) MoveRecord(ctx context.Context, kbID string, recordID st
 	case httpRes.StatusCode == 403:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 409:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -4962,11 +7060,42 @@ func (s *KnowledgeBase) MoveRecord(ctx context.Context, kbID string, recordID st
 // - `breadcrumbs` — adds the breadcrumb trail (empty at root level)
 // - `permissions` — adds the caller's permission flags
 //
+// **A connected app with a limit**
+//
+// A token that may see only some sources pages and counts only what
+// its limit lets it see:
+//   - Limited to whole sources (apps or collections) only: the listing
+//     and the search cover those, with exact totals and counts.
+//   - Limited to any spaces, folders or files, alone or beside whole
+//     sources: the listing returns each whole source, space (record
+//     group), folder and file the limit names, one item each, to open
+//     by its `id`. `totalItems` counts those items, not what is inside
+//     them. A search reads
+//     forward only (`prevCursor` is always null), and takes a `page`
+//     number up to 5; for later pages, send `nextCursor`. Its `totalItems` counts
+//     the matches found so far and can grow from page to page; it is
+//     final once `hasNext` is false. `counts` is returned only when the
+//     whole result fits in the first page read, and is `null` otherwise.
+//   - An item can sit in a folder the limit leaves out, as a file the
+//     limit names does. Its `parentId` and `parent` are then `null`: the
+//     item is returned, and the folder above it is not named.
+//   - A `nextCursor` or `prevCursor` belongs to the limit it was read
+//     under. A token with a different limit that sends it gets a `400`;
+//     start that listing again without a cursor.
+//
 // **Access control**
 //
 // Requires a valid bearer token. For OAuth tokens the `kb:read` scope
 // must be present; regular JWT bearer tokens pass through without scope
-// enforcement.
+// enforcement. Only nodes the caller can access are listed.
+//
+// **Request checking**
+//
+// This route has no request validator of its own; the query is passed on and
+// checked by the connector service. Query parameters not listed here are
+// ignored. A wrong type for `page`, `limit`, `onlyContainers` or `flattened`
+// (or `page` below 1 or `limit` outside 1-200, or either sent more than once) is answered
+// `422`; a refused filter value is answered `400`.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 //
@@ -5156,55 +7285,9 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 400:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out apierrors.GetKnowledgeHubRootNodesBadRequestError
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
-			}
-
-			out.HTTPMeta = components.HTTPMetadata{
-				Request:  req,
-				Response: httpRes,
-			}
-			return nil, &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
+		fallthrough
 	case httpRes.StatusCode == 401:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out apierrors.GetKnowledgeHubRootNodesUnauthorizedError
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
-			}
-
-			out.HTTPMeta = components.HTTPMetadata{
-				Request:  req,
-				Response: httpRes,
-			}
-			return nil, &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
+		fallthrough
 	case httpRes.StatusCode == 403:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -5213,7 +7296,32 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 				return nil, err
 			}
 
-			var out apierrors.GetKnowledgeHubRootNodesForbiddenError
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 422:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.GetKnowledgeHubRootNodesUnprocessableEntityError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
@@ -5238,7 +7346,34 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 				return nil, err
 			}
 
-			var out apierrors.GetKnowledgeHubRootNodesInternalServerError
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 503:
+		res.Headers = httpRes.Header
+
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ServiceUnavailableError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
@@ -5307,14 +7442,27 @@ func (s *KnowledgeBase) GetKnowledgeHubRootNodes(ctx context.Context, request op
 //
 // When `include=breadcrumbs` is set, the response contains a
 // `breadcrumbs` array tracing the path from the root to the current
-// node. The `currentNode` and `parentNode` objects are always populated
-// for non-root requests.
+// node. The `currentNode` object is always populated for non-root
+// requests. `parentNode` is too, except at the top of a source and for
+// a connected app whose limit leaves that parent out: it is `null` then.
 //
 // **Access control**
 //
 // Requires a valid bearer token. For OAuth tokens the `kb:read` scope
 // must be present; regular JWT bearer tokens pass through without scope
 // enforcement.
+//
+// A parent the caller may not see, one in the trash, and one that does not
+// exist are all answered `404` with the same body, so the route does not reveal
+// whether the node exists.
+//
+// **Request checking**
+//
+// This route has no request validator of its own; the path values and the query
+// are checked by the connector service. Query parameters not listed here are
+// ignored. A wrong type for `page`, `limit`, `onlyContainers` or `flattened`
+// (or `page` below 1 or `limit` outside 1-200) is answered `422`; other refusals,
+// `page` above 50 and an unusable `cursor` included, are `400`.
 //
 // If set, this operation will use either [Security.BearerAuth] or [Security.Oauth2] from the global security.
 //
@@ -5504,80 +7652,11 @@ func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request o
 			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 400:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out apierrors.GetKnowledgeHubChildNodesBadRequestError
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
-			}
-
-			out.HTTPMeta = components.HTTPMetadata{
-				Request:  req,
-				Response: httpRes,
-			}
-			return nil, &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
+		fallthrough
 	case httpRes.StatusCode == 401:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out apierrors.GetKnowledgeHubRootNodesUnauthorizedError
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
-			}
-
-			out.HTTPMeta = components.HTTPMetadata{
-				Request:  req,
-				Response: httpRes,
-			}
-			return nil, &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
+		fallthrough
 	case httpRes.StatusCode == 403:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out apierrors.GetKnowledgeHubRootNodesForbiddenError
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
-			}
-
-			out.HTTPMeta = components.HTTPMetadata{
-				Request:  req,
-				Response: httpRes,
-			}
-			return nil, &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
+		fallthrough
 	case httpRes.StatusCode == 404:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -5586,7 +7665,32 @@ func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request o
 				return nil, err
 			}
 
-			var out apierrors.GetKnowledgeHubChildNodesNotFoundError
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 422:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.GetKnowledgeHubRootNodesUnprocessableEntityError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
@@ -5611,7 +7715,34 @@ func (s *KnowledgeBase) GetKnowledgeHubChildNodes(ctx context.Context, request o
 				return nil, err
 			}
 
-			var out apierrors.GetKnowledgeHubRootNodesInternalServerError
+			var out apierrors.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
+			}
+
+			out.HTTPMeta = components.HTTPMetadata{
+				Request:  req,
+				Response: httpRes,
+			}
+			return nil, &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, apierrors.NewAPIError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 503:
+		res.Headers = httpRes.Header
+
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out apierrors.ServiceUnavailableError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, apierrors.NewResponseValidationError("response did not match the declared error schema", httpRes.StatusCode, string(rawBody), httpRes, err)
 			}
