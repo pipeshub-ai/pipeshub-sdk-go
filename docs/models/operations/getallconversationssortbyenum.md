@@ -6,7 +6,7 @@ Sort field. Invalid values fall back to `lastActivityAt`.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.GetAllConversationsSortByEnumCreatedAt

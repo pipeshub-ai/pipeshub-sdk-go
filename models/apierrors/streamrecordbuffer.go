@@ -5,8 +5,8 @@ package apierrors
 import (
 	"encoding/json"
 	"errors"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 type StreamRecordBufferInternalServerErrorType string

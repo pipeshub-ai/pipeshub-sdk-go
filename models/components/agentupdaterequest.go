@@ -5,8 +5,8 @@ package components
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 )
 
 // AgentUpdateRequestDefaultReasoningEffort - Agent-level reasoning effort used when a chat request omits its own.

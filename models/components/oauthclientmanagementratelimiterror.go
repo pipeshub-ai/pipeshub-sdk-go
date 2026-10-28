@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 )
 
 type OAuthClientManagementRateLimitErrorError struct {

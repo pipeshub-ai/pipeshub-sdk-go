@@ -6,7 +6,7 @@ The model's own reasoning effort, read from its stored configuration. It applies
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.ModelDefaultReasoningEffortNone

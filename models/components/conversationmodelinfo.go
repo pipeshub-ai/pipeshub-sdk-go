@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 // ConversationModelInfoReasoningEffort - Reasoning effort requested for the turn, when one was set.

@@ -11,7 +11,7 @@ Scope determines visibility and access control for connectors:<br>
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.ConnectorScopeTeam

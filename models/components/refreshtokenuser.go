@@ -3,8 +3,8 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 )
 
 // Kind - Whether this account is a person who signs in (`human`) or a

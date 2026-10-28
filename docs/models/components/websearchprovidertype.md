@@ -6,7 +6,7 @@ Supported web search provider. crawl4ai only reads pages (it backs up the built-
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.WebSearchProviderTypeDuckduckgo

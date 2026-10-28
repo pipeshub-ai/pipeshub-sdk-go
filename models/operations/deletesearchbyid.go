@@ -5,8 +5,8 @@ package operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 // DeleteSearchByIDShared - Additional `isShared` filter. `'true'` / `'1'` and `'false'` / `'0'`,

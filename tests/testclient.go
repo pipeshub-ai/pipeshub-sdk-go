@@ -5,7 +5,7 @@ package tests
 import (
 	"crypto/rand"
 	"fmt"
-	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
 	"net/http"
 	"time"
 )

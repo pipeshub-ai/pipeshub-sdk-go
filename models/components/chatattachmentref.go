@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 // ChatAttachmentRefSource - How the attachment was produced: a file upload, or text pasted into the

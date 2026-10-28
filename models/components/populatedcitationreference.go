@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 // PopulatedCitationReference - A message's citation reference after the handler populates it: the

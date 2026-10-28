@@ -10,7 +10,7 @@ exposes it to every member of the linked project. See
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.ConversationListItemProjectVisibilityPrivate

@@ -4,7 +4,7 @@ package apierrors
 
 import (
 	"encoding/json"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 // RateLimitErrorResponse - Rate-limit error payload (shape differs from standard error responses).

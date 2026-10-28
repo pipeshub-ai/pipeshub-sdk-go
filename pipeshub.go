@@ -7,11 +7,11 @@ package pipeshub
 import (
 	"context"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/config"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/hooks"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/retry"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/config"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/hooks"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
 	"net/http"
 	"time"
 )
@@ -328,10 +328,10 @@ func WithTimeout(timeout time.Duration) SDKOption {
 // New creates a new instance of the SDK with the provided options
 func New(opts ...SDKOption) *Pipeshub {
 	sdk := &Pipeshub{
-		SDKVersion: "1.8.0",
+		SDKVersion: "2.0.0",
 		sdkConfiguration: config.SDKConfiguration{
-			UserAgent:         "speakeasy-sdk/go 1.8.0 2.946.0 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go",
-			SDKVersion:        "1.8.0",
+			UserAgent:         "speakeasy-sdk/go 2.0.0 2.946.0 1.0.0 github.com/pipeshub-ai/pipeshub-sdk-go/v2",
+			SDKVersion:        "2.0.0",
 			GenVersion:        "2.946.0",
 			OpenAPIDocVersion: "1.0.0",
 			ServerList:        ServerList,

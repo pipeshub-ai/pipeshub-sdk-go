@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
 )
 
 // FilterOption - A single filter option for knowledge hub filters.

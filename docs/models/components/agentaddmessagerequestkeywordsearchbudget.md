@@ -6,7 +6,7 @@ How long each search waits for the keyword (grep) match after its semantic resul
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.AgentAddMessageRequestKeywordSearchBudgetShort

@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 // OauthScopes - Provider scopes requested for each way the connector is used

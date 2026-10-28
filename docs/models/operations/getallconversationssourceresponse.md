@@ -6,7 +6,7 @@ Echoes the requested `source` query value.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.GetAllConversationsSourceResponseOwned

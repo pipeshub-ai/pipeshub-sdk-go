@@ -3,8 +3,8 @@
 package operations
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types/stream"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types/stream"
 )
 
 type StreamAgentConversationRequest struct {

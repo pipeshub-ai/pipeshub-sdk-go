@@ -6,7 +6,7 @@ Filter messages by type. An empty value is read as not sent.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.GetAgentConversationByIDMessageTypeUnknown

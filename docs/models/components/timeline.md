@@ -28,7 +28,7 @@ is always a plain ranked search. A server whose `TIMELINE_SUMMARIES` setting is
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.TimelineCreated

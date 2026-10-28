@@ -9,7 +9,7 @@ processing state (`IDLE`, `QUEUED`, `SYNCING`, `FULL_SYNCING`), or null before i
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 value := components.GetKnowledgeBaseByIDStatusIdle

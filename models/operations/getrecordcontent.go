@@ -5,8 +5,8 @@ package operations
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 // Extract - With `query`, in record mode and without `startBlock`: return only the passages that answer `query`, as the model assigned to the `reader` role (else the default model) copies them out, instead of the record's text. The model is told to copy word for word, and `extract.unverifiedLines` counts the lines it did not. The response's `order` is `extract`, and its `extract` object names the model and the tokens it used. When the model cannot be reached, the usual read is returned with `extract.error` set.

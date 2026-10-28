@@ -4,7 +4,7 @@ package config
 
 import (
 	"context"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/retry"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/retry"
 	"net/http"
 	"time"
 )

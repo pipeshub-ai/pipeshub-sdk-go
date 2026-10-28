@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types"
 )
 
 // UnionCandidate represents a candidate type during union deserialization

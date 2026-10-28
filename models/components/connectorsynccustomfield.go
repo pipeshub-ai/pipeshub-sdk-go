@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 // ConnectorSyncCustomField - A connector-specific sync setting. Send its value in `config.sync` under `name`.

@@ -14,8 +14,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/pipeshub-ai/pipeshub-sdk-go/optionalnullable"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/types"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/optionalnullable"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/types"
 )
 
 func MarshalJSON(v interface{}, tag reflect.StructTag, topLevel bool) ([]byte, error) {

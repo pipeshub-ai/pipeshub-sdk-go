@@ -6,7 +6,7 @@ Reasoning effort requested for the turn, when one was set.
 
 ```go
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/operations"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/operations"
 )
 
 value := operations.GetArchivedConversationsReasoningEffortNone

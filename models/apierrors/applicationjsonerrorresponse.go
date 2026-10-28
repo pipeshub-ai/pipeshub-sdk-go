@@ -4,7 +4,7 @@ package apierrors
 
 import (
 	"encoding/json"
-	"github.com/pipeshub-ai/pipeshub-sdk-go/models/components"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
 )
 
 // ApplicationJSONErrorResponse - Standard JSON error envelope from `ErrorMiddleware` for `BaseError` subclasses (`error.middleware.ts`).

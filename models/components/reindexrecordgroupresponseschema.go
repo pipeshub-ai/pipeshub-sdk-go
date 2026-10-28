@@ -3,7 +3,7 @@
 package components
 
 import (
-	"github.com/pipeshub-ai/pipeshub-sdk-go/internal/utils"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/internal/utils"
 )
 
 // ReIndexRecordGroupResponseSchema - Response returned by POST /knowledgeBase/reindex/record-group/{recordGroupId}.
