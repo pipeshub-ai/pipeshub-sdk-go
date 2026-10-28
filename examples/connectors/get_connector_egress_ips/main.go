@@ -1,5 +1,5 @@
 // List the IP addresses PipesHub connects from (for allow-lists).
-// Needs PIPESHUB_BASE_URL, PIPESHUB_CLIENT_ID, PIPESHUB_CLIENT_SECRET.
+// Needs PIPESHUB_BASE_URL, PIPESHUB_BEARER_AUTH.
 //
 // Usage (from examples/): go run ./connectors/get_connector_egress_ips <path-to-.env>
 package main
@@ -26,17 +26,9 @@ func main() {
 	}
 
 	baseURL := strings.TrimRight(os.Getenv("PIPESHUB_BASE_URL"), "/") + "/api/v1"
-	tokenURL := os.Getenv("PIPESHUB_TOKEN_URL") // optional
-	if tokenURL == "" {
-		tokenURL = baseURL + "/oauth2/token"
-	}
 	client := pipeshub.New(
 		pipeshub.WithServerURL(baseURL),
-		pipeshub.WithSecurity(components.Security{Oauth2: &components.SchemeOauth2{
-			ClientID:     os.Getenv("PIPESHUB_CLIENT_ID"),
-			ClientSecret: os.Getenv("PIPESHUB_CLIENT_SECRET"),
-			TokenURL:     tokenURL,
-		}}),
+		pipeshub.WithSecurity(components.Security{BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH"))}),
 	)
 
 	res, err := client.ConnectorRegistry.GetConnectorEgressIps(context.Background())

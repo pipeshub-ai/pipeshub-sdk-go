@@ -1,5 +1,5 @@
 // Test a connector's connection with the auth config of an existing instance.
-// Needs PIPESHUB_BASE_URL, PIPESHUB_CLIENT_ID, PIPESHUB_CLIENT_SECRET, PIPESHUB_CONNECTOR_TYPE.
+// Needs PIPESHUB_BASE_URL, PIPESHUB_BEARER_AUTH, PIPESHUB_CONNECTOR_TYPE.
 //
 // Usage (from examples/): go run ./connectors/test_connector_connection <path-to-.env>
 package main
@@ -27,17 +27,9 @@ func main() {
 	}
 
 	baseURL := strings.TrimRight(os.Getenv("PIPESHUB_BASE_URL"), "/") + "/api/v1"
-	tokenURL := os.Getenv("PIPESHUB_TOKEN_URL") // optional
-	if tokenURL == "" {
-		tokenURL = baseURL + "/oauth2/token"
-	}
 	client := pipeshub.New(
 		pipeshub.WithServerURL(baseURL),
-		pipeshub.WithSecurity(components.Security{Oauth2: &components.SchemeOauth2{
-			ClientID:     os.Getenv("PIPESHUB_CLIENT_ID"),
-			ClientSecret: os.Getenv("PIPESHUB_CLIENT_SECRET"),
-			TokenURL:     tokenURL,
-		}}),
+		pipeshub.WithSecurity(components.Security{BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH"))}),
 	)
 
 	res, err := client.ConnectorRegistry.TestConnectorConnection(context.Background(), os.Getenv("PIPESHUB_CONNECTOR_TYPE"), operations.TestConnectorConnectionRequestBody{

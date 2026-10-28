@@ -24,7 +24,7 @@ Every program takes the `.env` path as its first argument.
 | Variable | Needed by |
 | --- | --- |
 | `PIPESHUB_BASE_URL` | all — the examples append `/api/v1` themselves |
-| `PIPESHUB_BEARER_AUTH` | optional; a raw JWT access token. When set, it is used directly and the email/password login is skipped |
+| `PIPESHUB_BEARER_AUTH` | required by `connectors/*` (a personal access token); optional for the others, which use it instead of the email/password login when set |
 | `PIPESHUB_TEST_USER_EMAIL`, `PIPESHUB_TEST_USER_PASSWORD` | all, unless `PIPESHUB_BEARER_AUTH` is set |
 | `PIPESHUB_AGENT_KEY` | all `agent_conversation/*` except `create_and_add_message` |
 | `KB_ID`, `CONNECTOR_ID` | optional knowledge filters for `agent_conversation/*` |
@@ -142,9 +142,9 @@ So pass `nil`, never an empty-but-non-nil `Filters`, when you mean "no opinion".
 ## Connectors
 
 `connectors/` has one program per connector operation, new in SDK 2.0.0. They sign in with
-**OAuth2 client credentials**: create an OAuth app with the `client_credentials` grant and the
-`connector:*` scopes, then set `PIPESHUB_CLIENT_ID` and `PIPESHUB_CLIENT_SECRET`. The SDK fetches the
-token from `PIPESHUB_TOKEN_URL`, or `${PIPESHUB_BASE_URL}/api/v1/oauth2/token` when that is unset.
+a **personal access token** in `PIPESHUB_BEARER_AUTH`. Use one of an admin with the `connector:*` scopes:
+creating team connectors and OAuth configurations is admin-only, and an OAuth app's client-credentials
+token acts as a service account, which is never an admin.
 
 They import the 2.0.0 module, `github.com/pipeshub-ai/pipeshub-sdk-go/v2`; the other programs still use v1.7.0.
 
