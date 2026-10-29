@@ -307,10 +307,10 @@ func New(opts ...SDKOption) *Pipeshub {
 			ServerList:        ServerList,
 			ServerVariables: []map[string]string{
 				{
-					"instance_url": "https://app.pipeshub.com",
+					"instance_url": "app.pipeshub.com",
 				},
 				{
-					"instance_url": "https://app.pipeshub.com",
+					"instance_url": "app.pipeshub.com",
 				},
 			},
 		},
