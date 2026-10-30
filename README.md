@@ -3,11 +3,9 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/pipeshub-ai/pipeshub-sdk-go/v2.svg)](https://pkg.go.dev/github.com/pipeshub-ai/pipeshub-sdk-go/v2)
 [![License](https://img.shields.io/github/license/pipeshub-ai/pipeshub-sdk-go.svg)](https://github.com/pipeshub-ai/pipeshub-sdk-go/blob/main/LICENSE)
 
-The PipesHub Go SDK provides access to the [PipesHub](https://pipeshub.com) API from Go. PipesHub connects workplace apps such as Google Drive, Slack, Confluence and Jira, indexes their content, and answers questions with citations to the source. With this SDK you can search and chat over that knowledge, run agents, and manage knowledge bases and connectors.
+The official Go SDK for [PipesHub](https://pipeshub.com). Search your company's knowledge and get answers with citations, run agents, and manage knowledge bases and connectors, all from your Go code.
 
-The SDK has typed requests and responses for every operation, and every method takes a `context.Context`. It is generated with [Speakeasy](https://www.speakeasy.com) from the [PipesHub OpenAPI spec](https://github.com/pipeshub-ai/open-api).
-
-**Compatibility:** SDK version 2.0.0 is compatible with PipesHub [v1.0.0](https://github.com/pipeshub-ai/pipeshub-ai/releases/tag/v1.0.0).
+PipesHub connects workplace apps such as Google Drive, Slack, Confluence and Jira and indexes their content. The SDK has typed requests and responses for every operation, and every method takes a `context.Context`. It is generated with [Speakeasy](https://www.speakeasy.com) from the [PipesHub OpenAPI spec](https://github.com/pipeshub-ai/open-api).
 
 ## Documentation
 
