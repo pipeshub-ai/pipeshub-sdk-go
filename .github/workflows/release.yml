@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   release:
@@ -36,3 +37,22 @@ jobs:
           tag_name: v${{ steps.version.outputs.VERSION }}
           name: v${{ steps.version.outputs.VERSION }}
           generate_release_notes: true
+
+      - name: Set up ORAS
+        uses: oras-project/setup-oras@v1
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push to GitHub Packages
+        run: |
+          ZIP="pipeshub-sdk-go-v${{ steps.version.outputs.VERSION }}.zip"
+          git archive --format=zip --prefix="pipeshub-sdk-go-v${{ steps.version.outputs.VERSION }}/" -o "$ZIP" HEAD
+          oras push "ghcr.io/pipeshub-ai/pipeshub-sdk-go:${{ steps.version.outputs.VERSION }}" \
+            --artifact-type application/vnd.pipeshub.sdk.go \
+            --annotation "org.opencontainers.image.source=https://github.com/pipeshub-ai/pipeshub-ai" \
+            --annotation "org.opencontainers.image.description=PipesHub Go SDK. Install with: go get github.com/pipeshub-ai/pipeshub-sdk-go@v${{ steps.version.outputs.VERSION }}" \
+            --annotation "org.opencontainers.image.version=${{ steps.version.outputs.VERSION }}" \
+            --annotation "org.opencontainers.image.licenses=Apache-2.0" \
+            "$ZIP"
+          oras tag "ghcr.io/pipeshub-ai/pipeshub-sdk-go:${{ steps.version.outputs.VERSION }}" latest

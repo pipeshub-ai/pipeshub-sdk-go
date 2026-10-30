@@ -19,4 +19,5 @@ func initHooks(h *Hooks) {
 	_ = h.registerAfterErrorHook
 
 	h.registerBeforeRequestHook(&RequestIDHook{})
+	h.registerBeforeRequestHook(&VersionCheckHook{})
 }
