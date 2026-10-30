@@ -1,7 +1,7 @@
 lockVersion: 2.0.0
 id: 3487f11d-6179-482e-b72a-f312792b5955
 management:
-  docChecksum: 4e64bf7934257a5119986bb2008e9e51
+  docChecksum: 33d1bafce6edf89acc5e973b9581bbaf
   docVersion: 1.0.0
   speakeasyVersion: 1.801.0
   generationVersion: 2.946.0
@@ -9,9 +9,9 @@ management:
   configChecksum: 3594191b71b0ffa378ba377967d10b9b
   published: true
 persistentEdits:
-  generation_id: 797e4963-4cfd-4868-8f97-85b03513f60c
-  pristine_commit_hash: 0d9da86b8b00b7ed78abc6f77a4b8f3534698f7f
-  pristine_tree_hash: 705c0458b1da47a389347625335fcf6ab310c3de
+  generation_id: 0c3dfc2f-23cd-482e-a17a-e4bc0a39b97f
+  pristine_commit_hash: 1247939691bd7814fe2da8802eea0ccef1520dcb
+  pristine_tree_hash: d816a20f4f3664e4fbdaacff410a06f11445b17c
 features:
   go:
     additionalDependencies: 0.1.0
@@ -4705,8 +4705,8 @@ trackedFiles:
     pristine_git_object: 7e8112148a2ba2de45efa9fb80e1cd9abd211638
   docs/sdks/semanticsearch/README.md:
     id: dcaf2a437dec
-    last_write_checksum: sha1:ce4dfada6388cf173358c4c1d30cca443831dd44
-    pristine_git_object: ac11441d8cc8f9e57d5f3cb6e1405dbf541eea00
+    last_write_checksum: sha1:9fe28caa36644209fcdc008b077db00c48b27313
+    pristine_git_object: 9d54d484d973240f640657a4e89969d243339ce6
   docs/sdks/useraccount/README.md:
     id: 442d2e5df2cd
     last_write_checksum: sha1:2f8207d02c3c57b4f6fc11658ffb5f8905fad949
@@ -6605,8 +6605,8 @@ trackedFiles:
     pristine_git_object: 9c522a8f94af81367d5e7e00806d892469ad9f1a
   pipeshub.go:
     id: 68cbebadbaeb
-    last_write_checksum: sha1:782997859478b9308a2af62b52a19159f36fa2bb
-    pristine_git_object: 4d0bb816e8dd25f1fd31312053b329fc1093c165
+    last_write_checksum: sha1:5b4c80f0f15d14964772b964e19c42563d2d1e42
+    pristine_git_object: 25bb885fd28f2e1c2de55145291b164f3d461f3d
   retry/config.go:
     id: 82d673cb0389
     last_write_checksum: sha1:102d1953fbd7e9f312c4442c71ccca2eaaeaa27d
@@ -10522,7 +10522,7 @@ examples:
   retrieve:
     simple:
       requestBody:
-        application/json: {"query": "how do we roll back a canary?", "limit": 8, "rewriteQuery": false}
+        application/json: {"query": "how do we roll back a canary?", "limit": 8, "filters": {"kb": ["3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90"]}, "rewriteQuery": false}
       responses:
         "200":
           application/json: {"chunks": [{"id": "<id>", "text": "<value>", "record": {"recordId": "<id>", "name": "<value>", "connector": "<value>", "mimeType": "<value>", "updatedAt": "1735683497228"}, "citation": {"url": "https://interesting-sauerkraut.name/", "recordUrl": "https://excitable-tenant.com", "pageNum": [309685, 213678], "blockIndex": 458991}}], "incomplete": true}
@@ -10533,6 +10533,16 @@ examples:
     speakeasy-default-retrieve:
       requestBody:
         application/json: {"query": "<value>", "limit": 8, "rewriteQuery": false}
+      responses:
+        "200":
+          application/json: {"chunks": [{"id": "<id>", "text": "<value>", "record": {"recordId": "<id>", "name": "<value>", "connector": "<value>", "mimeType": "<value>", "updatedAt": "1735683497228"}, "citation": {"url": "https://interesting-sauerkraut.name/", "recordUrl": "https://excitable-tenant.com", "pageNum": [309685, 213678], "blockIndex": 458991}}], "incomplete": true}
+        "400":
+          application/json: {"error": {"code": "HTTP_FORBIDDEN", "message": "You need admin access to do this. Ask an admin in your organisation."}}
+        "500":
+          application/json: {"error": {"code": "HTTP_FORBIDDEN", "message": "You need admin access to do this. Ask an admin in your organisation."}}
+    basic:
+      requestBody:
+        application/json: {"query": "how do we roll back a canary?", "limit": 8, "rewriteQuery": false}
       responses:
         "200":
           application/json: {"chunks": [{"id": "<id>", "text": "<value>", "record": {"recordId": "<id>", "name": "<value>", "connector": "<value>", "mimeType": "<value>", "updatedAt": "1735683497228"}, "citation": {"url": "https://interesting-sauerkraut.name/", "recordUrl": "https://excitable-tenant.com", "pageNum": [309685, 213678], "blockIndex": 458991}}], "incomplete": true}

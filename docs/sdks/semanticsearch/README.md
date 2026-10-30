@@ -31,7 +31,41 @@ Nothing to find (no match, no accessible records, nothing indexed
 yet) is a `200` with an empty `chunks` list.
 
 
-### Example Usage
+### Example Usage: basic
+
+<!-- UsageSnippet language="go" operationID="retrieve" method="post" path="/retrieve" example="basic" -->
+```go
+package main
+
+import(
+	"context"
+	"os"
+	"github.com/pipeshub-ai/pipeshub-sdk-go/v2/models/components"
+	pipeshub "github.com/pipeshub-ai/pipeshub-sdk-go/v2"
+	"log"
+)
+
+func main() {
+    ctx := context.Background()
+
+    s := pipeshub.New(
+        pipeshub.WithSecurity(components.Security{
+            BearerAuth: pipeshub.Pointer(os.Getenv("PIPESHUB_BEARER_AUTH")),
+        }),
+    )
+
+    res, err := s.SemanticSearch.Retrieve(ctx, components.RetrieveRequest{
+        Query: "how do we roll back a canary?",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if res.RetrieveResponse != nil {
+        // handle response
+    }
+}
+```
+### Example Usage: simple
 
 <!-- UsageSnippet language="go" operationID="retrieve" method="post" path="/retrieve" example="simple" -->
 ```go
@@ -56,6 +90,11 @@ func main() {
 
     res, err := s.SemanticSearch.Retrieve(ctx, components.RetrieveRequest{
         Query: "how do we roll back a canary?",
+        Filters: &components.Filters{
+            Kb: []string{
+                "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90",
+            },
+        },
     })
     if err != nil {
         log.Fatal(err)
