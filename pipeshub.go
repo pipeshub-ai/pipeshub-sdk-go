@@ -50,17 +50,11 @@ func Float64(f float64) *float64 { return &f }
 // Pointer provides a helper function to return a pointer to a type
 func Pointer[T any](v T) *T { return &v }
 
-// Pipeshub - PipesHub API: Unified API documentation for PipesHub services.
+// Pipeshub - PipesHub API: Search and chat over your company's knowledge, with citations to the source.
 //
-// PipesHub is an enterprise-grade platform providing:
-// - User authentication and management
-// - Document storage and version control
-// - Knowledge base management
-// - Enterprise search and conversational AI
-// - Third-party integrations via connectors
-// - System configuration management
-// - Crawling job scheduling
-// - Email services
+// PipesHub connects workplace apps such as Google Drive, Slack, Confluence and Jira and indexes
+// their content. This API searches and chats over that knowledge, runs agents, and manages
+// knowledge bases, connectors, users and access.
 //
 // ## Authentication
 // Most endpoints require JWT Bearer token authentication. Some internal endpoints use scoped tokens for service-to-service communication.
@@ -337,10 +331,10 @@ func New(opts ...SDKOption) *Pipeshub {
 			ServerList:        ServerList,
 			ServerVariables: []map[string]string{
 				{
-					"instance_url": "https://app.pipeshub.com",
+					"instance_url": "app.pipeshub.com",
 				},
 				{
-					"instance_url": "https://app.pipeshub.com",
+					"instance_url": "app.pipeshub.com",
 				},
 			},
 		},
